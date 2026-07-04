@@ -1,0 +1,132 @@
+---
+title: "mTLS"
+description: "Configure TLS mútuo para comunicação segura com as APIs"
+icon: "lock"
+---
+
+O **mTLS (Mutual TLS)** é obrigatório em todas as chamadas às APIs DelFinance. Ele garante autenticação mútua entre cliente e servidor por meio de certificados digitais.
+
+## Como funciona
+
+No mTLS, tanto o servidor quanto o cliente apresentam certificados durante o handshake TLS:
+
+1. O cliente inicia a conexão e valida o certificado do servidor.
+2. O servidor solicita o certificado do cliente.
+3. O cliente envia seu certificado assinado.
+4. O servidor valida o certificado do cliente contra sua CA (Autoridade Certificadora).
+5. A conexão segura é estabelecida.
+
+## Emissão do certificado
+
+<Steps>
+  <Step title="Gere um CSR (Certificate Signing Request)">
+    ```bash
+    openssl req -new -newkey rsa:2048 -nodes \
+      -keyout chave-privada.key \
+      -out solicitacao.csr \
+      -subj "/C=BR/ST=SP/L=SaoPaulo/O=SuaEmpresa/CN=api.suaempresa.com.br"
+    ```
+  </Step>
+  <Step title="Envie o CSR ao portal DelFinance">
+    Acesse o portal do desenvolvedor e submeta o `solicitacao.csr`.
+  </Step>
+  <Step title="Baixe o certificado emitido">
+    Você receberá o arquivo `certificado.crt` assinado pela CA da DelFinance.
+  </Step>
+  <Step title="Armazene com segurança">
+    Guarde a chave privada em um cofre seguro (HSM, AWS KMS, HashiCorp Vault).
+  </Step>
+</Steps>
+
+## Utilização em requisições
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.sandbox.delfinance.com.br/v1/accounts \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Authorization: Bearer eyJhbGciOi..."
+```
+
+```javascript Node.js
+import https from 'https';
+import fs from 'fs';
+import axios from 'axios';
+
+const agent = new https.Agent({
+  cert: fs.readFileSync('./certificado.crt'),
+  key: fs.readFileSync('./chave-privada.key'),
+  rejectUnauthorized: true,
+});
+
+const { data } = await axios.get(
+  'https://api.sandbox.delfinance.com.br/v1/accounts',
+  {
+    httpsAgent: agent,
+    headers: { Authorization: `Bearer ${accessToken}` },
+  }
+);
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.sandbox.delfinance.com.br/v1/accounts",
+    cert=("./certificado.crt", "./chave-privada.key"),
+    headers={"Authorization": f"Bearer {access_token}"},
+)
+```
+
+```go Go
+package main
+
+import (
+    "crypto/tls"
+    "net/http"
+)
+
+func main() {
+    cert, _ := tls.LoadX509KeyPair("certificado.crt", "chave-privada.key")
+    client := &http.Client{
+        Transport: &http.Transport{
+            TLSClientConfig: &tls.Config{
+                Certificates: []tls.Certificate{cert},
+            },
+        },
+    }
+    _, _ = client.Get("https://api.sandbox.delfinance.com.br/v1/accounts")
+}
+```
+
+</CodeGroup>
+
+## Rotação de certificados
+
+<Warning>
+  Os certificados possuem validade de 12 meses. Configure alertas 30 dias antes do vencimento para evitar interrupções.
+</Warning>
+
+Para renovar:
+
+1. Gere um novo CSR.
+2. Solicite emissão no portal.
+3. Faça deploy do novo certificado antes do vencimento do atual.
+4. Revogue o certificado anterior após a confirmação do novo.
+
+## Boas práticas
+
+- Nunca commite a chave privada em repositórios de código.
+- Restrinja acesso ao arquivo `.key` a `chmod 600`.
+- Utilize HSM ou cofres de segredos em produção.
+- Monitore logs de handshake TLS para detectar tentativas suspeitas.
+
+## Erros comuns
+
+| Erro | Causa |
+| --- | --- |
+| `SSL certificate problem: unable to get local issuer` | CA não confiável ou certificado incompleto |
+| `alert bad certificate` | Certificado expirado ou revogado |
+| `handshake failure` | Cipher suite ou versão TLS incompatível |
+| `certificate verify failed` | Certificado não corresponde ao cadastrado |

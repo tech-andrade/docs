@@ -1,0 +1,70 @@
+---
+title: "Primeiros Passos"
+description: "Guia rápido para começar a integrar com as APIs DelFinance"
+icon: "play"
+---
+
+Este guia mostra o caminho mais rápido para realizar sua primeira chamada às APIs DelFinance.
+
+## Pré-requisitos
+
+## Passo 1 — Obtenha suas credenciais
+
+Acesse o portal do desenvolvedor e crie uma nova aplicação. Você receberá:
+
+- **Client ID** — identificador público da sua aplicação.
+- **Client Secret** — chave secreta usada para autenticação.
+- **Certificado mTLS** — par de chaves (`.crt` e `.key`) para mTLS.
+
+<Warning>
+  Nunca exponha seu `client_secret` ou chave privada em repositórios públicos ou no front-end.
+</Warning>
+
+## Passo 2 — Obtenha um access token
+
+Realize uma requisição `POST` para o endpoint de autenticação usando o fluxo `client_credentials`:
+
+```bash
+curl -X POST https://auth.sandbox.delfinance.com.br/oauth/token \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=SEU_CLIENT_ID" \
+  -d "client_secret=SEU_CLIENT_SECRET" \
+  -d "scope=payments accounts"
+```
+
+Resposta esperada:
+
+```json
+{
+  "access_token": "eyJhbGciOi...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "payments accounts"
+}
+```
+
+## Passo 3 — Faça sua primeira chamada
+
+Use o `access_token` no cabeçalho `Authorization` das requisições às APIs:
+
+```bash
+curl https://api.sandbox.delfinance.com.br/v1/accounts \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Authorization: Bearer eyJhbGciOi..."
+```
+
+## Passo 4 — Homologue e vá para produção
+
+Após validar seus fluxos no sandbox:
+
+1. Solicite a homologação da sua aplicação.
+2. Gere novas credenciais e certificados de produção.
+3. Atualize as URLs base para o ambiente produtivo.
+
+<Tip>
+  Consulte [Ambientes](/iniciacao/ambientes) para conhecer as URLs base de cada ambiente.
+</Tip>

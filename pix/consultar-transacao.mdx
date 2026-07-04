@@ -1,0 +1,73 @@
+---
+title: "Consultar uma transação Pix"
+description: "Recupere os detalhes e o status de qualquer transação Pix"
+icon: "magnifying-glass"
+---
+
+Use a consulta para reconciliação, validação do status atual e recuperação de detalhes de uma transação.
+
+## Endpoint
+
+```text
+GET /v1/pix/transactions/{transaction_id}
+```
+
+## Exemplo
+
+<CodeGroup>
+
+```bash cURL
+curl https://api.sandbox.delfinance.com.br/v1/pix/transactions/pix_tx_123456 \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+```javascript Node.js
+const { data } = await axios.get(
+  `https://api.sandbox.delfinance.com.br/v1/pix/transactions/${transactionId}`,
+  {
+    httpsAgent: agent,
+    headers: { Authorization: `Bearer ${token}` },
+  }
+);
+```
+
+```csharp C#
+var response = await client.GetFromJsonAsync<PixTransaction>(
+    $"https://api.sandbox.delfinance.com.br/v1/pix/transactions/{transactionId}"
+);
+```
+
+</CodeGroup>
+
+## Resposta
+
+```json
+{
+  "id": "pix_tx_123456",
+  "end_to_end_id": "E12345678202601011200abcdef12345",
+  "type": "cash_in",
+  "status": "confirmed",
+  "amount": 150.75,
+  "description": "Pagamento do pedido #1234",
+  "created_at": "2026-01-01T12:00:00Z",
+  "confirmed_at": "2026-01-01T12:01:20Z"
+}
+```
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+| --- | --- | --- |
+| `id` | string | Identificador da transação na DelFinance |
+| `end_to_end_id` | string | Identificador único no SPI/Bacen |
+| `type` | string | `cash_in` (recebimento) ou `cash_out` (envio) |
+| `status` | string | Status atual (veja [Status](/pix/status)) |
+| `amount` | number | Valor da transação |
+| `description` | string | Descrição informada na criação |
+| `created_at` | ISO 8601 | Data de criação |
+| `confirmed_at` | ISO 8601 | Data de confirmação (quando aplicável) |
+
+<Tip>
+  A consulta é idempotente por natureza e não exige `X-Idempotency-Key`.
+</Tip>

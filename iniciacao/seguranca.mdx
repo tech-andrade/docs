@@ -1,0 +1,77 @@
+---
+title: "Segurança"
+description: "Boas práticas de segurança para integrações com a DelFinance"
+icon: "shield"
+---
+
+A segurança é pilar central da plataforma DelFinance. Siga estas práticas para proteger sua integração.
+
+## Proteção de credenciais
+
+<Warning>
+  **Nunca** exponha `client_secret`, chaves privadas ou tokens em:
+
+  - Repositórios públicos ou privados sem criptografia
+  - Logs de aplicação
+  - Front-end (JavaScript, mobile, apps)
+  - URLs (query strings)
+  - Mensagens de erro exibidas ao usuário final
+</Warning>
+
+### Recomendações
+
+- Utilize **cofres de segredos**: AWS Secrets Manager, HashiCorp Vault, Google Secret Manager, Azure Key Vault.
+- Aplique **rotação periódica** de `client_secret` (a cada 90 dias).
+- Restrinja acesso a chaves privadas com `chmod 600` e princípio do menor privilégio.
+- Use **HSM** (Hardware Security Module) em ambientes críticos.
+
+## Transporte seguro
+
+- **TLS 1.2 ou superior** obrigatório.
+- **mTLS** em todas as chamadas (veja [mTLS](/iniciacao/mtls)).
+- Rejeite ciphers fracos (RC4, DES, MD5).
+- Habilite HSTS em aplicações que consomem tokens.
+
+## Validação de webhooks
+
+Ao receber webhooks da DelFinance:
+
+1. Valide a assinatura HMAC no header `X-DelFinance-Signature`.
+2. Verifique se o timestamp está dentro de uma janela de 5 minutos.
+3. Confirme a origem via allowlist de IPs.
+
+```javascript
+import crypto from 'crypto';
+
+function validateWebhook(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+```
+
+## Rate limiting e proteção contra abuso
+
+- Respeite os limites de taxa retornados nos headers `X-RateLimit-*`.
+- Implemente **backoff exponencial** em caso de `429 Too Many Requests`.
+- Monitore anomalias de tráfego na sua aplicação.
+
+## Logs e auditoria
+
+## Dados sensíveis (LGPD)
+
+- Colete apenas os dados necessários.
+- Criptografe dados em repouso (AES-256) e em trânsito (TLS).
+- Implemente controles de acesso baseados em função (RBAC).
+- Documente a base legal do tratamento de dados.
+
+## Checklist de segurança
+
+## Reportando vulnerabilidades
+
+Se você identificar uma vulnerabilidade, envie um e-mail para `security@delfinance.com.br`. Não divulgue publicamente antes da correção.

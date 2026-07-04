@@ -1,0 +1,122 @@
+---
+title: "Idempotência"
+description: "Garanta segurança em requisições duplicadas com chaves de idempotência"
+icon: "repeat"
+---
+
+Operações de escrita (POST/PUT/PATCH) que envolvem movimentação financeira exigem uma **chave de idempotência** para evitar processamento duplicado em caso de retries de rede.
+
+## Como funciona
+
+1. O cliente gera um identificador único (UUID) para cada operação.
+2. Envia o valor no cabeçalho `X-Idempotency-Key`.
+3. A DelFinance armazena a resposta associada a essa chave por **24 horas**.
+4. Qualquer requisição subsequente com a mesma chave retorna a resposta original, sem executar a operação novamente.
+
+## Formato da chave
+
+- **Tipo:** UUID v4 recomendado.
+- **Tamanho:** máximo 64 caracteres.
+- **Escopo:** único por operação (não reutilize para requisições diferentes).
+
+## Exemplo de uso
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.sandbox.delfinance.com.br/v1/payments \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Authorization: Bearer eyJhbGciOi..." \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "valor": 100.00,
+    "destinatario": "12345678900"
+  }'
+```
+
+```javascript Node.js
+import { randomUUID } from 'crypto';
+
+const idempotencyKey = randomUUID();
+
+await axios.post(
+  'https://api.sandbox.delfinance.com.br/v1/payments',
+  { valor: 100.0, destinatario: '12345678900' },
+  {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'X-Idempotency-Key': idempotencyKey,
+    },
+    httpsAgent: agent,
+  }
+);
+```
+
+```python Python
+import uuid
+
+idempotency_key = str(uuid.uuid4())
+
+requests.post(
+    "https://api.sandbox.delfinance.com.br/v1/payments",
+    cert=("./certificado.crt", "./chave-privada.key"),
+    headers={
+        "Authorization": f"Bearer {access_token}",
+        "X-Idempotency-Key": idempotency_key,
+    },
+    json={"valor": 100.00, "destinatario": "12345678900"},
+)
+```
+
+</CodeGroup>
+
+## Comportamento
+
+| Cenário | Comportamento |
+| --- | --- |
+| Primeira requisição com a chave | Executa a operação e armazena a resposta |
+| Requisição repetida com **payload idêntico** | Retorna a resposta armazenada (não reprocessa) |
+| Requisição repetida com **payload diferente** | Retorna erro `409 Conflict` |
+| Requisição após 24 horas | Chave expirada, operação é executada novamente |
+
+## Endpoints que exigem idempotência
+
+- `POST /v1/payments`
+- `POST /v1/transfers`
+- `POST /v1/refunds`
+- `POST /v1/pix`
+
+<Info>
+  Endpoints de consulta (GET) são naturalmente idempotentes e não exigem o cabeçalho.
+</Info>
+
+## Estratégia de retries
+
+<Steps>
+  <Step title="Gere a chave uma única vez">
+    Antes da primeira tentativa, gere e persista a chave.
+  </Step>
+  <Step title="Reutilize em retries">
+    Em falhas de rede ou timeouts, envie a mesma chave.
+  </Step>
+  <Step title="Aplique backoff exponencial">
+    Aguarde 1s, 2s, 4s, 8s entre tentativas.
+  </Step>
+  <Step title="Limite de tentativas">
+    Máximo de 5 retries. Após isso, escale o erro.
+  </Step>
+</Steps>
+
+<Warning>
+  Nunca gere uma nova chave de idempotência em retries — isso pode causar duplicação de operações financeiras.
+</Warning>
+
+## Erros relacionados
+
+| Código | Descrição |
+| --- | --- |
+| `400 missing_idempotency_key` | Cabeçalho ausente em endpoint obrigatório |
+| `409 idempotency_conflict` | Chave reutilizada com payload diferente |
+| `422 invalid_idempotency_key` | Formato inválido (não UUID) |

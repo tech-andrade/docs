@@ -1,0 +1,42 @@
+---
+title: "Status de uma transação Pix"
+description: "Lista de status possíveis de uma transação Pix e seus significados"
+icon: "circle-info"
+---
+
+Cada transação Pix passa por uma série de estados durante seu ciclo de vida.
+
+## Status possíveis
+
+| Status | Descrição |
+| --- | --- |
+| `created` | Transação criada na DelFinance, mas ainda não processada. Cobranças ficam neste estado até o pagamento. |
+| `processing` | Transação em processamento pelo SPI. Aguardando confirmação final. |
+| `confirmed` | Transação concluída com sucesso. O valor foi liquidado. |
+| `failed` | Transação falhou. Pode ocorrer por saldo insuficiente, chave inválida ou rejeição do banco destino. |
+| `canceled` | Transação cancelada antes da liquidação (aplicável a cobranças expiradas ou canceladas manualmente). |
+| `refunded` | Transação devolvida integralmente ao pagador. |
+| `partially_refunded` | Parte do valor foi devolvida ao pagador. |
+
+## Máquina de estados
+
+```text
+created ─▶ processing ─┬─▶ confirmed ─┬─▶ refunded
+                     │              │
+                     │              └─▶ partially_refunded
+                     │
+                     ├─▶ failed
+                     │
+                     └─▶ canceled
+```
+
+## Boas práticas
+
+<Warning>
+  Status `processing` **não** significa sucesso. Aguarde `confirmed` (via webhook ou consulta) antes de liberar produtos ou serviços ao cliente.
+</Warning>
+
+- Sempre trate estados intermediários (`created`, `processing`) na sua lógica de negócio.
+- Configure alertas para transações que permanecem em `processing` por mais de 5 minutos.
+- Use webhooks como fonte primária de atualização de status e a consulta como fallback.
+- Persista o histórico de transições para auditoria.

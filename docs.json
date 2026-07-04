@@ -31,7 +31,44 @@
           "icon": "newspaper"
         }
       ]
-    }
+    },
+    "groups": [
+      {
+        "group": "Iniciação",
+        "icon": "rocket",
+        "pages": [
+          "iniciacao/visao-geral",
+          "iniciacao/primeiros-passos",
+          "iniciacao/ambientes",
+          "iniciacao/url-base",
+          "iniciacao/autenticacao",
+          "iniciacao/mtls",
+          "iniciacao/seguranca",
+          "iniciacao/idempotencia",
+          "iniciacao/sdks"
+        ]
+      },
+      {
+        "group": "Pix",
+        "icon": "bolt",
+        "pages": [
+          "pix/visao-geral",
+          "pix/fluxo-recebimento",
+          "pix/fluxo-envio",
+          "pix/consultar-transacao",
+          "pix/status",
+          "pix/devolucao",
+          "pix/webhooks"
+        ]
+      },
+      {
+        "group": "Getting Started",
+        "pages": [
+          "index",
+          "quickstart"
+        ]
+      }
+    ]
   },
   "logo": {
     "light": "/logo/light.svg",
@@ -67,6 +104,13 @@
       "x": "https://x.com/mintlify",
       "github": "https://github.com/mintlify",
       "linkedin": "https://linkedin.com/company/mintlify"
+    }
+  },
+  "api": {
+    "examples": {
+      "languages": [
+        ""
+      ]
     }
   }
 }

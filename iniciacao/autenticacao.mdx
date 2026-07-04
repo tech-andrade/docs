@@ -1,0 +1,126 @@
+---
+title: "Autenticação"
+description: "Autentique-se nas APIs DelFinance usando OAuth 2.0"
+icon: "key"
+---
+
+As APIs DelFinance utilizam **OAuth 2.0** com o fluxo `client_credentials` para autenticação de aplicações servidor-a-servidor.
+
+## Fluxo `client_credentials`
+
+<Steps>
+  <Step title="Solicite o access token">
+    Envie `client_id` e `client_secret` ao endpoint `/oauth/token`.
+  </Step>
+  <Step title="Receba o token">
+    A resposta contém um `access_token` válido por 1 hora (`expires_in: 3600`).
+  </Step>
+  <Step title="Use o token nas requisições">
+    Inclua o token no header `Authorization: Bearer {access_token}`.
+  </Step>
+  <Step title="Renove antes do vencimento">
+    Solicite um novo token antes que o atual expire.
+  </Step>
+</Steps>
+
+## Obtendo um token
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://auth.sandbox.delfinance.com.br/oauth/token \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials" \
+  -d "client_id=SEU_CLIENT_ID" \
+  -d "client_secret=SEU_CLIENT_SECRET" \
+  -d "scope=payments accounts"
+```
+
+```javascript Node.js
+import https from 'https';
+import fs from 'fs';
+import axios from 'axios';
+
+const agent = new https.Agent({
+  cert: fs.readFileSync('./certificado.crt'),
+  key: fs.readFileSync('./chave-privada.key'),
+});
+
+const { data } = await axios.post(
+  'https://auth.sandbox.delfinance.com.br/oauth/token',
+  new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: process.env.CLIENT_ID,
+    client_secret: process.env.CLIENT_SECRET,
+    scope: 'payments accounts',
+  }),
+  { httpsAgent: agent }
+);
+
+console.log(data.access_token);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://auth.sandbox.delfinance.com.br/oauth/token",
+    cert=("./certificado.crt", "./chave-privada.key"),
+    data={
+        "grant_type": "client_credentials",
+        "client_id": "SEU_CLIENT_ID",
+        "client_secret": "SEU_CLIENT_SECRET",
+        "scope": "payments accounts",
+    },
+)
+
+print(response.json()["access_token"])
+```
+
+</CodeGroup>
+
+## Resposta
+
+```json
+{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "payments accounts"
+}
+```
+
+## Escopos (scopes)
+
+Os escopos definem as permissões do token. Solicite apenas os escopos necessários para sua operação.
+
+| Escopo | Descrição |
+| --- | --- |
+| `accounts` | Consulta de contas e saldos |
+| `payments` | Criação e consulta de pagamentos |
+| `transfers` | Realização de transferências |
+| `webhooks` | Gestão de webhooks |
+
+## Usando o token
+
+```bash
+curl https://api.sandbox.delfinance.com.br/v1/accounts \
+  --cert ./certificado.crt \
+  --key ./chave-privada.key \
+  -H "Authorization: Bearer eyJhbGciOi..."
+```
+
+## Erros comuns
+
+| Código | Descrição | Solução |
+| --- | --- | --- |
+| `401 invalid_client` | Credenciais inválidas | Verifique `client_id` e `client_secret` |
+| `401 invalid_token` | Token expirado ou inválido | Solicite um novo token |
+| `403 insufficient_scope` | Escopo insuficiente | Inclua o escopo necessário na solicitação |
+| `400 invalid_grant` | Grant type não suportado | Use `client_credentials` |
+
+<Warning>
+  Nunca armazene tokens em código-fonte ou repositórios. Use variáveis de ambiente ou cofres de segredos.
+</Warning>

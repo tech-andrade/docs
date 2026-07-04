@@ -1,0 +1,52 @@
+---
+title: "Ambientes"
+description: "Diferenças entre os ambientes de sandbox e produção"
+icon: "layer-group"
+---
+
+A DelFinance disponibiliza dois ambientes para integração.
+
+## Sandbox
+
+O sandbox é um ambiente isolado para testes e desenvolvimento. Todas as operações são simuladas e nenhum valor real é movimentado.
+
+| Recurso | Valor |
+| --- | --- |
+| URL de autenticação | `https://auth.sandbox.delfinance.com.br` |
+| URL da API | `https://api.sandbox.delfinance.com.br` |
+| Certificado mTLS | Emitido pelo portal (sandbox) |
+| Dados | Fictícios |
+
+<Tip>
+  Use o sandbox para desenvolver, executar testes automatizados e validar seus fluxos antes de ir para produção.
+</Tip>
+
+## Produção
+
+O ambiente produtivo processa operações reais e está sujeito à homologação prévia.
+
+| Recurso | Valor |
+| --- | --- |
+| URL de autenticação | `https://auth.delfinance.com.br` |
+| URL da API | `https://api.delfinance.com.br` |
+| Certificado mTLS | Emitido após homologação |
+| Dados | Reais |
+
+<Warning>
+  O acesso a produção exige aprovação formal e validação dos fluxos no sandbox.
+</Warning>
+
+## Comparativo rápido
+
+| Característica | Sandbox | Produção |
+| --- | --- | --- |
+| Movimentação real | ❌ | ✅ |
+| Rate limits | Reduzidos | Padrão |
+| Suporte | Autoatendimento | Suporte dedicado |
+| Homologação prévia | Não | Obrigatória |
+
+## Boas práticas
+
+- Mantenha variáveis de ambiente separadas para credenciais de sandbox e produção.
+- Nunca compartilhe certificados entre ambientes.
+- Rode testes de regressão no sandbox antes de cada deploy em produção.

@@ -1,0 +1,134 @@
+---
+title: "Devolução Pix"
+description: "Devolva valores totais ou parciais de um Pix recebido"
+icon: "rotate-left"
+---
+
+A devolução Pix permite retornar valores ao pagador original de forma total ou parcial.
+
+## Endpoint
+
+```text
+POST /v1/pix/transactions/{transaction_id}/refunds
+```
+
+## Tipos de devolução
+
+<CardGroup cols={2}>
+  <Card title="Total" icon="circle-check">
+    Devolve o valor integral do Pix recebido. Omita o campo `amount` ou informe o valor completo.
+  </Card>
+
+  <Card title="Parcial" icon="circle-half-stroke">
+    Devolve apenas parte do valor. Informe `amount` com o valor desejado (menor que o total).
+  </Card>
+</CardGroup>
+
+<Warning>
+  Devoluções exigem **idempotência**. Sempre envie `X-Idempotency-Key`.
+</Warning>
+
+## Exemplo — devolução parcial
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/transactions/pix_tx_123456/refunds \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: $(uuidgen)" \
+  -d '{
+    "amount": 50.00,
+    "reason": "requested_by_customer"
+  }'
+```
+
+```javascript Node.js
+import { randomUUID } from 'crypto';
+
+const { data } = await axios.post(
+  `https://api.sandbox.delfinance.com.br/v1/pix/transactions/${transactionId}/refunds`,
+  {
+    amount: 50.0,
+    reason: 'requested_by_customer',
+  },
+  {
+    httpsAgent: agent,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'X-Idempotency-Key': randomUUID(),
+    },
+  }
+);
+```
+
+```csharp C#
+var body = new {
+    amount = 50.00m,
+    reason = "requested_by_customer"
+};
+
+client.DefaultRequestHeaders.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
+
+var response = await client.PostAsJsonAsync(
+    $"https://api.sandbox.delfinance.com.br/v1/pix/transactions/{transactionId}/refunds",
+    body
+);
+```
+
+</CodeGroup>
+
+### Request
+
+```json
+{
+  "amount": 50.00,
+  "reason": "requested_by_customer"
+}
+```
+
+### Response
+
+```json
+{
+  "id": "refund_123456",
+  "transaction_id": "pix_tx_123456",
+  "status": "processing",
+  "amount": 50.00,
+  "created_at": "2026-01-01T13:00:00Z"
+}
+```
+
+## Motivos (`reason`) suportados
+
+| Valor | Descrição |
+| --- | --- |
+| `requested_by_customer` | Solicitação do próprio cliente |
+| `fraud` | Suspeita ou confirmação de fraude |
+| `duplicated` | Pagamento duplicado |
+| `processing_error` | Erro operacional do estabelecimento |
+
+## Consultar status da devolução
+
+```text
+GET /v1/pix/refunds/{refund_id}
+```
+
+```bash
+curl https://api.sandbox.delfinance.com.br/v1/pix/refunds/refund_123456 \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+A devolução pode terminar em:
+
+- `confirmed` — valor devolvido com sucesso.
+- `failed` — falha ao devolver (será emitido evento `pix.refund_failed`).
+
+## Eventos relacionados
+
+Acompanhe o resultado via [webhooks](/pix/webhooks):
+
+- `pix.refunded` — devolução concluída.
+- `pix.refund_failed` — devolução falhou.

@@ -1,0 +1,71 @@
+---
+title: "Visão geral do Pix"
+description: "Introdução à API Pix da DelFinance e conceitos fundamentais"
+icon: "bolt"
+---
+
+A API Pix da DelFinance permite integrar sua aplicação ao arranjo de pagamentos instantâneos do Banco Central de forma segura e escalável.
+
+## O que você pode fazer
+
+<CardGroup cols={2}>
+  <Card title="Receber Pix" icon="arrow-down-to-line">
+    Gere cobranças e QR Codes para receber pagamentos.
+  </Card>
+
+  <Card title="Enviar Pix" icon="arrow-up-from-line">
+    Realize pagamentos e transferências para qualquer chave ou dados bancários.
+  </Card>
+
+  <Card title="Consultar transações" icon="magnifying-glass">
+    Acompanhe o status de qualquer transação Pix.
+  </Card>
+
+  <Card title="Realizar devoluções" icon="rotate-left">
+    Devolva valores totais ou parciais de um Pix recebido.
+  </Card>
+
+  <Card title="Receber webhooks" icon="bell">
+    Eventos assíncronos para confirmação e falhas.
+  </Card>
+
+  <Card title="Sandbox" icon="flask">
+    Teste todo o fluxo antes de ir para produção.
+  </Card>
+</CardGroup>
+
+## Conceitos fundamentais
+
+| Conceito | Descrição |
+| --- | --- |
+| **Pagador** | Pessoa ou empresa que inicia o Pix (envia o valor). |
+| **Recebedor** | Pessoa ou empresa que recebe o valor. |
+| **Chave Pix** | Identificador do recebedor: CPF/CNPJ, e-mail, telefone, chave aleatória ou EVP. |
+| **EndToEndId** | Identificador único da transação no SPI/Bacen. Formato: `E` \+ ISPB \+ timestamp \+ sufixo. |
+| **TransactionId (TxId)** | Identificador da cobrança/transação na DelFinance. Usado para rastrear a operação. |
+| **QR Code** | Representação visual dos dados do Pix. Pode ser estático (reutilizável) ou dinâmico (uso único). |
+| **Webhook** | Notificação HTTP enviada pela DelFinance quando um evento ocorre (recebimento, falha, devolução). |
+| **Devolução** | Operação que retorna valor total ou parcial de um Pix recebido ao pagador original. |
+
+## Ambientes
+
+| Ambiente | URL base |
+| --- | --- |
+| Sandbox | `https://api.sandbox.delfinance.com.br` |
+| Produção | `https://api.delfinance.com.br` |
+
+<Tip>
+  Comece sempre pelo [sandbox](/iniciacao/ambientes) e valide todos os fluxos antes de solicitar acesso à produção.
+</Tip>
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Fluxo de recebimento" icon="arrow-down-to-line" href="/pix/fluxo-recebimento">
+    Entenda como identificar um Pix recebido.
+  </Card>
+
+  <Card title="Fluxo de envio" icon="arrow-up-from-line" href="/pix/fluxo-envio">
+    Aprenda a enviar Pix pela API.
+  </Card>
+</CardGroup>

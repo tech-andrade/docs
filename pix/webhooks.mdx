@@ -1,0 +1,115 @@
+---
+title: "Webhooks de Pix"
+description: "Receba eventos assíncronos de transações Pix em tempo real"
+icon: "bell"
+---
+
+Webhooks são notificações HTTP `POST` enviadas ao endpoint cadastrado sempre que um evento Pix ocorre. Eles são a fonte primária de atualização de status.
+
+## Eventos suportados
+
+| Evento | Quando é disparado |
+| --- | --- |
+| `pix.received` | Um Pix foi recebido e confirmado. |
+| `pix.sent` | Um Pix enviado foi concluído com sucesso. |
+| `pix.failed` | Um envio de Pix falhou. |
+| `pix.refunded` | Uma devolução foi concluída com sucesso. |
+| `pix.refund_failed` | Uma devolução falhou. |
+
+## Estrutura do payload
+
+Todos os eventos seguem a mesma estrutura base:
+
+```json
+{
+  "event": "pix.received",
+  "id": "evt_123456",
+  "created_at": "2026-01-01T12:01:20Z",
+  "data": {
+    "transaction_id": "pix_tx_123456",
+    "end_to_end_id": "E12345678202601011200abcdef12345",
+    "amount": 150.75,
+    "status": "confirmed"
+  }
+}
+```
+
+## Headers enviados
+
+| Header | Descrição |
+| --- | --- |
+| `X-DelFinance-Signature` | Assinatura HMAC-SHA256 do payload |
+| `X-DelFinance-Timestamp` | Timestamp Unix do envio |
+| `X-DelFinance-Event` | Nome do evento |
+| `X-Request-Id` | UUID da entrega |
+
+## Validando a assinatura
+
+<CodeGroup>
+
+```javascript Node.js
+import crypto from 'crypto';
+
+function validateSignature(payload, signature, secret) {
+  const expected = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expected)
+  );
+}
+
+app.post('/webhooks/pix', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-delfinance-signature'];
+  const valid = validateSignature(req.body, signature, process.env.WEBHOOK_SECRET);
+
+  if (!valid) return res.status(401).send('Invalid signature');
+
+  const event = JSON.parse(req.body.toString());
+  // processe o evento...
+  res.status(200).send('OK');
+});
+```
+
+```csharp C#
+using System.Security.Cryptography;
+using System.Text;
+
+public bool ValidateSignature(string payload, string signature, string secret)
+{
+    using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+    var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
+    var expected = Convert.ToHexString(hash).ToLower();
+
+    return CryptographicOperations.FixedTimeEquals(
+        Encoding.UTF8.GetBytes(signature),
+        Encoding.UTF8.GetBytes(expected)
+    );
+}
+```
+
+</CodeGroup>
+
+## Resposta esperada
+
+Seu endpoint deve responder com HTTP `2xx` em até **10 segundos**. Caso contrário, a entrega será retentada.
+
+## Retentativas
+
+Em caso de falha (não-2xx ou timeout), a DelFinance retentará com backoff exponencial:
+
+| Tentativa | Após |
+| --- | --- |
+| 1 | Imediata |
+| 2 | 1 minuto |
+| 3 | 5 minutos |
+| 4 | 30 minutos |
+| 5 | 2 horas |
+| 6 | 12 horas |
+
+Após 6 tentativas sem sucesso, o evento é marcado como `failed` e pode ser reenviado manualmente pelo portal.
+
+## Boas práticas

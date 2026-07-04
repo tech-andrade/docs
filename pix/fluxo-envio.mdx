@@ -1,0 +1,132 @@
+---
+title: "Fluxo de envio Pix"
+description: "Como enviar Pix (cash-out) usando a API DelFinance"
+icon: "arrow-up-from-line"
+---
+
+O envio de Pix (cash-out) permite transferir valores para qualquer chave Pix ou conta bancária.
+
+## Fluxo passo a passo
+
+<Steps>
+  <Step title="Cliente envia requisição">
+    Sua aplicação chama `POST /v1/pix/payments` informando valor, chave ou dados bancários do recebedor.
+  </Step>
+  <Step title="DelFinance valida">
+    Validamos saldo, limites, dados do recebedor via DICT e regras antifraude.
+  </Step>
+  <Step title="Processamento">
+    A transação é enviada ao SPI para liquidação.
+  </Step>
+  <Step title="Resposta inicial">
+    A API retorna imediatamente com `status: processing` e o `transaction_id`.
+  </Step>
+  <Step title="Status final">
+    O resultado final chega via webhook `pix.sent` ou `pix.failed`. Também pode ser consultado.
+  </Step>
+</Steps>
+
+<Warning>
+  **Idempotência é obrigatória** em operações de envio. Sempre envie `X-Idempotency-Key` para evitar duplicidade em retries.
+</Warning>
+
+## Exemplo — enviar Pix
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/payments \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "X-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -d '{
+    "amount": 250.00,
+    "description": "Reembolso pedido #5678",
+    "recipient": {
+      "pix_key": "usuario@exemplo.com",
+      "key_type": "email"
+    }
+  }'
+```
+
+```javascript Node.js
+import { randomUUID } from 'crypto';
+
+const { data } = await axios.post(
+  'https://api.sandbox.delfinance.com.br/v1/pix/payments',
+  {
+    amount: 250.0,
+    description: 'Reembolso pedido #5678',
+    recipient: {
+      pix_key: 'usuario@exemplo.com',
+      key_type: 'email',
+    },
+  },
+  {
+    httpsAgent: agent,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'X-Idempotency-Key': randomUUID(),
+    },
+  }
+);
+```
+
+```csharp C#
+var body = new {
+    amount = 250.00m,
+    description = "Reembolso pedido #5678",
+    recipient = new {
+        pix_key = "usuario@exemplo.com",
+        key_type = "email"
+    }
+};
+
+client.DefaultRequestHeaders.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
+
+var response = await client.PostAsJsonAsync(
+    "https://api.sandbox.delfinance.com.br/v1/pix/payments",
+    body
+);
+```
+
+</CodeGroup>
+
+### Resposta inicial
+
+```json
+{
+  "id": "pix_tx_789012",
+  "end_to_end_id": "E12345678202601011200abcdef12345",
+  "type": "cash_out",
+  "status": "processing",
+  "amount": 250.00,
+  "description": "Reembolso pedido #5678",
+  "recipient": {
+    "name": "João da Silva",
+    "document": "***.***.***-**",
+    "pix_key": "usuario@exemplo.com"
+  },
+  "created_at": "2026-01-01T14:00:00Z"
+}
+```
+
+## Tipos de chave suportados
+
+| `key_type` | Formato |
+| --- | --- |
+| `cpf` | Apenas números |
+| `cnpj` | Apenas números |
+| `email` | E-mail válido |
+| `phone` | `+5511999999999` (E.164) |
+| `evp` | UUID (chave aleatória) |
+
+## Erros comuns
+
+| Código | Descrição |
+| --- | --- |
+| `400 invalid_pix_key` | Chave Pix não existe no DICT |
+| `402 insufficient_funds` | Saldo insuficiente |
+| `403 limit_exceeded` | Limite de envio excedido |
+| `409 idempotency_conflict` | Chave de idempotência reutilizada com payload diferente |

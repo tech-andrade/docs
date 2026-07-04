@@ -1,0 +1,63 @@
+---
+title: "URL Base"
+description: "URLs base das APIs DelFinance por ambiente"
+icon: "link"
+---
+
+Todas as chamadas às APIs DelFinance devem ser realizadas sobre HTTPS, com mTLS habilitado.
+
+## URLs por ambiente
+
+<CodeGroup>
+
+```bash Sandbox
+https://api.sandbox.delfinance.com.br
+```
+
+```bash Produção
+https://api.delfinance.com.br
+```
+
+</CodeGroup>
+
+## URLs de autenticação (OAuth 2.0)
+
+<CodeGroup>
+
+```bash Sandbox
+https://auth.sandbox.delfinance.com.br/oauth/token
+```
+
+```bash Produção
+https://auth.delfinance.com.br/oauth/token
+```
+
+</CodeGroup>
+
+## Versionamento
+
+As APIs seguem versionamento via path. A versão atual é `v1`:
+
+```text
+https://api.delfinance.com.br/v1/{recurso}
+```
+
+<Info>
+  Mudanças com quebra de compatibilidade sempre resultam em uma nova versão. Melhorias retrocompatíveis são adicionadas à mesma versão.
+</Info>
+
+## Formato das requisições
+
+- **Protocolo:** HTTPS \+ TLS 1.2 ou superior
+- **Autenticação mTLS:** obrigatória em todas as chamadas
+- **Content-Type:** `application/json`
+- **Encoding:** UTF-8
+
+## Cabeçalhos padrão
+
+| Cabeçalho | Obrigatório | Descrição |
+| --- | --- | --- |
+| `Authorization` | Sim | Bearer token OAuth 2.0 |
+| `Content-Type` | Sim | `application/json` |
+| `X-Idempotency-Key` | Em operações de escrita | Chave única de idempotência |
+| `X-Request-Id` | Recomendado | UUID para rastrear a requisição |
