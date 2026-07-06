@@ -1,0 +1,208 @@
+---
+title: "Cobrança com Vencimento (QR Code cobv)"
+sidebarTitle: "Cobrança com vencimento"
+description: "Crie cobranças Pix com data de vencimento, juros, multa e desconto por antecipação — o modelo mais próximo do boleto bancário."
+icon: "calendar-clock"
+---
+
+A **Cobrança com Vencimento** é o modelo Pix para cobranças que precisam de uma data limite de pagamento, com a possibilidade de aplicar encargos após o vencimento (juros e multa) e incentivos para antecipar (desconto e abatimento).
+
+É o substituto natural do boleto: preserva os mesmos conceitos — vencimento, multa por atraso, juros diários, desconto para pagamento antecipado — mas com a liquidação instantânea do Pix.
+
+<Tip>
+Se você está migrando de boleto para Pix, este é o modelo. Os campos `taxes` mapeiam diretamente para o que você já configura no boleto hoje.
+</Tip>
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Faturas e mensalidades" icon="calendar-clock">
+    Planos de assinatura, condomínios, mensalidades escolares — qualquer cobrança recorrente com data de vencimento definida.
+  </Card>
+  <Card title="Substituição de boleto" icon="file-invoice-dollar">
+    Migre cobranças que hoje geram boleto para Pix com vencimento, mantendo multa e juros por atraso e desconto por antecipação.
+  </Card>
+</CardGroup>
+
+Se você precisa de um código de **uso imediato** sem vencimento, use a [Cobrança Imediata (QR Dinâmico)](/guias/pix/receber-pix/cobranca-imediata) em vez desta.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Crie a cobrança com vencimento">
+Os campos obrigatórios são `correlationId`, `amount`, `dueDate`, e os objetos `payer` e `address` com seus dados completos.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "{{$guid}}",
+    "amount": 150.00,
+    "dueDate": "2025-12-30",
+    "formatResponse": "PAYLOAD_AND_QRCODE",
+    "payer": {
+        "name": "João Alves",
+        "document": "07034346593"
+    },
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    }
+}'
+```
+```json Response
+{
+    "correlationId": "ac7a235a-1a91-47b0-8da5-0eb75abf3617",
+    "transactionId": "wcharge0aac4378c3cf4c37b0ec16c7c",
+    "amount": 150.00,
+    "originalAmount": 150.00,
+    "dueDate": "2025-12-30",
+    "status": "ACTIVE",
+    "revision": 0,
+    "payer": {
+        "name": "JOAO ALVES",
+        "document": "***343465**"
+    },
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "createdAt": "2024-12-17T12:22:02.757Z",
+    "updatedAt": "2024-12-17T12:22:02.757Z",
+    "expiresAt": "2026-01-29T23:59:59.000Z",
+    "payloadPix": "00020101021226830014br.gov.bcb.pix2561pix-h.delbank.com.br/v2/cobv/wcharge0aac4378c3cf4c37b0ec16c7c5204000053039865802BR5907DELBANK6007ARACAJU62070503***63040F7B"
+}
+```
+</CodeGroup>
+
+Note que o `expiresAt` é calculado automaticamente com base no `dueDate` e no `maxDaysOverdue` (padrão de 30 dias após o vencimento). O pagamento ainda será aceito após o `dueDate`, mas com acréscimo de juros e multa, se configurados.
+</Step>
+
+<Step title="Configure encargos e descontos (opcional)">
+O objeto `taxes` é onde você define o comportamento financeiro da cobrança. Todos os campos são opcionais entre si — use apenas os que fazem sentido para o seu caso.
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 150.00,
+    "dueDate": "2025-12-30",
+    "payer": { "name": "João Alves", "document": "07034346593" },
+    "address": { "cityName": "ARACAJU", "zipCode": "49000000", "state": "SE", "street": "LOGRADOURO" },
+    "taxes": {
+        "rebateType": "FIXED_AMOUNT",
+        "rebateAmount": 5.00,
+        "discountType": "FIXED_AMOUNT",
+        "discountAmount": 10.00,
+        "interestType": "PERCENTAGE_PER_MONTH_CALENDAR_DAY",
+        "interestAmount": 1,
+        "fineType": "PERCENTAGE",
+        "fineAmount": 2
+    }
+}
+```
+
+| Campo | Quando é aplicado | Tipos aceitos |
+|---|---|---|
+| `rebate` (abatimento) | Sempre, independente da data | `FIXED_AMOUNT`, `PERCENTAGE` |
+| `discount` (desconto) | Apenas se pago antes do vencimento | `FIXED_AMOUNT`, `PERCENTAGE` |
+| `interest` (juros) | Por dia/mês/ano após o vencimento | `FIXED_AMOUNT_CALENDAR_DAY`, `PERCENTAGE_PER_DAY_CALENDAR_DAY`, `PERCENTAGE_PER_MONTH_CALENDAR_DAY`, `PERCENTAGE_PER_YEAR_CALENDAR_DAY` |
+| `fine` (multa) | Aplicada uma vez, após o vencimento | `FIXED_AMOUNT`, `PERCENTAGE` |
+
+<Note>
+`rebateAmount` reduz o valor base da cobrança independentemente de quando o pagamento ocorre. `discountAmount` só é aplicado se o pagamento vier antes do `dueDate`.
+</Note>
+</Step>
+
+<Step title="Exiba o QR Code para o pagador">
+A resposta inclui tudo que você precisa para apresentar a cobrança:
+
+- **`payloadPix`** — o "Pix Copia e Cola".
+- **`qrCodeImageBase64`** — imagem pronta do QR Code, quando `formatResponse` é `PAYLOAD_AND_QRCODE`.
+- **`dueDate`** e **`expiresAt`** — exiba o vencimento para o pagador deixar claro o prazo sem encargos.
+
+<Tip>
+Deixe o `dueDate` visível na tela de pagamento. Pagadores precisam saber até quando pagam sem multa.
+</Tip>
+</Step>
+
+<Step title="Receba a confirmação via Webhook">
+O fluxo é idêntico aos outros modelos: quando o pagamento é liquidado, a API dispara o evento `PIX_RECEIVED` com o `correlationId` da cobrança.
+
+Veja [Processando a confirmação via Webhook](/guias/webhooks/visao-geral) para o passo a passo completo.
+</Step>
+
+<Step title="Consulte o status quando necessário">
+Consulte o estado da cobrança pelo `correlationId` ou `transactionId`:
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date/{{transactionIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</Step>
+
+<Step title="Cancele se necessário">
+Se a cobrança não deve mais ser paga (pedido cancelado, acordo externo, etc.), cancele o QR Code:
+
+```bash cURL
+curl -X 'PATCH' \
+  'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date/{{transactionIdentifier}}/cancel' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+
+Retorna HTTP `202` sem corpo.
+</Step>
+
+</Steps>
+
+## Desconto escalonado por data
+
+Em vez de um desconto único, você pode oferecer até **3 faixas de desconto** com datas diferentes, incentivando o pagamento cada vez mais antecipado. Nesse caso, use `discountsDueDate` no lugar de `discountAmount` — os dois campos são mutuamente exclusivos.
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 200.00,
+    "dueDate": "2025-12-30",
+    "payer": { "name": "João Alves", "document": "07034346593" },
+    "address": { "cityName": "ARACAJU", "zipCode": "49000000", "state": "SE", "street": "LOGRADOURO" },
+    "taxes": {
+        "interestType": "PERCENTAGE_PER_DAY_CALENDAR_DAY",
+        "interestAmount": 0.033,
+        "fineType": "PERCENTAGE",
+        "fineAmount": 2,
+        "discountType": "FIXED_AMOUNT",
+        "discountsDueDate": [
+            { "dueDate": "2025-11-30", "amount": 30.00 },
+            { "dueDate": "2025-12-15", "amount": 15.00 },
+            { "dueDate": "2025-12-25", "amount": 5.00 }
+        ]
+    }
+}
+```
+
+Neste exemplo: quem paga até 30/11 ganha R$ 30 de desconto, até 15/12 ganha R$ 15, até 25/12 ganha R$ 5. Após 30/12 (o `dueDate`), incidem juros e multa.
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Criar" icon="plus" href="/api-reference/pix/criar-qrcode-vencimento">
+    `POST /pix/qrcode/due-date`
+  </Card>
+  <Card title="Consultar" icon="magnifying-glass" href="/api-reference/pix/consultar-qrcode-vencimento">
+    `GET /pix/qrcode/due-date/:id`
+  </Card>
+  <Card title="Cancelar" icon="ban" href="/api-reference/pix/cancelar-qrcode-vencimento">
+    `PATCH /pix/qrcode/due-date/:id/cancel`
+  </Card>
+</CardGroup>

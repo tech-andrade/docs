@@ -1,0 +1,118 @@
+---
+title: "Pagar via Dados Bancários"
+sidebarTitle: "Por dados bancários"
+description: "Envie um Pix informando diretamente os dados da conta destino, sem precisar de chave Pix ou QR Code."
+icon: "building-columns"
+---
+
+Quando o recebedor não tem chave Pix cadastrada — ou quando você já tem os dados bancários completos — é possível enviar o pagamento diretamente, informando a conta, agência, banco (ISPB) e dados do titular. Não há etapa de inicialização: uma única chamada já executa a transferência.
+
+Esse modelo é equivalente ao que era feito via TED, mas liquidado instantaneamente como Pix.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Execute a transferência diretamente">
+Monte o objeto `beneficiary` com os dados completos da conta destino e envie. Não é necessário nenhuma chamada prévia de inicialização.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
+--header 'IdempotencyKey: {{$guid}}' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "amount": 150.00,
+    "description": "Pagamento fornecedor",
+    "beneficiary": {
+        "number": "10138",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participantIspb": "38224857",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU",
+            "type": "NATURAL"
+        }
+    }
+}'
+```
+```json Response
+{
+    "id": "0fc7821d-b488-4268-88c0-a2bc443d046e",
+    "endToEndId": "E3822485720230808004731LMaDWkOcM",
+    "transactionNsu": 722355,
+    "status": "PIX_PROCESSING",
+    "type": "PIX_MANUAL",
+    "amount": 150.00,
+    "createdAt": "2024-12-20T12:00:00.251Z",
+    "description": "Pagamento fornecedor",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "10138",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    }
+}
+```
+</CodeGroup>
+
+O status inicial é `PIX_PROCESSING`. O status final chega via webhook.
+
+<Warning>
+O `IdempotencyKey` no header é obrigatório. Envie um GUID único por requisição para evitar pagamentos duplicados em caso de retry. Veja [Idempotência](/iniciacao/idempotencia).
+</Warning>
+</Step>
+
+</Steps>
+
+## Campos do beneficiary
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `number` | string | Número da conta destino |
+| `branch` | string | Agência da conta destino |
+| `type` | enum | Tipo da conta: `CURRENT` (corrente), `PAYMENT` (pagamento), `SAVING` (poupança), `SALARY` (salário) |
+| `participantIspb` | string | Código ISPB do banco destino. Consulte a lista de ISPBs no site do Banco Central |
+| `holder.document` | string | CPF ou CNPJ do titular da conta destino |
+| `holder.name` | string | Nome completo do titular |
+| `holder.type` | enum | `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica) |
+
+<Tip>
+O código ISPB identifica a instituição financeira destino. Para o próprio Delbank, use `38224857`. Para outras instituições, consulte a [lista de participantes do SPI](https://www.bcb.gov.br/estabilidadefinanceira/spb) no Banco Central.
+</Tip>
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Executar transferência" icon="paper-plane" href="/api-reference/pix/criar-transferencia">
+    `POST /transfers`
+  </Card>
+  <Card title="Consultar transferência" icon="magnifying-glass" href="/api-reference/pix/consultar-transferencia">
+    `GET /transfers/:id`
+  </Card>
+</CardGroup>

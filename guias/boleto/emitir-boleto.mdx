@@ -1,0 +1,232 @@
+---
+title: "Emitir Boleto"
+sidebarTitle: "Emitir boleto"
+description: "Emita boletos bancários convencionais ou com QR Code Pix, com suporte a desconto, multa, juros e beneficiário final."
+icon: "plus"
+---
+
+Todos os tipos de boleto são criados pelo mesmo endpoint — `POST /baas/v1/charges`. O campo `type` define se é um boleto convencional (`BANKSLIP`) ou com QR Code Pix integrado (`BANKSLIP_PIX`).
+
+<Note>
+Sua conta precisa estar habilitada como **Cedente** antes de emitir boletos. Veja [Visão Geral](/guias/boleto/visao-geral) para detalhes sobre esse pré-requisito.
+</Note>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Emita o boleto">
+O mínimo necessário é o `type`, `correlationId`, `yourNumber`, `dueDate`, `Amount` e os dados completos do `payer`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "BANKSLIP",
+    "correlationId": "{{$guid}}",
+    "yourNumber": "PED-2024-001",
+    "dueDate": "2025-12-30",
+    "Amount": 150.00,
+    "payer": {
+        "name": "João Alves",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "complement": "SALA 602",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    }
+}'
+```
+```json Response
+{
+    "type": "BANKSLIP",
+    "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
+    "amount": 150.00,
+    "walletNumber": "112",
+    "yourNumber": "PED-2024-001",
+    "ourNumber": "00000215634",
+    "dueDate": "2025-12-30T00:00:00Z",
+    "barCode": "43596930700000000100001112000000600000215634",
+    "digitableLine": "43590001161200000060900002156347693070000000010",
+    "payer": {
+        "name": "JOÃO ALVES",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "complement": "SALA 602",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    },
+    "status": "Pending",
+    "payments": [],
+    "createdAt": "2024-12-10T18:16:47.347Z",
+    "updatedAt": "2024-12-10T18:16:47.347Z"
+}
+```
+</CodeGroup>
+
+A resposta traz `barCode` e `digitableLine` — use esses valores para exibir o boleto ao pagador ou gerar o PDF (veja [Gerenciar Boleto](/guias/boleto/gerenciar-boleto)).
+</Step>
+
+<Step title="Apresente o boleto ao pagador">
+Para boletos convencionais (`BANKSLIP`), você tem duas opções:
+
+- **Linha digitável** (`digitableLine`) — exiba em texto para o pagador copiar no app do banco.
+- **PDF** — gere via `GET /baas/v1/charges/:correlationId/stream` para enviar por e-mail ou exibir na tela. Veja [Gerenciar Boleto](/guias/boleto/gerenciar-boleto).
+
+Para `BANKSLIP_PIX`, a resposta também inclui `qrCode` (payload) e `qrCodeImageBase64`, permitindo que o pagador escolha entre boleto ou Pix.
+</Step>
+
+<Step title="Acompanhe o pagamento via Webhook">
+Quando o boleto for pago, a API dispara um evento de webhook com os dados da liquidação. Configure a URL de webhook no painel do desenvolvedor para receber essas notificações em tempo real.
+</Step>
+
+</Steps>
+
+## Boleto com QR Code Pix (BANKSLIP_PIX)
+
+Para emitir um boleto que também pode ser pago via Pix, use `"type": "BANKSLIP_PIX"`. O endpoint e os campos são os mesmos — a resposta adiciona `qrCode` e `qrCodeImageBase64`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "BANKSLIP_PIX",
+    "correlationId": "{{$guid}}",
+    "yourNumber": "PED-2024-002",
+    "dueDate": "2025-12-30",
+    "Amount": 150.00,
+    "payer": {
+        "name": "João Alves",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    }
+}'
+```
+```json Response
+{
+    "type": "BANKSLIP_PIX",
+    "correlationId": "69577abe-3867-4e0b-85ee-21aa6bc9db9b",
+    "amount": 150.00,
+    "walletNumber": "112",
+    "yourNumber": "PED-2024-002",
+    "ourNumber": "00000532665",
+    "dueDate": "2025-12-30T23:59:59.999Z",
+    "qrCode": "00020101021226770014br.gov.bcb.pix2555pix-h.delbank.com.br/v2/cobv/vcharge00000000000003246005204000053039865802BR5907DELBANK6007ARACAJU62070503***63045ED1",
+    "qrCodeImageBase64": "data:image/png;base64,iVBORw0KGgoAAAANSU...",
+    "barCode": "43599110300000000100001112000001700000532665",
+    "digitableLine": "43590001161200000170600005326657911030000000010",
+    "payer": { "..." : "..." },
+    "status": "Pending",
+    "payments": [],
+    "createdAt": "2025-02-05T20:59:24.019Z",
+    "updatedAt": "2025-02-05T20:59:25.016Z"
+}
+```
+</CodeGroup>
+
+## Adicionar desconto, multa e juros
+
+Use os campos `discount`, `lateFine` e `latePayment` para configurar os encargos. Todos são opcionais.
+
+```json
+{
+    "type": "BANKSLIP_PIX",
+    "correlationId": "{{$guid}}",
+    "yourNumber": "PED-2024-003",
+    "dueDate": "2025-12-30",
+    "Amount": 200.00,
+    "payer": { "..." : "..." },
+    "discount": {
+        "type": "Fixed",
+        "items": [
+            { "date": "2025-12-10", "amount": 20.00 },
+            { "date": "2025-12-20", "amount": 10.00 },
+            { "date": "2025-12-28", "amount": 5.00 }
+        ]
+    },
+    "lateFine": {
+        "type": "Percentage",
+        "date": "2025-12-31",
+        "amount": 2.0
+    },
+    "latePayment": {
+        "type": "Fixed",
+        "date": "2025-12-31",
+        "amount": 2.50
+    }
+}
+```
+
+| Campo | Quando aplicado | `type` aceito |
+|---|---|---|
+| `discount.items[]` | Antes das datas definidas (até 3 faixas) | `Fixed`, `Percentage` |
+| `lateFine` | Uma vez, após `lateFine.date` | `Fixed`, `Percentage` |
+| `latePayment` | Por período, após `latePayment.date` | `Fixed`, `Percentage` |
+
+<Note>
+O `discount` aceita até **3 itens** com datas diferentes — quanto antes pagar, maior o desconto. As datas devem ser anteriores ao `dueDate`.
+</Note>
+
+## Boleto com beneficiário final (para gateways)
+
+Se você opera como gateway ou plataforma emitindo boletos em nome de terceiros, use `finalBeneficiary` para identificar quem de fato receberá o pagamento.
+
+```json
+{
+    "type": "BANKSLIP",
+    "correlationId": "{{$guid}}",
+    "yourNumber": "PED-2024-004",
+    "dueDate": "2025-12-30",
+    "Amount": 300.00,
+    "payer": { "..." : "..." },
+    "finalBeneficiary": {
+        "name": "Loja do João",
+        "document": "12345678000195",
+        "address": {
+            "zipCode": "49000000",
+            "publicPlace": "RUA PRINCIPAL",
+            "neighborhood": "CENTRO",
+            "number": "100",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    }
+}
+```
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Criar boleto" icon="plus" href="/api-reference/boleto/criar-boleto">
+    `POST /baas/v1/charges`
+  </Card>
+</CardGroup>

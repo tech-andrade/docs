@@ -1,0 +1,269 @@
+---
+title: "Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Erros comuns ao enviar pagamentos Pix e como resolvê-los."
+icon: "circle-exclamation"
+---
+
+Esta página cobre os erros mais frequentes ao inicializar e executar pagamentos Pix — por chave, por dados bancários e por QR Code.
+
+---
+
+## Erros na inicialização por chave (`/pix/dict/payment-initialization`)
+
+<AccordionGroup>
+
+<Accordion title="Chave não encontrada no DICT">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "NOT_FOUND",
+  "errors": ["Chave Pix não encontrada"]
+}
+```
+
+**Causa:** A chave informada não está cadastrada no DICT do Banco Central, ou foi removida desde a última vez que foi usada.
+
+**Solução:** Confirme a chave com o recebedor. No sandbox, use apenas as [chaves de teste disponíveis](/guias/pix/pagar-pix/por-chave#chaves-disponíveis-no-sandbox).
+
+</Accordion>
+
+<Accordion title="Transferência para a própria conta não permitida">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Não é possível realizar uma transferência para a própria conta"]
+}
+```
+
+**Causa:** A chave consultada está vinculada à mesma conta que está iniciando o pagamento.
+
+**Solução:** Use uma conta diferente como destino. No sandbox, isso significa usar uma API key de uma conta diferente da conta de destino.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Erros na inicialização por QR Code (`/pix/qrcode/payment-initialization`)
+
+<AccordionGroup>
+
+<Accordion title="QR Code já foi pago (CONCLUDED)">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["QR Code já foi pago"]
+}
+```
+
+**Causa:** O payload informado pertence a um QR Code Dinâmico que já teve um pagamento registrado. QR Codes Dinâmicos são de uso único.
+
+**Solução:** Solicite um novo QR Code ao recebedor.
+
+</Accordion>
+
+<Accordion title="QR Code expirado">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["QR Code expirado"]
+}
+```
+
+**Causa:** O QR Code Dinâmico ultrapassou o prazo de validade (`expiresIn`) definido pelo recebedor.
+
+**Solução:** Solicite um novo QR Code ao recebedor. No campo `expirationTime` da resposta da inicialização você verá o tempo restante em segundos — valide antes de prosseguir.
+
+</Accordion>
+
+<Accordion title="QR Code cancelado">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["QR Code cancelado"]
+}
+```
+
+**Causa:** O QR Code foi cancelado pelo recebedor (`REMOVED_BY_THE_RECEIVER`) ou pela instituição (`REMOVED_BY_PSP`).
+
+**Solução:** Solicite um novo QR Code ao recebedor.
+
+</Accordion>
+
+<Accordion title="Payload inválido ou malformado">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Payload inválido ou malformado"]
+}
+```
+
+**Causa:** O payload enviado não é um BR Code Pix válido. Pode ter sido truncado, copiado parcialmente, ou corrompido.
+
+**Solução:** Certifique-se de enviar o payload completo, sem espaços ou quebras de linha adicionais. O valor deve ser a string exata do "Pix Copia e Cola", começando com `000201...`.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Erros ao executar a transferência (`/transfers`)
+
+<AccordionGroup>
+
+<Accordion title="IdempotencyKey ausente ou inválido">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["IdempotencyKey: não deve ser nulo ou vazio"]
+}
+```
+
+**Causa:** O header `IdempotencyKey` não foi enviado ou está vazio.
+
+**Solução:** Inclua um GUID único no header `IdempotencyKey` em toda requisição de transferência:
+
+```bash
+--header 'IdempotencyKey: {{$guid}}'
+```
+
+</Accordion>
+
+<Accordion title="endToEndId expirado ou já utilizado">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["endToEndId inválido ou já utilizado"]
+}
+```
+
+**Causa:** O `endToEndId` retornado na inicialização de pagamento já foi usado em uma transferência anterior, ou expirou antes de ser utilizado.
+
+**Solução:** O `endToEndId` é de uso único e tem validade curta. Execute a inicialização novamente (`/payment-initialization`) para obter um novo identificador e use-o imediatamente.
+
+</Accordion>
+
+<Accordion title="initiationType inválido">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "INVALID_ARGUMENT",
+  "errors": ["initiationType: valor inválido"]
+}
+```
+
+**Causa:** O campo `initiationType` recebeu um valor fora dos aceitos.
+
+**Solução:** Use apenas os valores válidos: `KEY`, `QR_CODE_STATIC` ou `QR_CODE_DYNAMIC`. Para pagamentos por QR Code, use exatamente o valor do campo `initiationType` retornado pela inicialização — não derive pelo `type`.
+
+</Accordion>
+
+<Accordion title="Objeto beneficiary incompleto (pagamento manual)">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["beneficiary: campos obrigatórios ausentes"]
+}
+```
+
+**Causa:** Algum campo obrigatório do objeto `beneficiary` está ausente ou com valor inválido.
+
+**Solução:** Para pagamento por dados bancários, todos os campos abaixo são obrigatórios:
+
+```json
+{
+  "beneficiary": {
+    "number": "...",
+    "branch": "...",
+    "type": "CURRENT",
+    "participantIspb": "...",
+    "holder": {
+      "document": "...",
+      "name": "...",
+      "type": "NATURAL"
+    }
+  }
+}
+```
+
+</Accordion>
+
+<Accordion title="Saldo insuficiente">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Saldo insuficiente para realizar a transferência"]
+}
+```
+
+**Causa:** O saldo disponível na conta é menor que o valor informado no `amount`.
+
+**Solução:** Verifique o saldo da conta antes de enviar a transferência. No sandbox, o saldo pode ser recarregado via painel do desenvolvedor.
+
+</Accordion>
+
+<Accordion title="Transferência com status PIX_ERROR">
+
+A transferência foi criada mas falhou no processamento. O status `PIX_ERROR` indica que a liquidação não ocorreu.
+
+**Causa:** Pode ter ocorrido por rejeição do SPI (Sistema de Pagamentos Instantâneos) por dados incorretos da conta destino, instabilidade momentânea, ou rejeição pela instituição do recebedor.
+
+**Solução:**
+1. Consulte os detalhes da transferência via `GET /transfers/{id}` para verificar se há mensagem de erro adicional.
+2. Se os dados estiverem corretos, tente novamente com um novo `IdempotencyKey` e um novo `endToEndId` (refaça a inicialização).
+3. Se o erro persistir, entre em contato com o suporte informando o `endToEndId` e o `transactionNsu`.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Checklist antes de abrir um chamado
+
+<Steps>
+  <Step title="Headers obrigatórios presentes">
+    Confirme que `x-delbank-api-key`, `x-delfinance-account-id` e `IdempotencyKey` estão presentes em todas as requisições de transferência.
+  </Step>
+  <Step title="endToEndId gerado na mesma sessão">
+    O `endToEndId` tem validade curta. Nunca armazene e reutilize um `endToEndId` de uma inicialização anterior — sempre refaça a inicialização imediatamente antes de executar o pagamento.
+  </Step>
+  <Step title="initiationType correto">
+    Para pagamentos por QR Code, use o `initiationType` que veio na resposta da inicialização, não o `type`. Os dois campos têm valores diferentes.
+  </Step>
+  <Step title="Ambiente correto">
+    Chaves de sandbox não funcionam em produção e vice-versa. Confirme que está usando `apisandbox.delbank.com.br` para testes e `api.delbank.com.br` para produção.
+  </Step>
+</Steps>
+
+## O que informar ao abrir um chamado de suporte
+
+- Endpoint utilizado (método + URL completa)
+- Corpo da requisição enviada (sem dados sensíveis)
+- Timestamp da requisição
+- `endToEndId` da transferência
+- `transactionNsu`, se disponível na resposta
+- Resposta de erro retornada completa

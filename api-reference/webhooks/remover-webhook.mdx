@@ -1,0 +1,44 @@
+---
+title: "Remover webhook"
+api: "DELETE /baas/api/v1/webhooks/:id"
+description: "Remove um webhook cadastrado. A entrega de eventos para a URL registrada é interrompida imediatamente."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Webhooks](/guias/webhooks/visao-geral).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="id" type="string" required>
+  ID do webhook a ser removido, retornado no cadastro ou na listagem.
+</ParamField>
+
+## Response
+
+Retorna `204 No Content` em caso de sucesso, sem corpo na resposta.
+
+<RequestExample>
+```bash cURL
+curl --request DELETE \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/webhooks/wbh_a1b2c3d4' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 204
+(sem conteúdo)
+```
+</ResponseExample>

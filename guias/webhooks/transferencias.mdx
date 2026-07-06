@@ -1,0 +1,160 @@
+---
+title: "Webhooks Transferências"
+sidebarTitle: "Transferências"
+description: "Eventos de transferências internas e TEDs enviadas e recebidas."
+icon: "arrow-right-arrow-left"
+---
+
+Esta página cobre os quatro eventos de webhook relacionados a transferências — internas (entre contas Delfinance) e externas (TED para outros bancos).
+
+## TRANSFER_INTERNAL_CREDITED
+
+Disparado quando uma transferência interna (entre contas Delfinance) é creditada na sua conta.
+
+**Como registrar:**
+```json
+{
+  "eventType": "TRANSFER_INTERNAL_CREDITED",
+  "url": "https://seuservidor.com.br/webhooks/transferencia-interna-recebida",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "id": "Ce9ee2e45-8ccc-449c-857a-e6cb52b229cd",
+    "externalId": "SDFSDFSDFSD1234589278",
+    "eventType": "TRANSFER_INTERNAL_CREDITED",
+    "status": "EFFECTIVE",
+    "paymentChannel": "API",
+    "type": "INTERNAL",
+    "amount": 0.15,
+    "createdAt": "2025-01-15T17:45:59.11Z",
+    "payer": {
+        "number": "10480",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": { "document": "12154856555", "name": "Alexandre Santos", "type": "NATURAL" },
+        "participant": { "name": "DELBANK", "ispb": "38224857" }
+    },
+    "beneficiary": {
+        "number": "10073",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": { "document": "14656723822", "name": "VINÍCIUS ABREU", "type": "NATURAL" },
+        "participant": { "name": "DELBANK", "ispb": "38224857" }
+    }
+}
+```
+
+---
+
+## TRANSFER_INTERNAL_DEBITED
+
+Disparado quando uma transferência interna é debitada da sua conta — ou seja, você enviou para outra conta Delfinance.
+
+**Como registrar:**
+```json
+{
+  "eventType": "TRANSFER_INTERNAL_DEBITED",
+  "url": "https://seuservidor.com.br/webhooks/transferencia-interna-enviada",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:** Idêntico ao `TRANSFER_INTERNAL_CREDITED`, com `"eventType": "TRANSFER_INTERNAL_DEBITED"`.
+
+---
+
+## TRANSFER_EXTERNAL_CREDITED
+
+Disparado quando uma TED de outro banco é recebida na sua conta.
+
+**Como registrar:**
+```json
+{
+  "eventType": "TRANSFER_EXTERNAL_CREDITED",
+  "url": "https://seuservidor.com.br/webhooks/ted-recebida",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "id": "75bb0190-f96d-4a5b-a8f0-798680932bf2",
+    "externalId": null,
+    "eventType": "TRANSFER_EXTERNAL_CREDITED",
+    "status": "DONE",
+    "paymentChannel": "API",
+    "type": "TED",
+    "amount": 0.01,
+    "createdAt": "2025-05-09T20:29:46.156Z",
+    "payer": {
+        "number": "30422",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": { "document": "06790157000144", "name": "conta teste 0003", "type": "LEGAL" },
+        "participant": { "name": "DELBANK", "ispb": "38224857" }
+    },
+    "beneficiary": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": { "document": "30287697789", "name": "HOMOLOGACAO INTEGRACAO API", "type": "NATURAL" },
+        "participant": { "name": "BCO DO BRASIL S.A.", "ispb": "00000000" }
+    }
+}
+```
+
+---
+
+## TRANSFER_EXTERNAL_DEBITED
+
+Disparado quando uma TED é debitada da sua conta — você enviou para outro banco.
+
+**Como registrar:**
+```json
+{
+  "eventType": "TRANSFER_EXTERNAL_DEBITED",
+  "url": "https://seuservidor.com.br/webhooks/ted-enviada",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:** Idêntico ao `TRANSFER_EXTERNAL_CREDITED`, com `"eventType": "TRANSFER_EXTERNAL_DEBITED"`.
+
+---
+
+## Campos comuns a todos os eventos de transferência
+
+<AccordionGroup>
+<Accordion title="Referência de campos">
+
+| Campo | Descrição |
+|---|---|
+| `id` | Identificador único da transação |
+| `externalId` | Identificador externo para conciliação (pode ser nulo) |
+| `eventType` | Tipo do evento |
+| `status` | Status da transação: `EFFECTIVE` (interna) ou `DONE` (TED) |
+| `paymentChannel` | Canal de pagamento (ex: `"API"`) |
+| `type` | Tipo: `INTERNAL` ou `TED` |
+| `amount` | Valor transferido |
+| `createdAt` | Timestamp da transação |
+| `payer.number` | Número da conta pagadora |
+| `payer.branch` | Agência da conta pagadora |
+| `payer.type` | Tipo de conta (`CURRENT`, `PAYMENT`, etc.) |
+| `payer.holder.document` | CPF/CNPJ do titular |
+| `payer.holder.name` | Nome do titular |
+| `payer.holder.type` | `NATURAL` (pessoa física) ou `LEGAL` (PJ) |
+| `payer.participant.name` | Nome do banco |
+| `payer.participant.ispb` | ISPB do banco |
+| `beneficiary` | Mesma estrutura que `payer`, para a conta destinatária |
+
+</Accordion>
+</AccordionGroup>

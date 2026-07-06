@@ -25,7 +25,7 @@ POST /v1/pix/transactions/{transaction_id}/refunds
 </CardGroup>
 
 <Warning>
-  Devoluções exigem **idempotência**. Sempre envie `X-Idempotency-Key`.
+  Devoluções exigem **idempotência**. Sempre envie `IdempotencyKey`.
 </Warning>
 
 ## Exemplo — devolução parcial
@@ -33,11 +33,11 @@ POST /v1/pix/transactions/{transaction_id}/refunds
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/transactions/pix_tx_123456/refunds \
+curl -X POST https://apisandbox.delbank.com.br/v1/pix/transactions/pix_tx_123456/refunds \
   --cert ./certificado.crt --key ./chave-privada.key \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "X-Idempotency-Key: $(uuidgen)" \
+  -H "IdempotencyKey: $(uuidgen)" \
   -d '{
     "amount": 50.00,
     "reason": "requested_by_customer"
@@ -48,7 +48,7 @@ curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/transactions/pix_tx_12
 import { randomUUID } from 'crypto';
 
 const { data } = await axios.post(
-  `https://api.sandbox.delfinance.com.br/v1/pix/transactions/${transactionId}/refunds`,
+  `https://apisandbox.delbank.com.br/v1/pix/transactions/${transactionId}/refunds`,
   {
     amount: 50.0,
     reason: 'requested_by_customer',
@@ -57,7 +57,7 @@ const { data } = await axios.post(
     httpsAgent: agent,
     headers: {
       Authorization: `Bearer ${token}`,
-      'X-Idempotency-Key': randomUUID(),
+      IdempotencyKey: randomUUID(),
     },
   }
 );
@@ -69,10 +69,10 @@ var body = new {
     reason = "requested_by_customer"
 };
 
-client.DefaultRequestHeaders.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
+client.DefaultRequestHeaders.Add("IdempotencyKey", Guid.NewGuid().ToString());
 
 var response = await client.PostAsJsonAsync(
-    $"https://api.sandbox.delfinance.com.br/v1/pix/transactions/{transactionId}/refunds",
+    $"https://apisandbox.delbank.com.br/v1/pix/transactions/{transactionId}/refunds",
     body
 );
 ```
@@ -116,7 +116,7 @@ GET /v1/pix/refunds/{refund_id}
 ```
 
 ```bash
-curl https://api.sandbox.delfinance.com.br/v1/pix/refunds/refund_123456 \
+curl https://apisandbox.delbank.com.br/v1/pix/refunds/refund_123456 \
   --cert ./certificado.crt --key ./chave-privada.key \
   -H "Authorization: Bearer $TOKEN"
 ```

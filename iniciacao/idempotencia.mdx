@@ -9,8 +9,8 @@ Operações de escrita (POST/PUT/PATCH) que envolvem movimentação financeira e
 ## Como funciona
 
 1. O cliente gera um identificador único (UUID) para cada operação.
-2. Envia o valor no cabeçalho `X-Idempotency-Key`.
-3. A DelFinance armazena a resposta associada a essa chave por **24 horas**.
+2. Envia o valor no cabeçalho `IdempotencyKey`.
+3. A Delfinance armazena a resposta associada a essa chave por **24 horas**.
 4. Qualquer requisição subsequente com a mesma chave retorna a resposta original, sem executar a operação novamente.
 
 ## Formato da chave
@@ -24,12 +24,12 @@ Operações de escrita (POST/PUT/PATCH) que envolvem movimentação financeira e
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://api.sandbox.delfinance.com.br/v1/payments \
+curl -X POST https://apisandbox.delbank.com.br/v1/payments \
   --cert ./certificado.crt \
   --key ./chave-privada.key \
   -H "Authorization: Bearer eyJhbGciOi..." \
   -H "Content-Type: application/json" \
-  -H "X-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "IdempotencyKey: 550e8400-e29b-41d4-a716-446655440000" \
   -d '{
     "valor": 100.00,
     "destinatario": "12345678900"
@@ -42,12 +42,12 @@ import { randomUUID } from 'crypto';
 const idempotencyKey = randomUUID();
 
 await axios.post(
-  'https://api.sandbox.delfinance.com.br/v1/payments',
+  'https://apisandbox.delbank.com.br/v1/payments',
   { valor: 100.0, destinatario: '12345678900' },
   {
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'X-Idempotency-Key': idempotencyKey,
+      IdempotencyKey: idempotencyKey,
     },
     httpsAgent: agent,
   }
@@ -60,11 +60,11 @@ import uuid
 idempotency_key = str(uuid.uuid4())
 
 requests.post(
-    "https://api.sandbox.delfinance.com.br/v1/payments",
+    "https://apisandbox.delbank.com.br/v1/payments",
     cert=("./certificado.crt", "./chave-privada.key"),
     headers={
         "Authorization": f"Bearer {access_token}",
-        "X-Idempotency-Key": idempotency_key,
+        "IdempotencyKey": idempotency_key,
     },
     json={"valor": 100.00, "destinatario": "12345678900"},
 )

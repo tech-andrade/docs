@@ -1,0 +1,179 @@
+---
+title: "Consultar Pagamento"
+sidebarTitle: "Consultar pagamento"
+description: "Consulte o status de transferências Pix, TEDs e devoluções enviadas."
+icon: "magnifying-glass"
+---
+
+Você pode consultar o estado de qualquer pagamento enviado usando o `endToEndId` ou a `IdempotencyKey` da requisição original. Os dados chegam primeiro via webhook — use a consulta apenas para reconciliação ou recuperação de falhas.
+
+## Consultar transferência Pix
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/{{transferIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "id": "e051e1db-1a90-47dc-9e37-3ef2b4fc9d35",
+    "endToEndId": "E3822485720231012010030530986185",
+    "transactionNsu": 998633,
+    "status": "PIX_EFFECTIVE",
+    "type": "PIX_QR_CODE_DYNAMIC",
+    "amount": 99.90,
+    "createdAt": "2024-12-20T14:01:00.022Z",
+    "description": "Pagamento cobrança",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "30287697789",
+            "name": "EMPRESA RECEBEDORA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    }
+}
+```
+</CodeGroup>
+
+O `transferIdentifier` pode ser:
+- `endToEndId` — o identificador único E2E retornado na criação da transferência.
+- `IdempotencyKey` — a chave de idempotência enviada no header da requisição original.
+
+## Consultar transferência TED
+
+Para consultar transferências realizadas via TED (quando o destino não suporta Pix ou está fora do SPI):
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/ted/{{transferIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+```json Response
+{
+    "id": "e36ddde1-f5a3-469c-b56d-a09d4c22e87f",
+    "type": "TED",
+    "status": "DONE",
+    "amount": 150.00,
+    "createdAt": "2025-05-22T13:08:51.877Z",
+    "transferAt": "2025-05-22T13:08:51.877Z",
+    "description": "Pagamento fornecedor",
+    "sender": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "bank": {
+            "code": "435",
+            "name": "DELCRED SCD S.A.",
+            "ispbCode": "38224857"
+        }
+    },
+    "recipient": {
+        "number": "317102",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU",
+            "type": "NATURAL"
+        },
+        "bank": {
+            "code": "001",
+            "name": "BANCO DO BRASIL S.A.",
+            "ispbCode": "00000000"
+        }
+    }
+}
+```
+
+## Consultar devolução enviada
+
+Para consultar o status de uma devolução (estorno) que você enviou:
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/refund/{{transferIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+```json Response
+{
+    "id": "56de51b8-189d-4c39-9dc6-7b38047d78b3",
+    "endToEndId": "D38224857202605080223OQKB0ZSA0XS",
+    "status": "PIX_EFFECTIVE",
+    "type": "REFUND_PIX_KEY",
+    "amount": 5.50,
+    "createdAt": "2026-05-08T02:23:16.927Z",
+    "updatedAt": "2026-05-08T02:23:18.003Z",
+    "description": "Estorno pedido cancelado",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELFINANCE SCD S.A.",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "30287697789",
+            "name": "FULANO DE TAL",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "DELFINANCE SCD S.A.",
+            "ispb": "38224857"
+        }
+    }
+}
+```
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Consultar transferência Pix" icon="paper-plane" href="/api-reference/pix/consultar-transferencia">
+    `GET /transfers/:id`
+  </Card>
+  <Card title="Consultar TED" icon="building-columns" href="/api-reference/pix/consultar-ted">
+    `GET /transfers/ted/:id`
+  </Card>
+  <Card title="Consultar devolução enviada" icon="rotate-left" href="/api-reference/pix/consultar-devolucao-enviada">
+    `GET /transfers/refund/:id`
+  </Card>
+</CardGroup>

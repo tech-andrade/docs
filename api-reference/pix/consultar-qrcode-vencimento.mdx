@@ -1,0 +1,143 @@
+---
+title: "Consultar QR Code com Vencimento"
+api: "GET /pix/qrcode/due-date/:transactionIdentifier"
+description: "Consulta os dados de uma cobrança com vencimento e o pagamento associado, quando realizado."
+---
+
+<Note>
+Para o passo a passo completo de uso, veja o guia [Cobrança com Vencimento](/guias/pix/receber-pix/cobranca-com-vencimento).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="transactionIdentifier" type="string" required>
+  Identificador do QR Code: pode ser o `correlationId` ou o `transactionId`.
+</ParamField>
+
+## Response
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação definido na criação.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor efetivo da cobrança (após abatimento, se aplicado).
+</ResponseField>
+
+<ResponseField name="originalAmount" type="number">
+  Valor original enviado na criação.
+</ResponseField>
+
+<ResponseField name="dueDate" type="string">
+  Data de vencimento.
+</ResponseField>
+
+<ResponseField name="maxDaysOverdue" type="number">
+  Dias após o vencimento em que o QR Code ainda é válido para pagamento.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status atual do QR Code. Valores possíveis: `ACTIVE`, `CONCLUDED`, `CANCELLED`.
+</ResponseField>
+
+<ResponseField name="revision" type="number">
+  Número de revisões da cobrança.
+</ResponseField>
+
+<ResponseField name="taxes" type="object">
+  Configuração de encargos e descontos definida na criação.
+</ResponseField>
+
+<ResponseField name="payer" type="object">
+  Dados do pagador (`name`, `document` mascarado).
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço da transação.
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto — o "copia e cola".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Data e hora da última atualização.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  Data e hora limite para pagamento.
+</ResponseField>
+
+<ResponseField name="additionalInfos" type="array">
+  Informações adicionais definidas na criação.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date/{{transactionIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "correlationId": "ac7a235a-1a91-47b0-8da5-0eb75abf3617",
+    "transactionId": "wcharge0aac4378c3cf4c37b0ec16c7c",
+    "amount": 150.00,
+    "originalAmount": 150.00,
+    "dueDate": "2025-12-30",
+    "maxDaysOverdue": 30,
+    "taxes": {
+        "interestType": "PERCENTAGE_PER_MONTH_CALENDAR_DAY",
+        "interestAmount": 1,
+        "fineType": "PERCENTAGE",
+        "fineAmount": 2,
+        "discountType": "FIXED_AMOUNT",
+        "discountAmount": 10.00
+    },
+    "status": "ACTIVE",
+    "revision": 0,
+    "payer": {
+        "name": "JOAO ALVES",
+        "document": "***343465**"
+    },
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "createdAt": "2024-12-17T12:22:02.757Z",
+    "updatedAt": "2024-12-17T12:22:02.757Z",
+    "expiresAt": "2026-01-29T23:59:59.000Z",
+    "payloadPix": "00020101021226830014br.gov.bcb.pix2561pix-h.delbank.com.br/v2/cobv/wcharge0aac4378c3cf4c37b0ec16c7c5204000053039865802BR5907DELBANK6007ARACAJU62070503***63040F7B",
+    "additionalInfos": [
+        {
+            "name": "Referência",
+            "value": "Fatura Dezembro 2025"
+        }
+    ]
+}
+```
+</ResponseExample>

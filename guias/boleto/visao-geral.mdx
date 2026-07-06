@@ -1,0 +1,78 @@
+---
+title: "Cobranças via Boleto"
+sidebarTitle: "Visão geral"
+description: "Emita boletos bancários convencionais ou com QR Code Pix integrado, com suporte a desconto, multa e juros."
+icon: "barcode"
+---
+
+O boleto bancário é amplamente utilizado no Brasil para cobranças com data de vencimento, especialmente em contextos B2B, educação, condomínios e assinaturas onde o pagador prefere não usar cartão ou Pix. A API permite emitir dois tipos de boleto, um convencional e outro com QR Code Pix integrado.
+
+<Note>
+Antes de emitir qualquer boleto, sua conta precisa ser habilitada como **Cedente** (emissor autorizado de boletos). Solicite essa configuração pelo e-mail [clientes@delbank.com.br](mailto:clientes@delbank.com.br).
+</Note>
+
+## Tipos de boleto
+
+<CardGroup cols={2}>
+  <Card title="BANKSLIP" icon="barcode">
+    Boleto bancário convencional. Pago exclusivamente pela linha digitável ou código de barras, em qualquer agência bancária, app ou internet banking.
+  </Card>
+  <Card title="BANKSLIP_PIX" icon="qrcode">
+    Boleto com QR Code Pix integrado. O pagador pode escolher pagar pelo código de barras do boleto **ou** escaneando o QR Code Pix. Liquidação instantânea quando pago via Pix.
+  </Card>
+</CardGroup>
+
+<Tip>
+Se você quer cobranças com vencimento pagas **apenas** via Pix, use a [Cobrança com Vencimento (cobv)](/guias/pix/receber-pix/cobranca-com-vencimento). O `BANKSLIP_PIX` é ideal quando você quer oferecer as duas opções de pagamento no mesmo documento.
+</Tip>
+
+## Conceitos importantes
+
+### Carteiras (wallets)
+
+A carteira define como o boleto é emitido e quem gera o `ourNumber`:
+
+| Carteira | Tipo de cobrança | `ourNumber` |
+|---|---|---|
+| **112** | Simplificada | Gerado automaticamente pela Delfinance — não envie o campo |
+| **121** | Expressa | Gerado por você — envie o campo `ourNumber` na criação |
+
+### ourNumber e yourNumber
+
+- **`ourNumber`** ("Nosso Número"): identificador do boleto **para a Delfinance**, exibido no documento. Na carteira 112, é gerado automaticamente. Na carteira 121, você gera e envia.
+- **`yourNumber`** ("Número do Documento"): identificador do boleto **para você**, exibido como referência no documento. Sempre obrigatório.
+- **`correlationId`**: identificador para conciliação interna, deve ser um GUID único por boleto.
+
+### Encargos
+
+| Campo | O que é | Tipos aceitos |
+|---|---|---|
+| `discount` | Desconto por antecipação (até 3 datas escalonadas) | `Fixed`, `Percentage` |
+| `lateFine` | Multa aplicada após o vencimento | `Fixed`, `Percentage` |
+| `latePayment` | Juros por dia/mês após o vencimento | `Fixed`, `Percentage` |
+
+## Status do boleto
+
+| Status | Significado |
+|---|---|
+| `Pending` | Emitido, aguardando pagamento |
+| `Paid` | Pago pelo pagador |
+| `Expired` | Vencido sem pagamento registrado |
+| `Cancelled` | Baixado/cancelado pela API |
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Emitir boleto" icon="plus" href="/guias/boleto/emitir-boleto">
+    Crie boletos convencionais ou com QR Code Pix, com ou sem encargos.
+  </Card>
+  <Card title="Consultar boleto" icon="magnifying-glass" href="/guias/boleto/consultar-boleto">
+    Consulte por `correlationId` ou faça buscas paginadas por período.
+  </Card>
+  <Card title="Gerenciar boleto" icon="sliders" href="/guias/boleto/gerenciar-boleto">
+    Altere o vencimento, baixe/cancele ou faça download do PDF.
+  </Card>
+  <Card title="Simular pagamento" icon="flask" href="/guias/boleto/simulacao-pagamento">
+    Simule a conclusão de um pagamento no ambiente sandbox.
+  </Card>
+</CardGroup>

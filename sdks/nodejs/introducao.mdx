@@ -1,0 +1,50 @@
+---
+title: "Node.js SDK"
+sidebarTitle: "Introdução"
+description: "Instale e configure o SDK oficial da Delfinance para Node.js e TypeScript."
+icon: "node-js"
+---
+
+## Instalação
+
+<CodeGroup>
+```bash npm
+npm install @delbank/Delfinance-api-sdk
+```
+```bash yarn
+yarn add @delbank/Delfinance-api-sdk
+```
+```bash pnpm
+pnpm add @delbank/Delfinance-api-sdk
+```
+</CodeGroup>
+
+O SDK é escrito em TypeScript e inclui tipos nativos — funciona em projetos JS e TS sem configuração adicional.
+
+## Configuração inicial
+
+```typescript
+import { Delfinance } from '@delbank/Delfinance-api-sdk';
+
+const client = new Delfinance({
+  environment: 'sandbox', // ou 'production'
+  clientId: process.env.DELFINANCE_CLIENT_ID,
+  clientSecret: process.env.DELFINANCE_CLIENT_SECRET,
+  certPath: './certificado.crt',
+  keyPath: './chave-privada.key',
+});
+```
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `environment` | `string` | `"sandbox"` ou `"production"` |
+| `clientId` | `string` | API key do Portal do Desenvolvedor |
+| `clientSecret` | `string` | Client secret do Portal do Desenvolvedor |
+| `certPath` | `string` | Caminho para o certificado mTLS (`.crt`) |
+| `keyPath` | `string` | Caminho para a chave privada (`.key`) |
+
+## Publicado em
+
+<Card title="npm — @delbank/Delfinance-api-sdk" icon="npm" href="https://www.npmjs.com/package/@delbank/Delfinance-api-sdk">
+  Veja versões, changelog e dependências no npm.
+</Card>

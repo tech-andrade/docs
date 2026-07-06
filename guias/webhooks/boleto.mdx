@@ -1,0 +1,135 @@
+---
+title: "Webhooks Boleto"
+sidebarTitle: "Boleto"
+description: "Evento de boleto pago."
+icon: "barcode"
+---
+
+Esta página cobre o evento de webhook de pagamento de boleto.
+
+## CHARGE_PAID
+
+Disparado quando um boleto é pago e o crédito é registrado na sua conta. Funciona para pagamentos via código de barras e via QR Code Pix (em boletos `BANKSLIP_PIX`).
+
+**Como registrar:**
+```json
+{
+  "eventType": "CHARGE_PAID",
+  "url": "https://seuservidor.com.br/webhooks/boleto-pago",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload — pagamento via boleto (CHARGE_PAID):**
+```json
+{
+    "nsu": 513,
+    "correlationId": "217c34be-b374-4e33-9ae2-1b46f14b7116",
+    "referenceId": "E3822485720230705211537850921369",
+    "source": "SPI",
+    "amount": 12.12,
+    "createdAt": "2023-07-05T17:52:33Z",
+    "payer": {
+        "name": "FULANO DA SILVA",
+        "document": "12399999999"
+    },
+    "proof": {
+        "endToEndId": "E3822485720230705211537850921369",
+        "transactionId": "chargeCqkFlaENmal5NrPK58J",
+        "key": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+        "amount": 12.12,
+        "payer": {
+            "number": "10065",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": { "name": "FULANO DA SILVA", "document": "02599999908" },
+            "participant": { "ispb": "38224857", "name": "DELCRED SCD S.A." }
+        },
+        "payee": {
+            "number": "29823",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": { "name": "HOMOLOGACAO INTEGRACAO API", "document": "30287697789" },
+            "participant": { "ispb": "38224857", "name": "DELCRED SCD S.A." }
+        }
+    }
+}
+```
+
+**Payload alternativo (CHARGE_PAID_V2) — inclui dados completos do boleto:**
+```json
+{
+    "eventType": "CHARGE_PAID_V2",
+    "correlationId": "a0443e00-a74f-4151-8022-6ad4256bfb66",
+    "walletNumber": "112",
+    "yourNumber": "200806081444",
+    "ourNumber": "00001050733",
+    "amount": 20.00,
+    "dueDate": "2025-01-28T00:00:00",
+    "barCode": "43597997500000020000001112000082100001050733",
+    "digitableLine": "43590001161200008210200010507333799750000002000",
+    "payer": {
+        "name": "TEST PAYER",
+        "document": "11111111111",
+        "zipCode": "12345678",
+        "address": "ADDRESS TEST",
+        "neighborhood": "NEIGHBORHOOD",
+        "city": "SÃO PAULO",
+        "state": "SP",
+        "email": "email@gmail.com"
+    },
+    "createdAt": "2025-01-28T19:44:15.913Z",
+    "status": "PAID",
+    "payments": [
+        {
+            "date": "2025-01-28T03:00:00.000Z",
+            "amount": 20.00,
+            "payer": { "name": "TEST PAYER", "document": "11111111111" },
+            "issuer": {
+                "code": "0633",
+                "ispb": "68900810",
+                "branch": "0001",
+                "name": "BANCO RENDIMENTO S.A.",
+                "fantasyName": "BCO RENDIMENTO S.A."
+            }
+        }
+    ]
+}
+```
+
+<AccordionGroup>
+<Accordion title="Campos do payload CHARGE_PAID">
+
+| Campo | Descrição |
+|---|---|
+| `nsu` | Identificador único da transação |
+| `correlationId` | GUID de conciliação do boleto |
+| `referenceId` | Identificador de rastreamento |
+| `source` | Origem do pagamento (ex: `"SPI"`) |
+| `amount` | Valor pago |
+| `createdAt` | Timestamp do pagamento |
+| `payer.name` | Nome do pagador |
+| `payer.document` | CPF/CNPJ do pagador |
+| `proof.endToEndId` | Identificador da transação Pix (quando pago via QR Code) |
+| `proof.transactionId` | Identificador interno do boleto |
+| `proof.payer` | Dados completos da conta pagadora |
+| `proof.payee` | Dados completos da sua conta |
+
+</Accordion>
+<Accordion title="Campos adicionais do CHARGE_PAID_V2">
+
+| Campo | Descrição |
+|---|---|
+| `walletNumber` | Carteira do boleto (`"112"` ou `"121"`) |
+| `yourNumber` | Número do documento |
+| `ourNumber` | Nosso número |
+| `barCode` | Código de barras |
+| `digitableLine` | Linha digitável |
+| `status` | `"PAID"` |
+| `payments[]` | Array com dados detalhados de cada pagamento registrado |
+| `payments[].issuer` | Dados do banco que processou o pagamento |
+
+</Accordion>
+</AccordionGroup>
+

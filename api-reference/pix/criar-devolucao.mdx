@@ -1,0 +1,93 @@
+---
+title: "Criar devolução Pix"
+api: "PUT /baas/api/v1/transactions/pix/{endToEndIdOriginal}/refund"
+description: "Devolva total ou parcialmente um Pix recebido na sua conta em até 90 dias."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Devolver um Pix Recebido](/guias/pix/receber-pix/devolucao).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  UUID v4 único por requisição, garante idempotência da operação.
+</ParamField>
+
+## Path
+
+<ParamField path="endToEndIdOriginal" type="string" required>
+  O `endToEndId` da transação Pix original que foi recebida e será devolvida. Disponível no payload do webhook `PIX_RECEIVED` ou no extrato da conta.
+</ParamField>
+
+## Body
+
+<ParamField body="amount" type="number" required>
+  Valor a devolver em reais. Para devolução total, informe o valor exato do Pix recebido. Para devolução parcial, informe um valor menor. O somatório de todas as devoluções não pode ultrapassar o valor original.
+</ParamField>
+
+<ParamField body="externalId" type="string">
+  Identificador externo para conciliação no seu sistema. Máximo de 40 caracteres.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descrição interna da devolução.
+</ParamField>
+
+## Response
+
+<ResponseField name="idempotencyKey" type="string">
+  Chave de idempotência enviada na requisição.
+</ResponseField>
+
+<ResponseField name="externalId" type="string">
+  Identificador externo informado, se enviado.
+</ResponseField>
+
+<ResponseField name="endToEndId" type="string">
+  Identificador único da devolução (prefixo `D`). Diferente do `endToEndId` original da transação recebida (prefixo `E`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status inicial da devolução: `PIX_PROCESSING`.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp de criação da solicitação em ISO 8601.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --request PUT \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/transactions/pix/E182361202024041911111111111111/refund' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "amount": 100.00,
+    "externalId": "devolucao-pedido-9817",
+    "description": "Devolução solicitada pelo cliente"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 202
+{
+    "idempotencyKey": "421ece97-a8d2-4c45-afaf-3c8f81666fd2",
+    "externalId": "devolucao-pedido-9817",
+    "endToEndId": "D38224857202502281706FA489GE2ZSN",
+    "status": "PIX_PROCESSING",
+    "createdAt": "2025-02-28T17:06:41.963Z"
+}
+```
+</ResponseExample>

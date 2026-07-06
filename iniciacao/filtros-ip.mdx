@@ -1,0 +1,46 @@
+---
+title: "Filtros de IPs"
+description: "Detalhes de configuração e operação da allowlist de IPs para a API da Delfinance"
+icon: "shield-check"
+---
+
+<Note>
+  Esta é a página de detalhes para filtros de IPs. Para a visão geral da segurança da integração, consulte [Autenticação e segurança](/iniciacao/autenticacao).
+</Note>
+
+Em Produção, a Delfinance exige que o tráfego saia de IPs públicos fixos e aprovados pela organização. Esse controle é chamado de allowlist de IPs ou static egress IP.
+
+## Quando é obrigatório
+
+- **Sandbox**: não é obrigatório
+- **Produção**: obrigatório
+
+## Como funciona
+
+1. Você informa os IPs públicos de saída usados pela sua infraestrutura.
+2. A Delfinance valida se a requisição veio de um IP aprovado.
+3. Requisições vindas de IPs não autorizados são rejeitadas.
+
+## O que você precisa preparar
+
+- IPs públicos fixos de saída;
+- estabilidade desses IPs, sem uso de IPs dinâmicos ou compartilhados;
+- um processo para trocar a lista caso a infraestrutura mude.
+
+## Checklist
+
+- [ ] IPs de saída definidos
+- [ ] Lista enviada à Delfinance
+- [ ] Validação testada em ambiente apropriado
+- [ ] Monitoramento de falhas de acesso configurado
+
+## Boas práticas
+
+- use IPs dedicados sempre que possível;
+- mantenha a lista de IPs documentada e versionada;
+- teste o fluxo em homologação antes de habilitar a Produção;
+- informe ao time de suporte qualquer mudança de rede ou infraestrutura.
+
+<Warning>
+  Se a sua infraestrutura usa NAT, proxy ou balanceadores, confirme com antecedência quais IPs públicos realmente sairão para a internet.
+</Warning>

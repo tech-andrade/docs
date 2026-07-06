@@ -1,0 +1,243 @@
+---
+title: "Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Erros comuns ao integrar cobranças Pix e como resolvê-los."
+icon: "circle-exclamation"
+---
+
+Esta página cobre os erros mais frequentes ao criar, consultar e cancelar QR Codes Pix, com a causa e o que fazer em cada caso.
+
+## Pagamento não aparece após ser realizado
+
+Se um pagamento foi feito pelo pagador mas não aparece no seu sistema, verifique na ordem:
+
+1. **O débito realmente ocorreu?** Confirme com o pagador se o valor saiu da conta dele.
+2. **O pagamento chegou ao SPI?** A instituição do pagador pode ter tido uma falha ao encaminhar a transação ao Sistema de Pagamentos Instantâneos.
+3. **Houve desfazimento?** Algumas instituições realizam o débito e depois o revertem automaticamente em caso de erro interno.
+
+Se tudo estiver confirmado e o pagamento ainda não aparecer, entre em contato com o suporte informando o `endToEndId` da transação.
+
+---
+
+## Erros ao criar QR Code Estático
+
+<AccordionGroup>
+
+<Accordion title="UNPROCESSABLE_ENTITY — Corpo da requisição inválido ou malformado">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Corpo da requisição inválido ou malformado"]
+}
+```
+
+**Causa:** A requisição foi enviada sem corpo, ou com um JSON malformado.
+
+**Solução:** Envie sempre um JSON válido no corpo, mesmo que mínimo:
+
+```bash
+curl -X POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static \
+  -H "x-delbank-api-key: {{apiKey}}" \
+  -H "Content-Type: application/json" \
+  -d '{"correlationId": "{{$guid}}"}'
+```
+
+</Accordion>
+
+<Accordion title="404 Not Found — QR Code não encontrado na consulta">
+
+```json
+{
+  "title": "Not Found",
+  "status": 404
+}
+```
+
+**Causa:** O `transactionIdentifier` informado não pertence à conta autenticada, está incorreto, ou não foi incluído na URL.
+
+**Solução:** Verifique se o `correlationId` ou `transactionId` está correto e foi criado pela mesma API key usada na consulta. Confirme que ele está no path da URL, não no body.
+
+</Accordion>
+
+<Accordion title="QR_CODE_NOT_FOUND — Cancelamento falhou">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "QR_CODE_NOT_FOUND",
+  "errors": ["QR Code não encontrado"]
+}
+```
+
+**Causa:** O `transactionIdentifier` não pertence à conta, está incorreto, ou o QR Code já foi cancelado anteriormente.
+
+**Solução:** Confirme que o identificador é válido e pertence à sua conta. Verifique também o status atual do QR Code — se já estiver `CANCELLED`, o endpoint retornará esse erro.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Erros ao criar QR Code Dinâmico
+
+<AccordionGroup>
+
+<Accordion title="UNPROCESSABLE_ENTITY — Objeto address incompleto">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Address: Os campos 'cityName', 'zipCode', 'state' devem ser informados"]
+}
+```
+
+**Causa:** O objeto `address` foi enviado incompleto, sem todos os campos obrigatórios.
+
+**Solução:** Quando enviar o objeto `address`, inclua todos os campos: `cityName`, `zipCode`, `state` e `street`. Se não quiser informar endereço, omita o objeto completamente — o padrão Aracaju/SE será usado.
+
+</Accordion>
+
+<Accordion title="UNPROCESSABLE_ENTITY — Objeto payer incompleto">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Payer: Os campos 'name' e 'document' devem ser informados"]
+}
+```
+
+**Causa:** O objeto `payer` foi enviado sem `name` ou `document`.
+
+**Solução:** Ao enviar o objeto `payer`, inclua `name` e `document`. O campo `validate` é opcional.
+
+</Accordion>
+
+<Accordion title="INVALID_ARGUMENT — Valor inválido em formatResponse">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "INVALID_ARGUMENT",
+  "errors": ["formatResponse: Valores aceitos: [ONLY_PAYLOAD, PAYLOAD_AND_QRCODE]"]
+}
+```
+
+**Causa:** O campo `formatResponse` recebeu um valor fora dos aceitos.
+
+**Solução:** Use apenas `ONLY_PAYLOAD` ou `PAYLOAD_AND_QRCODE`.
+
+</Accordion>
+
+<Accordion title="UNPROCESSABLE_ENTITY — additionalInfos com campos faltando">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "UNPROCESSABLE_ENTITY",
+  "errors": ["Corpo da requisição inválido ou malformado"]
+}
+```
+
+ou
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "INVALID_ARGUMENT",
+  "errors": ["additionalInfos[0].name: não deve estar em branco"]
+}
+```
+
+**Causa:** Um objeto dentro do array `additionalInfos` está com `name` ou `value` ausente.
+
+**Solução:** Cada item do array deve ter obrigatoriamente os dois campos:
+
+```json
+"additionalInfos": [
+  { "name": "Pedido", "value": "12345" }
+]
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Erros ao criar Cobrança com Vencimento
+
+<AccordionGroup>
+
+<Accordion title="INVALID_ARGUMENT — taxes sem dueDate">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "INVALID_ARGUMENT",
+  "errors": [
+    "taxes: só deve ser informado se dueDate também for informado",
+    "dueDate: não deve ser nulo"
+  ]
+}
+```
+
+**Causa:** O objeto `taxes` foi enviado sem o campo `dueDate`.
+
+**Solução:** `taxes` só é válido em conjunto com `dueDate`. Inclua a data de vencimento antes de configurar juros, multas ou descontos.
+
+</Accordion>
+
+<Accordion title="INVALID_ARGUMENT — dueDate ausente">
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "INVALID_ARGUMENT",
+  "errors": ["dueDate: não deve ser nulo"]
+}
+```
+
+**Causa:** O campo `dueDate` não foi informado.
+
+**Solução:** Inclua `dueDate` no formato `YYYY-MM-DD`.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Checklist antes de abrir um chamado
+
+Antes de acionar o suporte, verifique:
+
+<Steps>
+  <Step title="Headers corretos">
+    Confirme que `x-delbank-api-key` e `x-delfinance-account-id` estão presentes e corretos em todas as requisições.
+  </Step>
+  <Step title="JSON válido">
+    Valide o corpo da requisição em um validador JSON. Um erro de vírgula ou aspas pode gerar erros genéricos de `UNPROCESSABLE_ENTITY`.
+  </Step>
+  <Step title="Identificador pertence à conta">
+    Todo `transactionId` ou `correlationId` só pode ser consultado, cancelado ou simulado pela mesma conta que o criou.
+  </Step>
+  <Step title="Ambiente correto">
+    Confirme se você está usando a URL correta: `apisandbox.delbank.com.br` para sandbox e `api.delbank.com.br` para produção. Chaves de um ambiente não funcionam no outro.
+  </Step>
+</Steps>
+
+## O que informar ao abrir um chamado de suporte
+
+Para agilizar o diagnóstico, informe:
+
+- Endpoint utilizado (método + URL completa)
+- Corpo da requisição enviada
+- Timestamp da requisição
+- `accountId` e os primeiros caracteres da API key
+- Resposta de erro retornada completa
+- `endToEndId`, se o problema envolver um pagamento já realizado

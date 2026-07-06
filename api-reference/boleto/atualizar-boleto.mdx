@@ -1,0 +1,68 @@
+---
+title: "Atualizar boleto"
+api: "PATCH /baas/v1/charges/{correlationId}"
+description: "Altere a data de vencimento de um boleto pendente."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Gerenciar Boleto](/guias/boleto/gerenciar-boleto).
+</Note>
+
+Atualiza parcialmente um boleto. Atualmente, apenas o campo `dueDate` pode ser alterado. O `correlationId`, código de barras e linha digitável permanecem os mesmos.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="correlationId" type="string" required>
+  GUID do boleto a ser atualizado.
+</ParamField>
+
+## Body
+
+<ParamField body="dueDate" type="string" required>
+  Nova data de vencimento no formato `YYYY-MM-DD`.
+</ParamField>
+
+## Response
+
+Retorna `200 OK` com corpo vazio (`text/plain`) em caso de sucesso.
+
+<RequestExample>
+```bash cURL
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "dueDate": "2026-03-31"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 200
+(corpo vazio)
+```
+```json 400
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.1",
+    "title": "One or more validation errors occurred.",
+    "status": 400,
+    "traceId": "00-d4f01e7c0b935601aa07789983ec6228-6fffc4c2b5f642dc-00",
+    "errors": {
+        "$.dueDate": [
+            "The JSON value could not be converted to System.Nullable`1[System.DateTime]."
+        ]
+    }
+}
+```
+</ResponseExample>

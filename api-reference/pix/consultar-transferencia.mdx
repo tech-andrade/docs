@@ -1,0 +1,65 @@
+---
+title: "Consultar transferência Pix"
+api: "GET /v1/pix/transfers/{transfer_id}"
+description: "Consulte o status e as informações detalhadas de uma transferência Pix Out"
+---
+
+Recupera os detalhes de uma transferência Pix realizada a partir do ID gerado na criação.
+
+### Parâmetros de rota
+
+<ParamField path="transfer_id" type="string" required>
+  ID único da transferência gerado pela Delfinance (ex: `trsf_28173a`).
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  ID da transferência.
+</ResponseField>
+
+<ResponseField name="end_to_end_id" type="string" required>
+  Código global da transação no Banco Central.
+</ResponseField>
+
+<ResponseField name="key" type="string" required>
+  Chave Pix de destino.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor transferido.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual (`processing`, `completed`, `failed`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de envio.
+</ResponseField>
+
+<ResponseField name="failure_reason" type="string">
+  Mensagem explicativa se a transferência falhar (ex: `KEY_NOT_FOUND` ou `INSUFFICIENT_FUNDS`).
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://apisandbox.delbank.com.br/v1/pix/transfers/trsf_28173a \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "trsf_28173a",
+  "end_to_end_id": "E12345678202607041900trsf28173a",
+  "key": "financeiro@fornecedor.com",
+  "amount": 250.00,
+  "status": "completed",
+  "created_at": "2026-07-04T19:00:00Z"
+}
+```
+</ResponseExample>

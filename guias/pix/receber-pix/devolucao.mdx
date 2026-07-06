@@ -1,0 +1,89 @@
+---
+title: "Devolver um Pix Recebido"
+sidebarTitle: "Devolver Pix recebido"
+description: "Saiba como devolver total ou parcialmente um Pix recebido na sua conta em até 90 dias."
+icon: "rotate-left"
+---
+
+Após receber um Pix, é possível devolver o valor total ou parte dele ao pagador original. A operação é feita pelo `endToEndId` da transação recebida e pode ser solicitada em até 90 dias da data de recebimento.
+
+<Warning>
+Devoluções parciais sucessivas exigem um intervalo mínimo de **2 minutos** entre cada requisição. Solicitações enviadas antes desse intervalo não serão processadas.
+</Warning>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Obtenha o endToEndId da transação recebida">
+O `endToEndId` vem no payload do webhook `PIX_RECEIVED` (campo `endToEndId`) ou pode ser consultado no extrato de transações da conta. É o identificador único do Pix original que você deseja devolver.
+</Step>
+
+<Step title="Envie a devolução">
+Chame `PUT /baas/api/v1/transactions/pix/:endToEndIdOriginal/refund` com o valor a devolver. Para devolução total, informe o mesmo valor do Pix recebido. Para devolução parcial, informe um valor menor.
+
+<CodeGroup>
+```bash Devolução total
+curl --request PUT \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/transactions/pix/E182361202024041911111111111111/refund' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "amount": 100.00,
+    "description": "Devolução solicitada pelo cliente"
+}'
+```
+```bash Devolução parcial
+curl --request PUT \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/transactions/pix/E182361202024041911111111111111/refund' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "amount": 30.00,
+    "externalId": "devolucao-pedido-9817",
+    "description": "Devolução parcial por item cancelado"
+}'
+```
+</CodeGroup>
+
+A resposta `202 Accepted` confirma que a devolução foi aceita para processamento:
+
+```json
+{
+    "idempotencyKey": "421ece97-a8d2-4c45-afaf-3c8f81666fd2",
+    "externalId": "devolucao-pedido-9817",
+    "endToEndId": "D38224857202502281706FA489GE2ZSN",
+    "status": "PIX_PROCESSING",
+    "createdAt": "2025-02-28T17:06:41.963Z"
+}
+```
+
+O `endToEndId` retornado (prefixo `D`) é o identificador da devolução — diferente do `endToEndId` original (prefixo `E`).
+</Step>
+
+<Step title="Acompanhe a conclusão via webhook">
+Quando a devolução for liquidada, você receberá o evento `PIX_PAYMENT_UPDATED` com `status: PIX_EFFECTIVE`. Se houver erro no processamento, o evento `PIX_REFUND_PAYMENT_UPDATED` será disparado. Veja [Webhooks Pix](/guias/webhooks/pix) para detalhes dos payloads.
+</Step>
+
+</Steps>
+
+## Regras e limitações
+
+| Regra | Detalhe |
+|---|---|
+| Prazo máximo | 90 dias a partir da data de recebimento do Pix original |
+| Valor máximo | O somatório das devoluções não pode ultrapassar o valor original recebido |
+| Intervalo entre parciais | Mínimo de 2 minutos entre requisições de devolução parcial para o mesmo Pix |
+| `IdempotencyKey` | Obrigatório, deve ser um UUID v4 único por requisição |
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Criar devolução Pix" icon="rotate-left" href="/api-reference/pix/criar-devolucao">
+    `PUT /baas/api/v1/transactions/pix/:endToEndIdOriginal/refund`
+  </Card>
+</CardGroup>

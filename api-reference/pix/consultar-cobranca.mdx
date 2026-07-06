@@ -1,0 +1,66 @@
+---
+title: "Consultar cobrança Pix"
+api: "GET /v1/pix/charges/{charge_id}"
+description: "Recupere os detalhes e o status de uma cobrança Pix dinâmica criada anteriormente"
+---
+
+Obtém o status de pagamento e demais propriedades de uma cobrança Pix utilizando o identificador único fornecido no momento da criação.
+
+### Parâmetros de rota
+
+<ParamField path="charge_id" type="string" required>
+  ID único da cobrança gerado pela Delfinance (ex: `chg_981726a`).
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  ID único da cobrança.
+</ResponseField>
+
+<ResponseField name="txid" type="string" required>
+  Identificador único da transação Pix (Transaction ID).
+</ResponseField>
+
+<ResponseField name="copia_e_cola" type="string" required>
+  Payload do Pix.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor original da cobrança.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual (`pending`, `paid`, `expired`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de criação.
+</ResponseField>
+
+<ResponseField name="paid_at" type="string">
+  Data em que o Pix foi pago pelo cliente (formato ISO 8601). Retornado apenas se `status` for `paid`.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://apisandbox.delbank.com.br/v1/pix/charges/chg_981726a \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "chg_981726a",
+  "txid": "9c8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c",
+  "copia_e_cola": "00020101021226830014br.gov.bcb.pix...",
+  "amount": 150.75,
+  "status": "paid",
+  "created_at": "2026-07-04T12:00:00Z",
+  "paid_at": "2026-07-04T12:05:32Z"
+}
+```
+</ResponseExample>

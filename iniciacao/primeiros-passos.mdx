@@ -1,70 +1,108 @@
 ---
-title: "Primeiros Passos"
-description: "Guia rápido para começar a integrar com as APIs DelFinance"
+title: "Primeiros passos"
+description: "Configure seus ambientes, obtenha suas credenciais e faça sua primeira requisição"
 icon: "play"
 ---
 
-Este guia mostra o caminho mais rápido para realizar sua primeira chamada às APIs DelFinance.
+Para começar a integrar com a Delfinance, você precisa configurar seus ambientes de desenvolvimento e obter suas credenciais de acesso. Oferecemos dois ambientes distintos para garantir a segurança e estabilidade da sua integração.
 
-## Pré-requisitos
+---
 
-## Passo 1 — Obtenha suas credenciais
+## 1. Ambientes: Sandbox vs Produção
 
-Acesse o portal do desenvolvedor e crie uma nova aplicação. Você receberá:
+| Recurso | Sandbox (Testes) | Produção (Real) |
+| :--- | :--- | :--- |
+| **Objetivo** | Simular cenários de teste sem dinheiro real | Processar transações financeiras reais |
+| **URL Base** | `https://apisandbox.delbank.com.br` | `https://api.delbank.com.br` |
+| **Limites** | Rate limit reduzido, dados fictícios | Rate limit comercial, dados reais |
+| **Dinheiro** | Moeda fictícia | Dinheiro real (BRL) |
 
-- **Client ID** — identificador público da sua aplicação.
-- **Client Secret** — chave secreta usada para autenticação.
-- **Certificado mTLS** — par de chaves (`.crt` e `.key`) para mTLS.
+---
+
+## 2. Configurando seu Ambiente de Sandbox
+
+O ambiente de Sandbox é o ponto de entrada para testar a integração sem impacto financeiro. O fluxo atual no portal do desenvolvedor é o seguinte:
+
+<Steps>
+  <Step title="Acesse o portal do desenvolvedor">
+    Entre no [Portal do Desenvolvedor Delfinance Sandbox](https://portal-dev.delfinance.com.br). Na tela de login, você pode entrar com Google, GitHub ou realizar um cadastro tradicional.
+
+    <img src="/assets/tela-login-portal-dev.jpg" alt="Tela de login do portal do desenvolvedor" />
+  </Step>
+  <Step title="Acesse a área logada">
+    Após entrar, você será direcionado para a home do portal. Ali você encontra o ponto de início para solicitar o acesso ao ambiente de Sandbox.
+
+    <img src="/assets/portal-dev-home.jpg" alt="Home do portal do desenvolvedor" />
+  </Step>
+  <Step title="Informe seu CNPJ para o Sandbox">
+    Na solicitação de credenciais de Sandbox, informe o CNPJ que deseja usar para o ambiente de testes. Preferencialmente, esse CNPJ deve ser o da sua empresa.
+
+    <img src="/assets/portal-dev-solicitacao-crendecial-sandbox.jpg" alt="Solicitação de credencial de sandbox no portal" />
+
+    Se ainda não tiver um CNPJ corporativo disponível, você pode usar um CNPJ temporário para obter as credenciais de Sandbox. Essa necessidade é temporária e, na migração para Produção, você poderá informar o CNPJ real da empresa.
+  </Step>
+  <Step title="Receba sua chave de API exclusiva">
+    Após a solicitação, a plataforma gera uma chave de API exclusiva para a sua integração e disponibiliza essa credencial na home do portal.
+
+    <img src="/assets/portal-dev-credencial-sandbox-disponivel.jpg" alt="Credencial de sandbox disponível na home" />
+
+    Você pode copiar a chave quando necessário.
+
+    <img src="/assets/portal-dev-credencial-sandbox-copiada.jpg" alt="Credencial de sandbox copiada" />
+  </Step>
+  <Step title="Use a chave na integração">
+    Com a chave em mãos, você já pode autenticar suas requisições no Sandbox. Para Produção, o processo é semelhante, mas com as regras de segurança adicionais aplicadas.
+  </Step>
+</Steps>
 
 <Warning>
-  Nunca exponha seu `client_secret` ou chave privada em repositórios públicos ou no front-end.
+  Nunca compartilhe sua API Key, Account ID ou chave privada do certificado em repositórios públicos.
 </Warning>
 
-## Passo 2 — Obtenha um access token
+---
 
-Realize uma requisição `POST` para o endpoint de autenticação usando o fluxo `client_credentials`:
+## 3. URLs base e headers padrão
+
+Antes de fazer a primeira chamada, vale conhecer os endpoints e os headers que a API espera.
+
+### URLs base
+
+| Ambiente | URL base |
+| --- | --- |
+| Sandbox | `https://apisandbox.delbank.com.br` |
+| Produção | `https://api.delbank.com.br` |
+
+### Headers padrão
+
+Os headers abaixo são parte do modelo atual de integração:
+
+| Cabeçalho | Obrigatório | Descrição |
+| --- | --- | --- |
+| `x-delbank-api-key` | Sim | Chave de API da integração |
+| `x-delfinance-account-id` | Sim | Identificador da conta |
+| `Content-Type` | Sim | `application/json` |
+| `IdempotencyKey` | Em operações de cashout | Chave única de idempotência |
+
+### Próximo passo
+
+Após validar sua integração no Sandbox, o próximo passo é preparar a operação em Produção. Para entender melhor esse processo e o que muda na transição, consulte a página [Ida para Produção](/iniciacao/ida-producao).
+
+---
+
+## 4. Fazendo a primeira requisição
+
+Com a sua API Key e o Account ID em mãos, você já consegue chamar a API no ambiente de Sandbox.
+
+### Passo A: Envie as credenciais da API
+
+Use os headers abaixo para autenticar a requisição:
 
 ```bash
-curl -X POST https://auth.sandbox.delfinance.com.br/oauth/token \
-  --cert ./certificado.crt \
-  --key ./chave-privada.key \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials" \
-  -d "client_id=SEU_CLIENT_ID" \
-  -d "client_secret=SEU_CLIENT_SECRET" \
-  -d "scope=payments accounts"
+curl https://apisandbox.delbank.com.br/v1/accounts \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
 ```
 
-Resposta esperada:
+### Passo B: Revise as regras de segurança antes de avançar
 
-```json
-{
-  "access_token": "eyJhbGciOi...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "scope": "payments accounts"
-}
-```
-
-## Passo 3 — Faça sua primeira chamada
-
-Use o `access_token` no cabeçalho `Authorization` das requisições às APIs:
-
-```bash
-curl https://api.sandbox.delfinance.com.br/v1/accounts \
-  --cert ./certificado.crt \
-  --key ./chave-privada.key \
-  -H "Authorization: Bearer eyJhbGciOi..."
-```
-
-## Passo 4 — Homologue e vá para produção
-
-Após validar seus fluxos no sandbox:
-
-1. Solicite a homologação da sua aplicação.
-2. Gere novas credenciais e certificados de produção.
-3. Atualize as URLs base para o ambiente produtivo.
-
-<Tip>
-  Consulte [Ambientes](/iniciacao/ambientes) para conhecer as URLs base de cada ambiente.
-</Tip>
+Antes de migrar para Produção, revise as boas práticas e os componentes de segurança da integração na página [Autenticação e segurança](/iniciacao/autenticacao).

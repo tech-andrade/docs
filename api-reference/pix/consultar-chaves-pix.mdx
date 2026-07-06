@@ -1,0 +1,45 @@
+---
+title: "Consultar chaves Pix"
+api: "GET /baas/api/v1/pix/dict/entries"
+description: "Liste todas as chaves Pix cadastradas na conta."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Gerenciar Chave Pix](/guias/pix/receber-pix/chave-pix).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Response
+
+Retorna um array com todas as chaves cadastradas na conta. Cada item contém o valor da chave.
+
+<ResponseField name="key" type="string">
+  Valor da chave Pix (CPF, CNPJ, e-mail, celular ou UUID para EVP).
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --request GET \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    { "key": "14414076000118" },
+    { "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222" }
+]
+```
+</ResponseExample>

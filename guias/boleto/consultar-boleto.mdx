@@ -1,0 +1,124 @@
+---
+title: "Consultar Boleto"
+sidebarTitle: "Consultar boleto"
+description: "Consulte boletos por correlationId ou faça buscas paginadas por período para conciliação e gestão."
+icon: "magnifying-glass"
+---
+
+Existem duas formas de consultar boletos: por `correlationId` (consulta individual) ou por período com paginação (consulta em lote para conciliação).
+
+<Tip>
+Prefira receber eventos via **webhook** para acompanhar pagamentos em tempo real, em vez de polling por consulta periódica. A consulta paginada é mais adequada para conciliação e auditoria.
+</Tip>
+
+## Consultar por correlationId
+
+Retorna os dados completos de um boleto específico, incluindo os encargos configurados e o histórico de pagamentos.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "type": "BANKSLIP",
+    "correlationId": "304c439c-4b17-4a75-abb1-2526e356cdad",
+    "amount": 150.00,
+    "walletNumber": "112",
+    "yourNumber": "PED-2024-001",
+    "ourNumber": "00000520637",
+    "dueDate": "2025-12-30T00:00:00Z",
+    "barCode": "43595103800000000100001112000000600000520637",
+    "digitableLine": "43590001161200000060900005206370510380000000010",
+    "payer": {
+        "name": "JOÃO ALVES",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "complement": "SALA 602",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    },
+    "beneficiary": {
+        "branch": "00019",
+        "bankAccount": "29823",
+        "document": "30287697789",
+        "name": "HOMOLOGACAO INTEGRACAO API",
+        "address": {
+            "zipCode": "49000000",
+            "publicPlace": "Rua Verde Violeta",
+            "neighborhood": "Lamarão",
+            "number": "82",
+            "city": "ITABAIANA",
+            "state": "SE"
+        }
+    },
+    "discount": {
+        "type": "Fixed",
+        "items": [
+            { "date": "2025-12-10T00:00:00Z", "amount": 20.00 },
+            { "date": "2025-12-20T00:00:00Z", "amount": 10.00 },
+            { "date": "2025-12-28T00:00:00Z", "amount": 5.00 }
+        ]
+    },
+    "lateFine": {
+        "type": "Percentage",
+        "date": "2025-12-31T00:00:00Z",
+        "amount": 2.00
+    },
+    "latePayment": {
+        "type": "Fixed",
+        "date": "2025-12-31T00:00:00Z",
+        "amount": 2.50
+    },
+    "status": "Pending",
+    "payments": [],
+    "additionalInfo": [],
+    "createdAt": "2024-12-05T17:55:55.08Z",
+    "updatedAt": "2024-12-05T18:00:55.56Z"
+}
+```
+</CodeGroup>
+
+Quando o boleto for pago, o array `payments` será preenchido com os dados da liquidação.
+
+## Consulta paginada por período
+
+Retorna uma lista de boletos criados dentro do intervalo de datas informado. Útil para conciliação financeira e geração de relatórios.
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges?startDate=2025-01-01&endDate=2025-01-31&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+### Parâmetros de query
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `startDate` | `string` | Sim | Data inicial no formato `YYYY-MM-DD` |
+| `endDate` | `string` | Sim | Data final no formato `YYYY-MM-DD`. Máximo: 1 ano de intervalo |
+| `page` | `number` | Não | Página (começa em 1) |
+| `limit` | `number` | Não | Itens por página — máximo 100 |
+
+<Note>
+O intervalo máximo permitido entre `startDate` e `endDate` é de **1 ano**. Para períodos maiores, faça múltiplas consultas.
+</Note>
+
+A resposta é um array de objetos com os mesmos campos da consulta individual, mas sem `payments` expandido.
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Consultar boleto" icon="magnifying-glass" href="/api-reference/boleto/consultar-boleto">
+    `GET /baas/v1/charges/:correlationId` e `GET /baas/v1/charges?startDate=&endDate=`
+  </Card>
+</CardGroup>

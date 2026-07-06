@@ -1,0 +1,274 @@
+---
+title: "Criar QR Code com Vencimento"
+api: "POST /pix/qrcode/due-date"
+description: "Cria uma cobrança Pix com data de vencimento, suporte a juros, multa, abatimento e desconto por antecipação."
+---
+
+<Note>
+Para entender quando usar este endpoint e ver o passo a passo completo, veja o guia [Cobrança com Vencimento](/guias/pix/receber-pix/cobranca-com-vencimento).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="correlationId" type="string" required>
+  Identificador usado para conciliação com o seu sistema. Retornado no webhook de confirmação de pagamento. Deve ser um GUID.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Valor original da cobrança em reais.
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  Data de vencimento no formato `YYYY-MM-DD`. Após essa data, incidem os encargos configurados em `taxes`.
+</ParamField>
+
+<ParamField body="payer" type="object" required>
+  Dados de identificação do pagador.
+
+  <Expandable title="payer">
+    <ParamField body="payer.name" type="string" required>
+      Nome completo do pagador.
+    </ParamField>
+    <ParamField body="payer.document" type="string" required>
+      CPF ou CNPJ do pagador.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="address" type="object" required>
+  Endereço da transação.
+
+  <Expandable title="address">
+    <ParamField body="address.cityName" type="string" required>
+      Nome da cidade.
+    </ParamField>
+    <ParamField body="address.zipCode" type="string" required>
+      CEP.
+    </ParamField>
+    <ParamField body="address.state" type="string" required>
+      UF do estado (ex: `SP`).
+    </ParamField>
+    <ParamField body="address.street" type="string">
+      Nome do logradouro.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descrição interna da cobrança.
+</ParamField>
+
+<ParamField body="formatResponse" type="string">
+  Controla se a imagem do QR Code é retornada. `ONLY_PAYLOAD` (padrão) ou `PAYLOAD_AND_QRCODE`.
+</ParamField>
+
+<ParamField body="maxDaysOverdue" type="number">
+  Quantidade de dias após o `dueDate` em que o QR Code ainda poderá ser pago (com encargos). O padrão é 30 dias.
+</ParamField>
+
+<ParamField body="taxes" type="object">
+  Configuração de encargos e descontos. Só é válido quando `dueDate` também é informado.
+
+  <Expandable title="taxes">
+    <ParamField body="taxes.rebateType" type="string">
+      Tipo do abatimento (redução incondicional do valor): `FIXED_AMOUNT` ou `PERCENTAGE`.
+    </ParamField>
+    <ParamField body="taxes.rebateAmount" type="number">
+      Valor ou percentual de abatimento. Aplicado sempre, independentemente da data de pagamento.
+    </ParamField>
+    <ParamField body="taxes.discountType" type="string">
+      Tipo do desconto por antecipação: `FIXED_AMOUNT` ou `PERCENTAGE`.
+    </ParamField>
+    <ParamField body="taxes.discountAmount" type="number">
+      Valor ou percentual de desconto se pago antes do `dueDate`. **Mutuamente exclusivo com `discountsDueDate`.**
+    </ParamField>
+    <ParamField body="taxes.discountsDueDate" type="array">
+      Até 3 faixas de desconto escalonadas por data. **Mutuamente exclusivo com `discountAmount`.**
+
+      <Expandable title="discountsDueDate[]">
+        <ParamField body="taxes.discountsDueDate[].dueDate" type="string">
+          Data limite para aplicação do desconto (`YYYY-MM-DD`). Deve ser anterior ao `dueDate` da cobrança.
+        </ParamField>
+        <ParamField body="taxes.discountsDueDate[].amount" type="number">
+          Valor do desconto em reais para esta faixa.
+        </ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField body="taxes.interestType" type="string">
+      Tipo do juros após o vencimento: `FIXED_AMOUNT_CALENDAR_DAY`, `PERCENTAGE_PER_DAY_CALENDAR_DAY`, `PERCENTAGE_PER_MONTH_CALENDAR_DAY` ou `PERCENTAGE_PER_YEAR_CALENDAR_DAY`.
+    </ParamField>
+    <ParamField body="taxes.interestAmount" type="number">
+      Valor ou percentual dos juros, conforme o `interestType`.
+    </ParamField>
+    <ParamField body="taxes.fineType" type="string">
+      Tipo da multa aplicada uma vez após o vencimento: `FIXED_AMOUNT` ou `PERCENTAGE`.
+    </ParamField>
+    <ParamField body="taxes.fineAmount" type="number">
+      Valor ou percentual da multa.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="additionalInfos" type="array">
+  Lista de informações adicionais exibidas ao pagador no app do banco.
+
+  <Expandable title="additionalInfos[]">
+    <ParamField body="additionalInfos[].name" type="string" required>
+      Rótulo da informação.
+    </ParamField>
+    <ParamField body="additionalInfos[].value" type="string" required>
+      Valor da informação.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação enviado na criação.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code gerado.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor efetivo da cobrança (após abatimento, se aplicado).
+</ResponseField>
+
+<ResponseField name="originalAmount" type="number">
+  Valor original enviado na criação, antes de qualquer abatimento.
+</ResponseField>
+
+<ResponseField name="dueDate" type="string">
+  Data de vencimento.
+</ResponseField>
+
+<ResponseField name="maxDaysOverdue" type="number">
+  Dias após o vencimento em que o QR Code ainda é válido para pagamento.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status do QR Code. Valor inicial: `ACTIVE`.
+</ResponseField>
+
+<ResponseField name="revision" type="number">
+  Número de revisões da cobrança (usado pelo padrão BR Code/BACEN).
+</ResponseField>
+
+<ResponseField name="taxes" type="object">
+  Configuração de encargos e descontos enviada na criação.
+</ResponseField>
+
+<ResponseField name="payer" type="object">
+  Dados do pagador (`name`, `document` mascarado).
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço da transação.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Data e hora da última atualização.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  Data e hora limite para pagamento (calculado como `dueDate` + `maxDaysOverdue`).
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto — o "copia e cola".
+</ResponseField>
+
+<ResponseField name="qrCodeImageBase64" type="string">
+  Imagem do QR Code em base64 (250×250 px). Presente apenas quando `formatResponse` é `PAYLOAD_AND_QRCODE`.
+</ResponseField>
+
+<ResponseField name="additionalInfos" type="array">
+  Informações adicionais enviadas na criação.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "{{$guid}}",
+    "amount": 150.00,
+    "dueDate": "2025-12-30",
+    "formatResponse": "PAYLOAD_AND_QRCODE",
+    "payer": {
+        "name": "João Alves",
+        "document": "07034346593"
+    },
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "taxes": {
+        "interestType": "PERCENTAGE_PER_MONTH_CALENDAR_DAY",
+        "interestAmount": 1,
+        "fineType": "PERCENTAGE",
+        "fineAmount": 2,
+        "discountType": "FIXED_AMOUNT",
+        "discountAmount": 10.00
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "correlationId": "ac7a235a-1a91-47b0-8da5-0eb75abf3617",
+    "transactionId": "wcharge0aac4378c3cf4c37b0ec16c7c",
+    "amount": 150.00,
+    "originalAmount": 150.00,
+    "dueDate": "2025-12-30",
+    "maxDaysOverdue": 30,
+    "taxes": {
+        "interestType": "PERCENTAGE_PER_MONTH_CALENDAR_DAY",
+        "interestAmount": 1,
+        "fineType": "PERCENTAGE",
+        "fineAmount": 2,
+        "discountType": "FIXED_AMOUNT",
+        "discountAmount": 10.00
+    },
+    "status": "ACTIVE",
+    "revision": 0,
+    "payer": {
+        "name": "JOAO ALVES",
+        "document": "***343465**"
+    },
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "createdAt": "2024-12-17T12:22:02.757Z",
+    "updatedAt": "2024-12-17T12:22:02.757Z",
+    "expiresAt": "2026-01-29T23:59:59.000Z",
+    "payloadPix": "00020101021226830014br.gov.bcb.pix2561pix-h.delbank.com.br/v2/cobv/wcharge0aac4378c3cf4c37b0ec16c7c5204000053039865802BR5907DELBANK6007ARACAJU62070503***63040F7B"
+}
+```
+</ResponseExample>

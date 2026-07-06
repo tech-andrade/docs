@@ -1,0 +1,164 @@
+---
+title: "Pagar via QR Code"
+sidebarTitle: "Por QR Code"
+description: "Pague uma cobrança Pix a partir do payload de um QR Code estático ou dinâmico em dois passos: inicialize o pagamento para decodificar o payload e obter o endToEndId, depois execute a transferência."
+icon: "qrcode"
+---
+
+Para pagar uma cobrança Pix emitida por terceiros — seja um QR Code estático ou dinâmico — o fluxo tem dois passos: primeiro você decodifica o payload com o endpoint de inicialização para obter os dados da cobrança e o `endToEndId`, depois executa o pagamento com esse identificador.
+
+Esse fluxo serve tanto para **QR Codes Estáticos** quanto para **QR Codes Dinâmicos** (imediatos e com vencimento). O que muda entre eles é o `initiationType` que você usa no segundo passo — e a API já te diz qual usar na resposta do primeiro passo.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Inicialize o pagamento com o payload do QR Code">
+Envie o payload (o conteúdo textual do QR Code, também chamado de "copia e cola") para o endpoint de inicialização. A API decodifica o payload, valida a cobrança e retorna os dados necessários para executar o pagamento.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/payment-initialization' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "payload": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargeffab8b4c963344c283e491f5e5204000053039865802BR5907DELBANK6007ARACAJU62070503***6304CB42"
+}'
+```
+```json Response (QR Code Dinâmico)
+{
+    "key": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+    "endToEndId": "E3822485720230801135525927150397",
+    "transactionId": "vchargeffab8b4c963344c283e491f5e",
+    "expirationTime": 1800,
+    "allowChangeAmount": false,
+    "categoryCode": "0000",
+    "type": "DYNAMIC_IMMEDIATE_PAYMENT",
+    "initiationType": "QR_CODE_DYNAMIC",
+    "status": "ACTIVE",
+    "amount": 99.90,
+    "originalAmount": 99.90,
+    "capturedAt": "2024-12-20T14:00:00.000Z",
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        },
+        "holder": {
+            "name": "EMPRESA RECEBEDORA LTDA",
+            "document": "30287697789",
+            "type": "NATURAL"
+        }
+    }
+}
+```
+</CodeGroup>
+
+<Note>
+Guarde os valores `endToEndId`, `transactionId` e `initiationType` da resposta — você vai precisar dos três no próximo passo. O `initiationType` já está no formato correto para usar diretamente na transferência.
+</Note>
+</Step>
+
+<Step title="Confirme os dados da cobrança">
+Antes de executar o pagamento, valide os dados retornados:
+
+- **`status`** deve ser `ACTIVE`. Se for `CONCLUDED`, o QR Code já foi pago. Se for `REMOVED_BY_THE_RECEIVER` ou `REMOVED_BY_PSP`, ele foi cancelado.
+- **`amount`** é o valor da cobrança. Se `allowChangeAmount` for `true`, o pagador pode alterar o valor.
+- **`beneficiary`** — confirme que o recebedor é quem você espera.
+- **`expirationTime`** — para QR Codes Dinâmicos, verifique se o código ainda está dentro do prazo.
+</Step>
+
+<Step title="Execute a transferência">
+Com os dados da inicialização em mãos, execute o pagamento. Use o `initiationType` exatamente como veio na resposta anterior.
+
+<CodeGroup>
+```bash cURL
+curl --request POST \
+  'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --data '{
+    "amount": 99.90,
+    "description": "Pagamento cobrança",
+    "endToEndId": "E3822485720230801135525927150397",
+    "transactionId": "vchargeffab8b4c963344c283e491f5e",
+    "initiationType": "QR_CODE_DYNAMIC"
+}'
+```
+```json Response
+{
+    "id": "ea381676-6673-420a-8eea-a89d7b3edb20",
+    "endToEndId": "E3822485720230801135525927150397",
+    "transactionNsu": 721963,
+    "status": "PIX_PROCESSING",
+    "type": "PIX_QR_CODE_DYNAMIC",
+    "amount": 99.90,
+    "createdAt": "2024-12-20T14:01:00.000Z",
+    "description": "Pagamento cobrança",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "30287697789",
+            "name": "EMPRESA RECEBEDORA LTDA",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    }
+}
+```
+</CodeGroup>
+
+<Warning>
+O `IdempotencyKey` no header é obrigatório e deve ser único por requisição. O `endToEndId` também é de uso único — ele expira após ser utilizado ou após um curto período.
+</Warning>
+</Step>
+
+</Steps>
+
+## Mapeamento do initiationType
+
+O campo `type` retornado pela inicialização indica o tipo do QR Code. O campo `initiationType` já traz o valor pronto para usar no transfer — mas é importante entender o mapeamento:
+
+| `type` na inicialização | `initiationType` no transfer |
+|---|---|
+| `QR_CODE_STATIC` | `QR_CODE_STATIC` |
+| `DYNAMIC_IMMEDIATE_PAYMENT` | `QR_CODE_DYNAMIC` |
+| `DYNAMIC_PAYMENT_WITH_EXPIRATION` | `QR_CODE_DYNAMIC` |
+
+Use sempre o `initiationType` que veio na resposta da inicialização — não derive o valor pelo `type`.
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Inicializar pagamento por QR Code" icon="magnifying-glass" href="/api-reference/pix/inicializar-pagamento-qrcode">
+    `POST /pix/qrcode/payment-initialization`
+  </Card>
+  <Card title="Executar transferência" icon="paper-plane" href="/api-reference/pix/criar-transferencia">
+    `POST /transfers`
+  </Card>
+</CardGroup>

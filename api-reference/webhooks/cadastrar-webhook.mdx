@@ -1,0 +1,102 @@
+---
+title: "Cadastrar webhook"
+api: "POST /baas/api/v1/webhooks"
+description: "Registre uma URL para receber notificações de um tipo de evento específico."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Webhooks](/guias/webhooks/visao-geral).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="eventType" type="string" required>
+  Tipo de evento a monitorar. Cada webhook escuta um único tipo de evento.
+
+  Valores: `PIX_RECEIVED`, `PIX_PAYMENT_UPDATED`, `PIX_REFUNDED`, `PIX_REFUND_PAYMENT_UPDATED`, `CHARGE_PAID`, `INFRACTION_NOTIFICATION_CREATED`, `INFRACTION_NOTIFICATION_UPDATED`, `ACCOUNT_STATUS_UPDATED`, `WHITELABEL_CUSTOMER_APPROVED`, `WHITELABEL_CUSTOMER_DOCUMENTATION_REJECTED`
+</ParamField>
+
+<ParamField body="url" type="string" required>
+  URL do seu servidor que receberá os eventos via `POST`. Deve começar com `http://` ou `https://` e conter um domínio válido.
+</ParamField>
+
+<ParamField body="authorizationScheme" type="string">
+  Esquema de autenticação usado para chamar o seu endpoint. Valores: `NONE`, `BASIC`, `BEARER`, `HEADER`. Padrão: `NONE`.
+</ParamField>
+
+<ParamField body="authorization" type="string">
+  Valor enviado no header `Authorization` da requisição para o seu servidor. Obrigatório quando `authorizationScheme` não for `NONE`.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  ID único do webhook cadastrado.
+</ResponseField>
+
+<ResponseField name="eventType" type="string">
+  Tipo de evento monitorado.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  URL registrada.
+</ResponseField>
+
+<ResponseField name="authorizationScheme" type="string">
+  Esquema de autenticação configurado.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação no formato ISO 8601.
+</ResponseField>
+
+<RequestExample>
+```bash cURL (BEARER)
+curl --request POST \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/webhooks' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --data '{
+    "eventType": "PIX_RECEIVED",
+    "url": "https://seuservidor.com.br/webhooks/pix",
+    "authorizationScheme": "BEARER",
+    "authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}'
+```
+
+```bash cURL (NONE)
+curl --request POST \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/webhooks' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --data '{
+    "eventType": "CHARGE_PAID",
+    "url": "https://seuservidor.com.br/webhooks/boleto",
+    "authorizationScheme": "NONE"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+  "id": "wbh_a1b2c3d4",
+  "eventType": "PIX_RECEIVED",
+  "url": "https://seuservidor.com.br/webhooks/pix",
+  "authorizationScheme": "BEARER",
+  "createdAt": "2026-07-06T10:00:00Z"
+}
+```
+</ResponseExample>

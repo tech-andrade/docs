@@ -1,0 +1,47 @@
+You can create up to 5 Pix keys per account. There are 4 types of keys (email, phone, random key, CPF/CNPJ)
+
+## Request
+
+```curl curl
+curl --location --request POST 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+| IdempotencyKey    | **Required**`GUID`generated in the request                      |
+| x-auth-code       | code sent by SMS or email for this type of key (phone or email) |
+| x-auth-id         | id returned in the endpoint of sending the auth code            |
+
+### Body
+
+| Name      | Type     | Description                                                                                                                                                                             |
+| :-------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| entryType | `enum`   | **Required** `DOCUMENT`, `EVP`, `PHONE`, `EMAIL`<br/>For phone and email type Pix keys, a confirmation code is required that is generated using the auth code endpoint below.             |
+
+
+
+## Endpoint auth code
+
+This endpoint is used to confirm the authenticity of email and phone keys. A code is sent by email or SMS and the id is returned to the endpoint. Both must be passed to the key creation endpoint as headers: x-auth-id and x-auth-code, respectively.
+
+### Request
+
+```curl
+curl --location --request POST 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/auth-code' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+### Body
+
+| Name     | Type     | Description                                                                                                                                                       |
+| :------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sender   | `enum`   | `EMAIL` or `SMS`                                                                                                                                                  |
+| receiver | `string` | Phone number or email<br/>(for phone numbers, you must also add the country code, Ex: +5579901010202)                                                                 |
+| payload  | `string` | SMS message or email HTML.<br/>The code will be inserted in the placeholder `{{code}}`                                                                            |

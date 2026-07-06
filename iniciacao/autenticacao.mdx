@@ -1,126 +1,55 @@
 ---
-title: "Autenticação"
-description: "Autentique-se nas APIs DelFinance usando OAuth 2.0"
+title: "Credenciais"
+description: "Visão geral de autenticação, mTLS e allowlist de IPs para as APIs da Delfinance"
 icon: "key"
 ---
 
-As APIs DelFinance utilizam **OAuth 2.0** com o fluxo `client_credentials` para autenticação de aplicações servidor-a-servidor.
+Para consumir as APIs da Delfinance, sua integração precisa passar por três camadas de segurança que funcionam juntas:
 
-## Fluxo `client_credentials`
+1. **Credenciais da API**: `x-delbank-api-key` e `x-delfinance-account-id`
+2. **mTLS**: certificado do cliente para validar a identidade da conexão
+3. **Allowlist de IPs**: IPs públicos fixos de saída aprovados pela Delfinance
 
-<Steps>
-  <Step title="Solicite o access token">
-    Envie `client_id` e `client_secret` ao endpoint `/oauth/token`.
-  </Step>
-  <Step title="Receba o token">
-    A resposta contém um `access_token` válido por 1 hora (`expires_in: 3600`).
-  </Step>
-  <Step title="Use o token nas requisições">
-    Inclua o token no header `Authorization: Bearer {access_token}`.
-  </Step>
-  <Step title="Renove antes do vencimento">
-    Solicite um novo token antes que o atual expire.
-  </Step>
-</Steps>
+<Note>
+  Em Sandbox, as credenciais já permitem testar a integração. Em Produção, mTLS e allowlist de IPs passam a ser obrigatórios.
+</Note>
 
-## Obtendo um token
+## Credenciais da API
 
-<CodeGroup>
+Use os headers abaixo para autenticar a organização e a conta que será usada na requisição.
 
-```bash cURL
-curl -X POST https://auth.sandbox.delfinance.com.br/oauth/token \
-  --cert ./certificado.crt \
-  --key ./chave-privada.key \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "grant_type=client_credentials" \
-  -d "client_id=SEU_CLIENT_ID" \
-  -d "client_secret=SEU_CLIENT_SECRET" \
-  -d "scope=payments accounts"
-```
-
-```javascript Node.js
-import https from 'https';
-import fs from 'fs';
-import axios from 'axios';
-
-const agent = new https.Agent({
-  cert: fs.readFileSync('./certificado.crt'),
-  key: fs.readFileSync('./chave-privada.key'),
-});
-
-const { data } = await axios.post(
-  'https://auth.sandbox.delfinance.com.br/oauth/token',
-  new URLSearchParams({
-    grant_type: 'client_credentials',
-    client_id: process.env.CLIENT_ID,
-    client_secret: process.env.CLIENT_SECRET,
-    scope: 'payments accounts',
-  }),
-  { httpsAgent: agent }
-);
-
-console.log(data.access_token);
-```
-
-```python Python
-import requests
-
-response = requests.post(
-    "https://auth.sandbox.delfinance.com.br/oauth/token",
-    cert=("./certificado.crt", "./chave-privada.key"),
-    data={
-        "grant_type": "client_credentials",
-        "client_id": "SEU_CLIENT_ID",
-        "client_secret": "SEU_CLIENT_SECRET",
-        "scope": "payments accounts",
-    },
-)
-
-print(response.json()["access_token"])
-```
-
-</CodeGroup>
-
-## Resposta
-
-```json
-{
-  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "Bearer",
-  "expires_in": 3600,
-  "scope": "payments accounts"
-}
-```
-
-## Escopos (scopes)
-
-Os escopos definem as permissões do token. Solicite apenas os escopos necessários para sua operação.
-
-| Escopo | Descrição |
-| --- | --- |
-| `accounts` | Consulta de contas e saldos |
-| `payments` | Criação e consulta de pagamentos |
-| `transfers` | Realização de transferências |
-| `webhooks` | Gestão de webhooks |
-
-## Usando o token
+- `x-delbank-api-key`: autentica a organização e a integração
+- `x-delfinance-account-id`: identifica a conta acessada
 
 ```bash
-curl https://api.sandbox.delfinance.com.br/v1/accounts \
-  --cert ./certificado.crt \
-  --key ./chave-privada.key \
-  -H "Authorization: Bearer eyJhbGciOi..."
+curl https://apisandbox.delbank.com.br/v1/accounts \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
 ```
 
-## Erros comuns
+## mTLS
 
-| Código | Descrição | Solução |
-| --- | --- | --- |
-| `401 invalid_client` | Credenciais inválidas | Verifique `client_id` e `client_secret` |
-| `401 invalid_token` | Token expirado ou inválido | Solicite um novo token |
-| `403 insufficient_scope` | Escopo insuficiente | Inclua o escopo necessário na solicitação |
-| `400 invalid_grant` | Grant type não suportado | Use `client_credentials` |
+O mTLS adiciona uma camada extra de segurança ao TLS, validando o certificado do cliente na conexão. Ele é obrigatório em Produção e ajuda a garantir que apenas clientes autorizados consigam se comunicar com a API.
 
-<Warning>
-  Nunca armazene tokens em código-fonte ou repositórios. Use variáveis de ambiente ou cofres de segredos.
-</Warning>
+Para detalhes sobre emissão, instalação, teste e ciclo de vida do certificado, acesse [mTLS](/iniciacao/mtls).
+
+## Filtros de IPs
+
+A allowlist de IPs restringe o tráfego de saída da sua infraestrutura a IPs públicos aprovados. Esse controle é importante em Produção para reduzir riscos de acesso não autorizado.
+
+Para ver como funciona a configuração, os pré-requisitos e o checklist de implementação, acesse [Filtros de IPs](/iniciacao/filtros-ip).
+
+## Resumo por ambiente
+
+| Ambiente | Credenciais da API | mTLS | Allowlist de IPs |
+| --- | --- | --- | --- |
+| Sandbox | Sim | Não | Não |
+| Produção | Sim | Sim | Sim |
+
+## Boas práticas
+
+- armazene as chaves em cofres de segredos;
+- nunca exponha credenciais em código, logs ou front-end;
+- mantenha mTLS e IPs aprovados sempre atualizados;
+- teste primeiro em Sandbox antes de habilitar Produção;
+- use TLS 1.2 ou superior em todas as conexões.

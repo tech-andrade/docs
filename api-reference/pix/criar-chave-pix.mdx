@@ -1,0 +1,60 @@
+---
+title: "Criar chave Pix"
+api: "POST /baas/api/v1/pix/dict/entries"
+description: "Cadastre uma nova chave Pix na conta. Via API, suporta criação do tipo EVP (chave aleatória)."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Gerenciar Chave Pix](/guias/pix/receber-pix/chave-pix).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  GUID único por requisição.
+</ParamField>
+
+<ParamField header="x-auth-id" type="string">
+  ID retornado pelo endpoint de envio de código de validação. Obrigatório para chaves do tipo `EMAIL` e `PHONE`.
+</ParamField>
+
+<ParamField header="x-auth-code" type="string">
+  Código recebido por e-mail ou SMS. Obrigatório para chaves do tipo `EMAIL` e `PHONE`.
+</ParamField>
+
+## Body
+
+<ParamField body="entryType" type="string" required>
+  Tipo da chave a ser criada. Valores: `EVP`, `DOCUMENT`, `EMAIL`, `PHONE`.
+</ParamField>
+
+<RequestExample>
+```bash cURL (EVP)
+curl --request POST \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "entryType": "EVP"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222",
+    "entryType": "EVP"
+}
+```
+</ResponseExample>

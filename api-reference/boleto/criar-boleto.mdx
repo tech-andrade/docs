@@ -1,0 +1,214 @@
+---
+title: "Criar boleto"
+api: "POST /baas/v1/charges"
+description: "Emita boletos bancários convencionais (BANKSLIP) ou com QR Code Pix integrado (BANKSLIP_PIX)."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Emitir Boleto](/guias/boleto/emitir-boleto).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="type" type="string" required>
+  Tipo do boleto. Valores aceitos: `BANKSLIP` (convencional) ou `BANKSLIP_PIX` (com QR Code Pix integrado).
+</ParamField>
+
+<ParamField body="correlationId" type="string" required>
+  GUID único para identificação e conciliação do boleto no seu sistema. Deve ser único por boleto.
+</ParamField>
+
+<ParamField body="yourNumber" type="string" required>
+  Número do documento — identificador do boleto para você. Exibido no documento como referência.
+</ParamField>
+
+<ParamField body="ourNumber" type="string">
+  Nosso número — identificador do boleto para a Delfinance. Obrigatório apenas para a carteira **121**. Não envie para a carteira 112 (gerado automaticamente).
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  Data de vencimento no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="Amount" type="number" required>
+  Valor do boleto em reais (ex: `150.00`).
+</ParamField>
+
+<ParamField body="payer" type="object" required>
+  Dados do pagador (sacado).
+  <Expandable title="propriedades">
+    <ParamField body="name" type="string" required>
+      Nome completo ou Razão Social do pagador.
+    </ParamField>
+    <ParamField body="document" type="string" required>
+      CPF ou CNPJ do pagador (apenas números).
+    </ParamField>
+    <ParamField body="email" type="string">
+      E-mail do pagador.
+    </ParamField>
+    <ParamField body="phone" type="object">
+      Telefone do pagador.
+      <Expandable title="propriedades">
+        <ParamField body="prefix" type="string">DDD (ex: `"79"`).</ParamField>
+        <ParamField body="number" type="string">Número (ex: `"988669383"`).</ParamField>
+      </Expandable>
+    </ParamField>
+    <ParamField body="address" type="object" required>
+      Endereço do pagador.
+      <Expandable title="propriedades">
+        <ParamField body="zipCode" type="string" required>CEP (apenas números).</ParamField>
+        <ParamField body="publicPlace" type="string" required>Logradouro.</ParamField>
+        <ParamField body="neighborhood" type="string" required>Bairro.</ParamField>
+        <ParamField body="number" type="string" required>Número.</ParamField>
+        <ParamField body="complement" type="string">Complemento.</ParamField>
+        <ParamField body="city" type="string" required>Cidade.</ParamField>
+        <ParamField body="state" type="string" required>UF (ex: `"SE"`).</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="discount" type="object">
+  Desconto por antecipação (opcional). Até 3 faixas de datas.
+  <Expandable title="propriedades">
+    <ParamField body="type" type="string" required>Tipo: `Fixed` (valor fixo) ou `PERCENTAGE` (percentual).</ParamField>
+    <ParamField body="items" type="array" required>
+      Array de faixas de desconto (máximo 3 itens).
+      <Expandable title="propriedades do item">
+        <ParamField body="date" type="string" required>Data limite para aplicação do desconto (`YYYY-MM-DD`). Deve ser anterior ao `dueDate`.</ParamField>
+        <ParamField body="amount" type="number" required>Valor ou percentual do desconto.</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="lateFine" type="object">
+  Multa aplicada após o vencimento (opcional).
+  <Expandable title="propriedades">
+    <ParamField body="type" type="string" required>Tipo: `Fixed` ou `Percentage`.</ParamField>
+    <ParamField body="date" type="string" required>Data a partir da qual a multa é aplicada (`YYYY-MM-DD`).</ParamField>
+    <ParamField body="amount" type="number" required>Valor ou percentual da multa.</ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="latePayment" type="object">
+  Juros por período após o vencimento (opcional).
+  <Expandable title="propriedades">
+    <ParamField body="type" type="string" required>Tipo: `Fixed` ou `PERCENTAGE`.</ParamField>
+    <ParamField body="date" type="string" required>Data a partir da qual os juros são aplicados (`YYYY-MM-DD`).</ParamField>
+    <ParamField body="amount" type="number" required>Valor ou percentual dos juros.</ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="finalBeneficiary" type="object">
+  Beneficiário final da cobrança (para gateways e plataformas que emitem em nome de terceiros).
+  <Expandable title="propriedades">
+    <ParamField body="name" type="string" required>Nome ou Razão Social.</ParamField>
+    <ParamField body="document" type="string" required>CPF ou CNPJ (apenas números).</ParamField>
+    <ParamField body="address" type="object" required>
+      Endereço do beneficiário final.
+      <Expandable title="propriedades">
+        <ParamField body="zipCode" type="string" required>CEP.</ParamField>
+        <ParamField body="publicPlace" type="string" required>Logradouro.</ParamField>
+        <ParamField body="neighborhood" type="string" required>Bairro.</ParamField>
+        <ParamField body="number" type="string" required>Número.</ParamField>
+        <ParamField body="city" type="string" required>Cidade.</ParamField>
+        <ParamField body="state" type="string" required>UF.</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">Tipo do boleto: `BANKSLIP` ou `BANKSLIP_PIX`.</ResponseField>
+<ResponseField name="correlationId" type="string">GUID de conciliação.</ResponseField>
+<ResponseField name="amount" type="number">Valor do boleto.</ResponseField>
+<ResponseField name="walletNumber" type="string">Carteira utilizada: `"112"` ou `"121"`.</ResponseField>
+<ResponseField name="yourNumber" type="string">Número do documento informado.</ResponseField>
+<ResponseField name="ourNumber" type="string">Nosso número (gerado ou informado).</ResponseField>
+<ResponseField name="dueDate" type="string">Data de vencimento em ISO 8601.</ResponseField>
+<ResponseField name="barCode" type="string">Código de barras do boleto.</ResponseField>
+<ResponseField name="digitableLine" type="string">Linha digitável para pagamento.</ResponseField>
+<ResponseField name="qrCode" type="string">Payload do QR Code Pix. Presente apenas para `BANKSLIP_PIX`.</ResponseField>
+<ResponseField name="qrCodeImageBase64" type="string">Imagem do QR Code em base64 (`data:image/png;base64,...`). Presente apenas para `BANKSLIP_PIX`.</ResponseField>
+<ResponseField name="status" type="string">Status inicial: `Pending`.</ResponseField>
+<ResponseField name="payments" type="array">Lista de pagamentos registrados (vazia na criação).</ResponseField>
+<ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
+<ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "BANKSLIP_PIX",
+    "correlationId": "{{$guid}}",
+    "yourNumber": "PED-2024-001",
+    "dueDate": "2025-12-30",
+    "Amount": 150.00,
+    "payer": {
+        "name": "João Alves",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "type": "BANKSLIP_PIX",
+    "correlationId": "69577abe-3867-4e0b-85ee-21aa6bc9db9b",
+    "amount": 150.00,
+    "walletNumber": "112",
+    "yourNumber": "PED-2024-001",
+    "ourNumber": "00000532665",
+    "dueDate": "2025-12-30T23:59:59.999Z",
+    "qrCode": "00020101021226770014br.gov.bcb.pix2555pix-h.delbank.com.br/v2/cobv/vcharge00000000000003246005204000053039865802BR5907DELBANK6007ARACAJU62070503***63045ED1",
+    "qrCodeImageBase64": "data:image/png;base64,iVBORw0KGgoAAAANSU...",
+    "barCode": "43599110300000000100001112000001700000532665",
+    "digitableLine": "43590001161200000170600005326657911030000000010",
+    "payer": {
+        "name": "JOÃO ALVES",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    },
+    "status": "Pending",
+    "payments": [],
+    "createdAt": "2025-02-05T20:59:24.019Z",
+    "updatedAt": "2025-02-05T20:59:25.016Z"
+}
+```
+</ResponseExample>

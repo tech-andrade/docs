@@ -1,0 +1,42 @@
+---
+title: "PHP SDK"
+sidebarTitle: "Introdução"
+description: "Instale e configure o SDK oficial da Delfinance para PHP."
+icon: "php"
+---
+
+## Instalação
+
+```bash
+composer require Delfinance/Delfinance-api-sdk
+```
+
+Requer PHP 8.0 ou superior e a extensão `ext-curl` habilitada.
+
+## Configuração inicial
+
+```php
+use Delfinance\Sdk\DelfinanceClient;
+
+$client = new DelfinanceClient([
+    'environment'   => 'sandbox', // ou 'production'
+    'client_id'     => getenv('DELFINANCE_CLIENT_ID'),
+    'client_secret' => getenv('DELFINANCE_CLIENT_SECRET'),
+    'cert_path'     => './certificado.crt',
+    'key_path'      => './chave-privada.key',
+]);
+```
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `environment` | `string` | `"sandbox"` ou `"production"` |
+| `client_id` | `string` | API key do Portal do Desenvolvedor |
+| `client_secret` | `string` | Client secret do Portal do Desenvolvedor |
+| `cert_path` | `string` | Caminho para o certificado mTLS (`.crt`) |
+| `key_path` | `string` | Caminho para a chave privada (`.key`) |
+
+## Publicado em
+
+<Card title="Packagist — Delfinance/Delfinance-api-sdk" icon="php" href="https://packagist.org/packages/Delfinance/Delfinance-api-sdk">
+  Veja versões e dependências no Packagist.
+</Card>

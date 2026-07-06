@@ -1,0 +1,75 @@
+---
+title: "MEDs"
+sidebarTitle: "MEDs"
+description: "Receba notificações sobre o Mecanismo Especial de Devolução do Banco Central quando infrações Pix são abertas ou atualizadas na sua conta."
+icon: "triangle-exclamation"
+---
+
+O MED (Mecanismo Especial de Devolução) é o fluxo oficial do Banco Central para tratar solicitações de devolução de transações Pix por suspeita de fraude ou erro operacional. Quando uma notificação de infração é aberta ou tem seu status alterado, a API dispara um webhook para que você possa acompanhar o processo em tempo real.
+
+## INFRACTION_NOTIFICATION_CREATED
+
+Disparado quando uma notificação de infração MED é aberta no sistema — geralmente iniciada pela instituição da parte debitada na transação original.
+
+**Como registrar:**
+```json
+{
+  "eventType": "INFRACTION_NOTIFICATION_CREATED",
+  "url": "https://seuservidor.com.br/webhooks/med",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "id": "00287f1e-aa85-452c-9ca6-d08d810c571c",
+    "endToEndId": "E38224857202501201735276EqueqSVM",
+    "reason": "RETURN_REQUEST",
+    "status": "PENDING",
+    "debitedParticipant": {
+        "ispb": "21018182",
+        "name": "BOLETOBANCÁRIO.COM TECNOLOGIA DE PAGAMENTOS LTDA."
+    },
+    "creditedParticipant": {
+        "ispb": "38224857",
+        "name": "DELBANK"
+    },
+    "infractionDetails": "01",
+    "analysisDetails": null,
+    "createdAt": "2022-04-07T10:25:32.793Z",
+    "updatedAt": "2025-02-13T16:35:13.907Z"
+}
+```
+
+## INFRACTION_NOTIFICATION_UPDATED
+
+Disparado quando uma notificação de infração já existente tem seu status atualizado. O payload tem estrutura idêntica ao `INFRACTION_NOTIFICATION_CREATED`.
+
+**Como registrar:**
+```json
+{
+  "eventType": "INFRACTION_NOTIFICATION_UPDATED",
+  "url": "https://seuservidor.com.br/webhooks/med",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+## Campos do payload
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | `string` | Identificador da notificação de infração |
+| `endToEndId` | `string` | Identificador da transação Pix relacionada |
+| `reason` | `enum` | Motivo da infração: `FRAUD` (fraude), `RETURN_REQUEST` (pedido de devolução), `RETURN_CANCELLATION` (cancelamento de devolução) |
+| `status` | `enum` | Status atual: `PENDING`, `CANCELED`, `ACCEPTED`, `REJECTED` |
+| `debitedParticipant.ispb` | `string` | ISPB da instituição que foi debitada na transação original |
+| `debitedParticipant.name` | `string` | Nome da instituição debitada |
+| `creditedParticipant.ispb` | `string` | ISPB da instituição que foi creditada na transação original |
+| `creditedParticipant.name` | `string` | Nome da instituição creditada |
+| `infractionDetails` | `string` | Código de detalhe do tipo de infração |
+| `analysisDetails` | `string` | Resultado da análise, preenchido após avaliação da infração |
+| `createdAt` | `date` | Data de abertura da notificação |
+| `updatedAt` | `date` | Data da última atualização |

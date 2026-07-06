@@ -1,0 +1,467 @@
+# Delfinance — API Reference Completa
+
+API de Banking as a Service (BaaS) brasileira para emissão de cobranças Pix, boleto bancário híbrido e gerenciamento de webhooks em tempo real.
+
+Sandbox: https://apisandbox.delbank.com.br
+Produção: https://api.delbank.com.br
+
+---
+
+## Autenticação
+
+Todas as requisições exigem dois headers obrigatórios:
+
+- x-delbank-api-key — API key da integração
+- x-delfinance-account-id — número da conta Delfinance
+
+Em produção, mTLS (certificado de cliente) e allowlist de IPs também são obrigatórios.
+No sandbox, apenas os dois headers acima são necessários.
+
+---
+
+## Idempotência
+
+Operações de escrita que movimentam recursos financeiros exigem o header IdempotencyKey.
+
+- Formato recomendado: UUID v4
+- Tamanho máximo: 64 caracteres
+- A Delfinance armazena a resposta por 24 horas
+- Reenviar a mesma chave com payload idêntico retorna a resposta original sem reprocessar
+- Reenviar com payload diferente retorna 409 Conflict
+
+Endpoints que exigem IdempotencyKey: criação de devolução Pix, criação de chave Pix, transferências.
+
+---
+
+## PIX — RECEBER
+
+### Criar QR Code Estático (Cobrança Reutilizável)
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static
+
+QR Code reutilizável — pode ser pago múltiplas vezes. Ideal para pontos de venda e doações.
+
+Body:
+- correlationId (string, obrigatório) — GUID de conciliação
+- description (string, opcional) — descrição interna
+- amount (number, opcional) — se omitido, o pagador escolhe o valor
+- pixKey (string, opcional) — chave Pix específica da conta
+- additionalInformation (string, opcional) — texto exibido ao pagador (máx. 64 chars)
+- formatResponse (string, opcional) — ONLY_PAYLOAD (padrão) ou PAYLOAD_AND_QRCODE
+
+Resposta 200:
+- transactionId — identificador único do QR Code
+- correlationId — GUID de conciliação
+- amount — valor, se definido
+- pixKey — chave Pix usada
+- beneficiaryName — nome do recebedor
+- payloadPix — string BR Code (copia e cola)
+- base64Image — imagem do QR Code em base64
+- createdAt — data/hora ISO 8601
+
+Evento webhook após pagamento: PIX_RECEIVED
+
+---
+
+### Criar QR Code Dinâmico (Cobrança Imediata)
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic
+
+QR Code de uso único com expiração. Ideal para checkout e cobranças avulsas.
+
+Body:
+- correlationId (string, obrigatório) — GUID de conciliação
+- amount (number, obrigatório) — valor em reais
+- description (string, opcional)
+- expiresIn (number, opcional) — segundos até expirar, padrão 86400 (24h)
+- formatResponse (string, opcional) — ONLY_PAYLOAD ou PAYLOAD_AND_QRCODE
+- payer.name (string, opcional)
+- payer.document (string, opcional) — CPF ou CNPJ
+- payer.validate (boolean, opcional) — true bloqueia outros pagadores
+- splitInstructions[].accountNumber (string) — conta que recebe a parcela
+- splitInstructions[].type (string) — FIXED ou PERCENTAGE
+- splitInstructions[].amount (number) — valor ou percentual (máx. 50% do total)
+- finalBeneficiary.name (string) — para gateways
+- finalBeneficiary.document (string)
+- finalBeneficiary.cityName (string)
+
+Resposta 200:
+- correlationId, transactionId, amount, status (ACTIVE)
+- expiresIn, expiresAt
+- payloadPix, qrCodeImageBase64 (se PAYLOAD_AND_QRCODE)
+
+Cancelar: PATCH /baas/api/v2/pix/qrcode/dynamic/{transactionId}/cancel → 202
+
+Evento webhook após pagamento: PIX_RECEIVED
+
+---
+
+### Criar QR Code com Vencimento (Cobrança com Vencimento)
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/due-date
+
+Cobrança com data de vencimento, juros, multa e desconto. Substituto do boleto.
+
+Body:
+- correlationId (string, obrigatório)
+- amount (number, obrigatório)
+- dueDate (string, obrigatório) — formato YYYY-MM-DD
+- payer.name (string, obrigatório)
+- payer.document (string, obrigatório) — CPF ou CNPJ
+- address.cityName, address.zipCode, address.state, address.street (obrigatório)
+- formatResponse (string, opcional) — ONLY_PAYLOAD ou PAYLOAD_AND_QRCODE
+- maxDaysOverdue (number, opcional) — dias após vencimento em que ainda aceita pagamento, padrão 30
+- taxes.rebateType — FIXED_AMOUNT ou PERCENTAGE (abatimento incondicional)
+- taxes.rebateAmount — valor ou percentual
+- taxes.discountType — FIXED_AMOUNT ou PERCENTAGE (desconto por antecipação)
+- taxes.discountAmount — valor ou percentual (mutuamente exclusivo com discountsDueDate)
+- taxes.discountsDueDate[].dueDate + taxes.discountsDueDate[].amount — até 3 faixas de desconto escalonadas
+- taxes.interestType — FIXED_AMOUNT_CALENDAR_DAY, PERCENTAGE_PER_DAY_CALENDAR_DAY, PERCENTAGE_PER_MONTH_CALENDAR_DAY, PERCENTAGE_PER_YEAR_CALENDAR_DAY
+- taxes.interestAmount
+- taxes.fineType — FIXED_AMOUNT ou PERCENTAGE
+- taxes.fineAmount
+
+Resposta 200:
+- correlationId, transactionId, amount, originalAmount, dueDate, status (ACTIVE)
+- revision, taxes, payer, address, expiresAt, payloadPix
+
+Cancelar: PATCH /baas/api/v2/pix/qrcode/due-date/{transactionId}/cancel → 202
+
+Evento webhook após pagamento: PIX_RECEIVED
+
+---
+
+### Criar Devolução Pix
+
+PUT https://apisandbox.delbank.com.br/baas/api/v1/transactions/pix/{endToEndIdOriginal}/refund
+
+Devolve total ou parcialmente um Pix recebido. Prazo: 90 dias após o recebimento.
+
+Headers adicionais:
+- IdempotencyKey (UUID v4, obrigatório)
+
+Path:
+- endToEndIdOriginal — endToEndId da transação recebida (prefixo E), disponível no webhook PIX_RECEIVED
+
+Body:
+- amount (number, obrigatório) — valor a devolver
+- externalId (string, opcional) — identificador externo, máx. 40 chars
+- description (string, opcional)
+
+Resposta 202:
+- idempotencyKey, externalId, endToEndId (prefixo D), status (PIX_PROCESSING), createdAt
+
+Regras:
+- Devolução total: informe o valor exato original
+- Devolução parcial: informe valor menor; somatório de devoluções não pode ultrapassar o original
+- Intervalo mínimo entre devoluções parciais do mesmo Pix: 2 minutos
+
+Evento webhook após processamento: PIX_REFUNDED
+
+---
+
+### Criar Chave Pix
+
+POST https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries
+
+Headers adicionais:
+- IdempotencyKey (GUID, obrigatório)
+- x-auth-id (opcional, obrigatório para EMAIL e PHONE)
+- x-auth-code (opcional, obrigatório para EMAIL e PHONE)
+
+Body:
+- entryType (string, obrigatório) — EVP, DOCUMENT, EMAIL ou PHONE
+
+Resposta 200:
+- key — valor da chave criada
+- entryType — tipo da chave
+
+Limites: 5 chaves por conta PF, 20 chaves por conta PJ.
+
+---
+
+### Consultar Chaves Pix
+
+GET https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries
+
+Resposta 200: array de objetos { key, entryType }
+
+---
+
+### Remover Chave Pix
+
+DELETE https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries
+
+Body:
+- entryType (string, obrigatório)
+- key (string, obrigatório) — valor da chave a remover
+
+Resposta 204: sem conteúdo
+
+---
+
+### Simular Pagamento Pix (sandbox)
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/{transactionId}/simulate-conclude
+
+Disponível apenas no sandbox. Simula um pagamento real, dispara o webhook PIX_RECEIVED e credita o valor no extrato.
+
+Resposta 202: sem corpo
+
+---
+
+## PIX — PAGAR
+
+### Inicializar Pagamento por Chave Pix
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/dict/payment-initialization
+
+Consulta a chave no DICT do Banco Central e retorna o endToEndId necessário para a transferência.
+
+Body:
+- key (string, obrigatório) — chave Pix do recebedor (CPF, CNPJ, e-mail, telefone ou EVP)
+- holderDocument (string, opcional) — valida se a chave pertence ao documento informado
+
+Resposta 200:
+- endToEndId — identificador de uso único para o POST /transfers
+- key
+- beneficiary.number, beneficiary.branch, beneficiary.type
+- beneficiary.participant.name, beneficiary.participant.ispb
+- beneficiary.holder.name, beneficiary.holder.document, beneficiary.holder.type
+- keyBelongsHolder (boolean, quando holderDocument foi informado)
+
+---
+
+### Inicializar Pagamento por QR Code
+
+POST https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/payment-initialization
+
+Decodifica o payload de um QR Code e retorna os dados necessários para a transferência.
+
+Body:
+- payload (string, obrigatório) — conteúdo textual do QR Code (BR Code, começa com 000201...)
+
+Resposta 200:
+- endToEndId — para usar no POST /transfers
+- transactionId — para usar no POST /transfers
+- key, type (QR_CODE_STATIC, DYNAMIC_IMMEDIATE_PAYMENT, DYNAMIC_PAYMENT_WITH_EXPIRATION)
+- initiationType (QR_CODE_STATIC ou QR_CODE_DYNAMIC) — para usar no POST /transfers
+- status (ACTIVE, CONCLUDED, REMOVED_BY_THE_RECEIVER, REMOVED_BY_PSP)
+- amount, originalAmount, allowChangeAmount, expirationTime
+- beneficiary (dados da conta do recebedor)
+
+---
+
+## BOLETO
+
+Todos os boletos são híbridos por padrão (BANKSLIP_PIX): incluem código de barras e QR Code Pix no mesmo documento.
+Boleto convencional (só código de barras) usa type: BANKSLIP.
+
+### Criar Boleto
+
+POST https://apisandbox.delbank.com.br/baas/v1/charges
+
+Body:
+- type (string, obrigatório) — BANKSLIP ou BANKSLIP_PIX
+- correlationId (string, obrigatório) — GUID único por boleto
+- yourNumber (string, obrigatório) — número do documento (referência sua)
+- ourNumber (string, opcional) — obrigatório apenas para carteira 121
+- dueDate (string, obrigatório) — YYYY-MM-DD
+- Amount (number, obrigatório) — valor em reais
+- payer.name (string, obrigatório)
+- payer.document (string, obrigatório) — CPF ou CNPJ
+- payer.email (string, opcional)
+- payer.phone.prefix + payer.phone.number (opcional)
+- payer.address.zipCode, publicPlace, neighborhood, number, city, state (obrigatório)
+- payer.address.complement (opcional)
+- discount.type (Fixed ou PERCENTAGE) + discount.items[].date + discount.items[].amount (até 3 faixas)
+- lateFine.type + lateFine.date + lateFine.amount (multa após vencimento)
+- latePayment.type + latePayment.date + latePayment.amount (juros após vencimento)
+- finalBeneficiary.name + finalBeneficiary.document + finalBeneficiary.address (para gateways)
+
+Resposta 200:
+- type, correlationId, amount, walletNumber (112 ou 121)
+- yourNumber, ourNumber, dueDate
+- barCode, digitableLine
+- qrCode, qrCodeImageBase64 (apenas BANKSLIP_PIX)
+- status (Pending), payments (array vazio na criação)
+- createdAt, updatedAt
+
+---
+
+### Consultar Boleto por correlationId
+
+GET https://apisandbox.delbank.com.br/baas/v1/charges/{correlationId}
+
+Resposta 200: objeto completo do boleto com status atual (Pending, Paid, Expired, Cancelled).
+
+---
+
+### Consultar Boletos por Período
+
+GET https://apisandbox.delbank.com.br/baas/v1/charges?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&page=1&limit=50
+
+Query params:
+- startDate (obrigatório) — YYYY-MM-DD
+- endDate (obrigatório) — YYYY-MM-DD, intervalo máximo de 1 ano
+- page (opcional) — começa em 1
+- limit (opcional) — máximo 100
+
+---
+
+### Atualizar Data de Vencimento
+
+PATCH https://apisandbox.delbank.com.br/baas/v1/charges/{correlationId}
+
+Body:
+- dueDate (string, obrigatório) — nova data YYYY-MM-DD
+
+Resposta 200: corpo vazio. correlationId, barCode e digitableLine permanecem os mesmos.
+
+---
+
+### Cancelar Boleto (Closeout)
+
+PUT https://apisandbox.delbank.com.br/baas/v1/charges/{correlationId}/closeout
+
+Realiza a baixa definitiva do boleto. Operação irreversível.
+
+Resposta 200: corpo vazio. Status passa para Cancelled.
+
+---
+
+### Imprimir Boleto (PDF)
+
+GET https://apisandbox.delbank.com.br/baas/v1/charges/{correlationId}/stream
+
+Resposta 200: stream binário com Content-Type application/pdf.
+Para BANKSLIP_PIX, o PDF inclui o QR Code impresso.
+
+---
+
+### Simular Pagamento de Boleto (sandbox)
+
+POST https://apisandbox.delbank.com.br/baas/v1/charges/{id}/simulate-conclude
+
+Body:
+- type (string, obrigatório) — BANKSLIP ou PIX
+
+Path id:
+- Para BANKSLIP: use a digitableLine ou barCode
+- Para PIX: use o correlationId
+
+Resposta 202: detalhes da simulação com dados do pagador fictício (DELBANK SIMULATOR).
+
+---
+
+## WEBHOOKS
+
+### Cadastrar Webhook
+
+POST https://apisandbox.delbank.com.br/baas/api/v1/webhooks
+
+Cada webhook escuta um único tipo de evento.
+
+Body:
+- eventType (string, obrigatório) — um dos tipos listados abaixo
+- url (string, obrigatório) — URL do servidor que receberá os eventos via POST
+- authorizationScheme (string, opcional) — NONE, BASIC, BEARER ou HEADER (padrão: NONE)
+- authorization (string, opcional) — valor do header Authorization, obrigatório quando authorizationScheme != NONE
+
+Resposta 201:
+- id, eventType, url, authorizationScheme, createdAt
+
+---
+
+### Listar Webhooks
+
+GET https://apisandbox.delbank.com.br/baas/api/v1/webhooks
+
+Resposta 200: array com todos os webhooks cadastrados pela API key.
+
+---
+
+### Remover Webhook
+
+DELETE https://apisandbox.delbank.com.br/baas/api/v1/webhooks/{id}
+
+Resposta 204: sem conteúdo. Entrega de eventos é interrompida imediatamente.
+
+---
+
+## TIPOS DE EVENTO (WEBHOOK)
+
+Retentativas: até 6 tentativas com backoff exponencial (1min, 5min, 30min, 2h, 12h).
+Timeout: o servidor deve responder HTTP 2xx em até 10 segundos.
+
+| eventType | Quando é disparado |
+|---|---|
+| PIX_RECEIVED | Pix creditado na conta |
+| PIX_PAYMENT_UPDATED | Atualização de status de Pix enviado (efetivado ou com erro) |
+| PIX_REFUNDED | Devolução Pix recebida processada com sucesso |
+| PIX_REFUND_PAYMENT_UPDATED | Erro em devolução Pix enviada |
+| CHARGE_PAID | Boleto pago via código de barras ou QR Code Pix |
+| INFRACTION_NOTIFICATION_CREATED | Notificação de infração MED criada pelo Banco Central |
+| INFRACTION_NOTIFICATION_UPDATED | Notificação de infração MED atualizada |
+| ACCOUNT_STATUS_UPDATED | Mudança de status da conta |
+| WHITELABEL_CUSTOMER_APPROVED | Conta whitelabel aprovada |
+| WHITELABEL_CUSTOMER_DOCUMENTATION_REJECTED | Documentação whitelabel rejeitada |
+
+---
+
+## PAYLOAD DO WEBHOOK PIX_RECEIVED (exemplo)
+
+```json
+{
+  "event": "PIX_RECEIVED",
+  "payload": {
+    "endToEndId": "E38224857202412201244TP05NXG36QK",
+    "correlationId": "40ede975-031d-4517-bdd4-31472d3f00a4",
+    "amount": 99.90,
+    "status": "RECEIVED",
+    "payer": {
+      "name": "João Silva",
+      "document": "***345678**",
+      "holder": { "type": "NATURAL" },
+      "participant": { "name": "BANCO DO BRASIL S.A.", "ispb": "00000000" }
+    },
+    "creditedAt": "2024-12-20T14:00:00.000Z"
+  }
+}
+```
+
+## PAYLOAD DO WEBHOOK CHARGE_PAID (exemplo)
+
+```json
+{
+  "event": "CHARGE_PAID",
+  "payload": {
+    "correlationId": "69577abe-3867-4e0b-85ee-21aa6bc9db9b",
+    "amount": 150.00,
+    "type": "BANKSLIP_PIX",
+    "status": "Paid",
+    "paidAt": "2025-07-05T13:30:15Z"
+  }
+}
+```
+
+---
+
+## STATUS DOS RECURSOS
+
+### QR Code Pix
+- ACTIVE — aguardando pagamento
+- CONCLUDED — pago
+- REMOVED_BY_THE_RECEIVER — cancelado pelo recebedor
+- REMOVED_BY_PSP — cancelado pela instituição
+
+### Boleto
+- Pending — aguardando pagamento
+- Paid — pago
+- Expired — expirado sem pagamento
+- Cancelled — cancelado via closeout
+
+### Devolução Pix
+- PIX_PROCESSING — em processamento
+- DEVOLVED — concluída com sucesso
+- ERROR — falhou no processamento

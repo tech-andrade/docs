@@ -1,6 +1,6 @@
 ---
 title: "Fluxo de envio Pix"
-description: "Como enviar Pix (cash-out) usando a API DelFinance"
+description: "Como enviar Pix (cash-out) usando a API Delfinance"
 icon: "arrow-up-from-line"
 ---
 
@@ -12,7 +12,7 @@ O envio de Pix (cash-out) permite transferir valores para qualquer chave Pix ou 
   <Step title="Cliente envia requisição">
     Sua aplicação chama `POST /v1/pix/payments` informando valor, chave ou dados bancários do recebedor.
   </Step>
-  <Step title="DelFinance valida">
+  <Step title="Delfinance valida">
     Validamos saldo, limites, dados do recebedor via DICT e regras antifraude.
   </Step>
   <Step title="Processamento">
@@ -27,7 +27,7 @@ O envio de Pix (cash-out) permite transferir valores para qualquer chave Pix ou 
 </Steps>
 
 <Warning>
-  **Idempotência é obrigatória** em operações de envio. Sempre envie `X-Idempotency-Key` para evitar duplicidade em retries.
+  **Idempotência é obrigatória** em operações de envio. Sempre envie `IdempotencyKey` para evitar duplicidade em retries.
 </Warning>
 
 ## Exemplo — enviar Pix
@@ -35,11 +35,11 @@ O envio de Pix (cash-out) permite transferir valores para qualquer chave Pix ou 
 <CodeGroup>
 
 ```bash cURL
-curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/payments \
+curl -X POST https://apisandbox.delbank.com.br/v1/pix/payments \
   --cert ./certificado.crt --key ./chave-privada.key \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -H "X-Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000" \
+  -H "IdempotencyKey: 550e8400-e29b-41d4-a716-446655440000" \
   -d '{
     "amount": 250.00,
     "description": "Reembolso pedido #5678",
@@ -54,7 +54,7 @@ curl -X POST https://api.sandbox.delfinance.com.br/v1/pix/payments \
 import { randomUUID } from 'crypto';
 
 const { data } = await axios.post(
-  'https://api.sandbox.delfinance.com.br/v1/pix/payments',
+  'https://apisandbox.delbank.com.br/v1/pix/payments',
   {
     amount: 250.0,
     description: 'Reembolso pedido #5678',
@@ -67,7 +67,7 @@ const { data } = await axios.post(
     httpsAgent: agent,
     headers: {
       Authorization: `Bearer ${token}`,
-      'X-Idempotency-Key': randomUUID(),
+      IdempotencyKey: randomUUID(),
     },
   }
 );
@@ -83,10 +83,10 @@ var body = new {
     }
 };
 
-client.DefaultRequestHeaders.Add("X-Idempotency-Key", Guid.NewGuid().ToString());
+client.DefaultRequestHeaders.Add("IdempotencyKey", Guid.NewGuid().ToString());
 
 var response = await client.PostAsJsonAsync(
-    "https://api.sandbox.delfinance.com.br/v1/pix/payments",
+    "https://apisandbox.delbank.com.br/v1/pix/payments",
     body
 );
 ```

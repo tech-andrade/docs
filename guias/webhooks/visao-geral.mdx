@@ -1,0 +1,93 @@
+---
+title: "Webhooks"
+sidebarTitle: "Visão geral"
+description: "Receba notificações em tempo real sobre pagamentos, transferências e eventos de conta."
+icon: "webhook"
+---
+
+Webhooks são a forma recomendada de receber atualizações da API. Assim que um evento ocorre, seja um pix recebido, um boleto pago, uma transferência enviada, a Delfinance faz uma requisição `POST` para a URL que você registrou, entregando os dados do evento em tempo real.
+
+<Tip>
+Prefira webhooks a polling. A API prioriza a entrega dos webhooks antes de qualquer outra resposta, garantindo que você receba a atualização o mais rápido possível.
+</Tip>
+
+## Registrar um webhook
+
+`POST https://apisandbox.delbank.com.br/baas/api/v1/webhooks`
+
+```json
+{
+  "eventType": "PIX_RECEIVED",
+  "url": "https://seuservidor.com.br/webhooks/pix",
+  "authorizationScheme": "BEARER",
+  "authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Campos
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `eventType` | `enum` | Sim | Tipo de evento a monitorar. Veja a tabela de eventos abaixo. |
+| `url` | `string` | Sim | URL do seu servidor que receberá os eventos via `POST` |
+| `authorizationScheme` | `enum` | Não | Esquema de autenticação: `BASIC`, `BEARER`, `HEADER` ou `NONE` |
+| `authorization` | `string` | Não | Valor enviado no header `Authorization` para autenticar a chamada no seu servidor |
+
+### Validação da URL
+
+A URL informada deve seguir estas regras:
+- Começar com `http://` ou `https://`
+- Conter um domínio válido (ex: `example.com`)
+- Domínio com no mínimo 1 e no máximo 256 caracteres
+- TLD (`.com`, `.br`, etc.) com 1 a 6 caracteres
+- Pode incluir path, query params e fragmentos
+
+### Esquemas de autenticação
+
+| Esquema | Como funciona |
+|---|---|
+| `NONE` | Sem autenticação — use apenas em ambiente de testes |
+| `BASIC` | Envia `Authorization: Basic <authorizationValue>` |
+| `BEARER` | Envia `Authorization: Bearer <authorizationValue>` |
+| `HEADER` | Envia o valor de `authorization` diretamente no header `Authorization` |
+
+## Gerenciar webhooks
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/baas/api/v1/webhooks` | Lista todos os webhooks cadastrados pela API key usada |
+| `GET` | `/baas/api/v1/webhooks/:id` | Consulta um webhook específico por ID |
+| `PATCH` | `/baas/api/v1/webhooks/:id` | Atualiza um webhook (mesmo payload do cadastro) |
+| `DELETE` | `/baas/api/v1/webhooks/:id` | Remove um webhook cadastrado |
+
+## Tipos de evento
+
+| Evento | Descrição | Página |
+|---|---|---|
+| `PIX_RECEIVED` | Pix creditado na conta | [Webhooks Pix](/guias/webhooks/pix) |
+| `PIX_PAYMENT_UPDATED` | Atualização de status de Pix enviado | [Webhooks Pix](/guias/webhooks/pix) |
+| `PIX_REFUNDED` | Devolução Pix recebida | [Webhooks Pix](/guias/webhooks/pix) |
+| `PIX_REFUND_PAYMENT_UPDATED` | Erro em devolução Pix enviada | [Webhooks Pix](/guias/webhooks/pix) |
+| `CHARGE_PAID` | Boleto pago e creditado | [Webhooks Boleto](/guias/webhooks/boleto) |
+| `INFRACTION_NOTIFICATION_CREATED` | Notificação de infração MED criada | [MEDs](/guias/webhooks/meds) |
+| `INFRACTION_NOTIFICATION_UPDATED` | Notificação de infração MED atualizada | [MEDs](/guias/webhooks/meds) |
+| `ACCOUNT_STATUS_UPDATED` | Mudança de status da conta | [Outros Eventos](/guias/webhooks/outros) |
+| `WHITELABEL_CUSTOMER_APPROVED` | Conta whitelabel aprovada | [Outros Eventos](/guias/webhooks/outros) |
+| `WHITELABEL_CUSTOMER_DOCUMENTATION_REJECTED` | Documentação whitelabel rejeitada | [Outros Eventos](/guias/webhooks/outros) |
+
+## Próximos passos
+
+<CardGroup cols={2}>
+  <Card title="Webhooks Pix" icon="pix" href="/guias/webhooks/pix">
+    PIX_RECEIVED, PIX_PAYMENT_UPDATED, PIX_REFUNDED, PIX_REFUND_PAYMENT_UPDATED
+  </Card>
+  <Card title="Webhooks Boleto" icon="barcode" href="/guias/webhooks/boleto">
+    CHARGE_PAID
+  </Card>
+  <Card title="MEDs" icon="triangle-exclamation" href="/guias/webhooks/meds">
+    INFRACTION_NOTIFICATION_CREATED e INFRACTION_NOTIFICATION_UPDATED
+  </Card>
+  <Card title="Outros Eventos" icon="bell" href="/guias/webhooks/outros">
+    Status de conta e aprovação whitelabel
+  </Card>
+</CardGroup>

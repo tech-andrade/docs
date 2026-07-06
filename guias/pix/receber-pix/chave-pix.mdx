@@ -1,0 +1,100 @@
+---
+title: "Gerenciar Chave Pix"
+sidebarTitle: "Chave Pix"
+description: "Entenda como usar uma chave Pix para receber pagamentos e saiba como criar, consultar e remover chaves via API."
+icon: "key"
+---
+
+Uma chave Pix é um apelido para a sua conta. Em vez de passar agência e número de conta para quem vai te pagar, basta compartilhar a chave, que pode ser seu CPF, CNPJ, e-mail, celular ou uma chave aleatória (EVP).
+
+Você pode gerenciar suas chaves pelo aplicativo, internet banking ou via API. Esta página foca na gestão via API, com suporte à criação de chaves do tipo **EVP** (chave aleatória).
+
+<Note>
+Cada conta suporta até **5 chaves Pix simultâneas para Pessoa Física** e até **20 chaves Pix simultâneas para Pessoa Jurídica**, conforme regra do Banco Central.
+</Note>
+
+## Tipos de chave
+
+| Tipo | Identificador | Observação |
+|---|---|---|
+| `DOCUMENT` | CPF ou CNPJ | Gerado automaticamente pelo banco para a conta principal |
+| `EVP` | Chave aleatória (UUID) | Criada via API ou app, sem dados pessoais |
+| `EMAIL` | Endereço de e-mail | Requer validação por código |
+| `PHONE` | Número de celular | Requer validação por SMS |
+
+<Tip>
+Para automações e integrações onde você precisa gerar múltiplas chaves sem expor dados pessoais, o tipo **EVP** é o mais indicado. A chave é um UUID de 36 caracteres gerado automaticamente.
+</Tip>
+
+## Criar uma chave EVP
+
+Chaves EVP não exigem nenhum dado adicional no corpo da requisição, nem validação por código. Basta enviar o `entryType`.
+
+```bash cURL
+curl --request POST \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "entryType": "EVP"
+}'
+```
+
+A resposta contém a chave gerada, que pode ser compartilhada imediatamente para receber Pix.
+
+## Consultar chaves cadastradas
+
+Retorna todas as chaves Pix registradas na conta.
+
+```bash cURL
+curl --request GET \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+
+```json Resposta
+[
+    { "key": "14414076000118" },
+    { "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222" }
+]
+```
+
+## Remover uma chave
+
+Para remover uma chave, informe o `entryType` e o valor da `key` no corpo da requisição.
+
+```bash cURL
+curl --request DELETE \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "entryType": "EVP",
+    "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222"
+}'
+```
+
+A resposta de sucesso é `204 No Content`, sem corpo.
+
+## Gerenciar pelo app ou internet banking
+
+Se preferir não usar a API, todas as operações de chave Pix também estão disponíveis no aplicativo e no internet banking da Delfinance, incluindo os tipos que exigem validação por código (e-mail e celular).
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Criar chave Pix" icon="plus" href="/api-reference/pix/criar-chave-pix">
+    `POST /baas/api/v1/pix/dict/entries`
+  </Card>
+  <Card title="Consultar chaves" icon="magnifying-glass" href="/api-reference/pix/consultar-chaves-pix">
+    `GET /baas/api/v1/pix/dict/entries`
+  </Card>
+  <Card title="Remover chave" icon="trash" href="/api-reference/pix/remover-chave-pix">
+    `DELETE /baas/api/v1/pix/dict/entries`
+  </Card>
+</CardGroup>

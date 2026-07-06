@@ -1,0 +1,137 @@
+---
+title: "Inicializar Pagamento por QR Code"
+api: "POST /pix/qrcode/payment-initialization"
+description: "Decodifica o payload de um QR Code Pix e retorna os dados da cobrança e o endToEndId para executar o pagamento."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Pagar via QR Code](/guias/pix/pagar-pix/por-qrcode).
+</Note>
+
+Decodifica o payload textual de um QR Code Pix (estático ou dinâmico), valida o estado da cobrança e retorna os dados necessários para executar o pagamento via `POST /transfers`, incluindo o `endToEndId` e o `initiationType` correto.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="payload" type="string" required>
+  O conteúdo textual do QR Code — também chamado de "Pix Copia e Cola" ou BR Code. É a string que começa com `000201...`.
+</ParamField>
+
+## Response
+
+<ResponseField name="endToEndId" type="string">
+  Identificador único de uso único. Deve ser enviado no `POST /transfers` para efetivar o pagamento.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Identificador de conciliação do QR Code gerado pelo recebedor. Deve ser enviado no `POST /transfers` junto com o `endToEndId`.
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  Chave Pix do recebedor vinculada ao QR Code.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Tipo do QR Code. Valores possíveis:
+  - `QR_CODE_STATIC` — QR Code Estático
+  - `DYNAMIC_IMMEDIATE_PAYMENT` — QR Code Dinâmico imediato
+  - `DYNAMIC_PAYMENT_WITH_EXPIRATION` — QR Code Dinâmico com vencimento
+</ResponseField>
+
+<ResponseField name="initiationType" type="string">
+  Tipo de iniciação que deve ser usado no campo `initiationType` do `POST /transfers`. Valores possíveis: `QR_CODE_STATIC` ou `QR_CODE_DYNAMIC`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Estado atual do QR Code:
+  - `ACTIVE` — pode ser pago
+  - `CONCLUDED` — já foi pago
+  - `REMOVED_BY_THE_RECEIVER` — cancelado pelo recebedor
+  - `REMOVED_BY_PSP` — cancelado pela instituição
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor da cobrança.
+</ResponseField>
+
+<ResponseField name="originalAmount" type="number">
+  Valor original antes de eventuais ajustes.
+</ResponseField>
+
+<ResponseField name="allowChangeAmount" type="boolean">
+  Indica se o valor pode ser alterado pelo pagador.
+</ResponseField>
+
+<ResponseField name="expirationTime" type="number">
+  Tempo restante de validade do QR Code em segundos (para QR Codes Dinâmicos).
+</ResponseField>
+
+<ResponseField name="categoryCode" type="string">
+  Código de categoria do recebedor. Padrão: `"0000"`.
+</ResponseField>
+
+<ResponseField name="capturedAt" type="string">
+  Instante em que o payload foi capturado por esta requisição, em ISO 8601.
+</ResponseField>
+
+<ResponseField name="beneficiary" type="object">
+  Dados da conta do recebedor.
+</ResponseField>
+
+<ResponseField name="additionalInfos" type="array">
+  Informações adicionais incluídas no QR Code pelo recebedor.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/payment-initialization' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "payload": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargeffab8b4c963344c283e491f5e5204000053039865802BR5907DELBANK6007ARACAJU62070503***6304CB42"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "key": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+    "endToEndId": "E3822485720230801135525927150397",
+    "transactionId": "vchargeffab8b4c963344c283e491f5e",
+    "expirationTime": 1800,
+    "allowChangeAmount": false,
+    "categoryCode": "0000",
+    "type": "DYNAMIC_IMMEDIATE_PAYMENT",
+    "initiationType": "QR_CODE_DYNAMIC",
+    "status": "ACTIVE",
+    "amount": 99.90,
+    "originalAmount": 99.90,
+    "capturedAt": "2024-12-20T14:00:00.000Z",
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        },
+        "holder": {
+            "name": "EMPRESA RECEBEDORA LTDA",
+            "document": "30287697789",
+            "type": "NATURAL"
+        }
+    }
+}
+```
+</ResponseExample>

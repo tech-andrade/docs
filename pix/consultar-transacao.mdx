@@ -17,14 +17,14 @@ GET /v1/pix/transactions/{transaction_id}
 <CodeGroup>
 
 ```bash cURL
-curl https://api.sandbox.delfinance.com.br/v1/pix/transactions/pix_tx_123456 \
+curl https://apisandbox.delbank.com.br/v1/pix/transactions/pix_tx_123456 \
   --cert ./certificado.crt --key ./chave-privada.key \
   -H "Authorization: Bearer $TOKEN"
 ```
 
 ```javascript Node.js
 const { data } = await axios.get(
-  `https://api.sandbox.delfinance.com.br/v1/pix/transactions/${transactionId}`,
+  `https://apisandbox.delbank.com.br/v1/pix/transactions/${transactionId}`,
   {
     httpsAgent: agent,
     headers: { Authorization: `Bearer ${token}` },
@@ -34,7 +34,7 @@ const { data } = await axios.get(
 
 ```csharp C#
 var response = await client.GetFromJsonAsync<PixTransaction>(
-    $"https://api.sandbox.delfinance.com.br/v1/pix/transactions/{transactionId}"
+    $"https://apisandbox.delbank.com.br/v1/pix/transactions/{transactionId}"
 );
 ```
 
@@ -59,7 +59,7 @@ var response = await client.GetFromJsonAsync<PixTransaction>(
 
 | Campo | Tipo | Descrição |
 | --- | --- | --- |
-| `id` | string | Identificador da transação na DelFinance |
+| `id` | string | Identificador da transação na Delfinance |
 | `end_to_end_id` | string | Identificador único no SPI/Bacen |
 | `type` | string | `cash_in` (recebimento) ou `cash_out` (envio) |
 | `status` | string | Status atual (veja [Status](/pix/status)) |
@@ -69,5 +69,5 @@ var response = await client.GetFromJsonAsync<PixTransaction>(
 | `confirmed_at` | ISO 8601 | Data de confirmação (quando aplicável) |
 
 <Tip>
-  A consulta é idempotente por natureza e não exige `X-Idempotency-Key`.
+  A consulta é idempotente por natureza e não exige `IdempotencyKey`.
 </Tip>

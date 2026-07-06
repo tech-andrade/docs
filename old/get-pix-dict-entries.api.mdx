@@ -1,0 +1,71 @@
+---
+id: get-pix-dict-entries
+title: "Retrieve PIX dictionary entries"
+description: "Fetch a list of PIX dictionary entries."
+sidebar_label: "Retrieve PIX dictionary entries"
+hide_title: true
+hide_table_of_contents: true
+api: eJyVVE1r20AQ/SvLnFpYWbLjtEa3QNLim0lTCAQfRquRtYm02uyujIzQfy8jy2m+ISfBfO2b996oh5y8ctoG3RhI4RcFVQoUlfZBNIXYrG9FrhVn0R0EmeA0+RlIaCw55Pg6hxR2FDa6u9QqXB1LQELAnYf0DjbrW9hKsOiwpkCOgz0YrAlS6KKcqgzNQ4RWRw90AAmakZSEOTmQ4Oix1Y5ySINrSYJXJdUIaQ/hYHmED06bHQzy1S4Xm7V4oIMoGiewDSWZoNUIGQb5EkChDRpFESrVtCZEOn8D4+Xsm5LE5VOf4AXE1CxMW2dfQz5sudjbxnjynF8kCX9evvmnVYq8L9pKnIpBgmpMIBO4HK2tpg3je889/ds30TkcSQ5U+2fxJrsnFUCCdSxt0EckrMg7gIdBAnVY24pGNccymC+X82Xy80eSJPP5amT5mMhXq0VB51mUZCuMltnZeYTqLIkoX/1YZAUuFosFDNvj3JpC2UymYjwYSkghzhB9jFbH+3lsdRezLWN6cpsntz95q3UVSxeC9WnMPR5NnjXdbPLaTDX1LHPAvGtTNOOGOvAusNHd6JoaDe6oZmpfi39lctvoMcFPHoPzWTJL2IS28aHGkfzJYtfEIPf0wTW9nt//1/QL9zgpFKgLsa1Qs8mPRPQThXfAFIIEtJqhz5lc3fHzelT+hGcroWx84I6+z9DTX1cNA4cfW3IHSO+2EvboNGaj/NtBnu6E2c+150QOaYGVp0+2+3Y9Xch38cmxfrDb0Vnv/T/2WLVc/8yAF0qRDc9yb26FvfDkvN9XNzAM/wB/Zbrf
+sidebar_class_name: "get api-method"
+info_path: Pix Key Management for Baas/Maintenance/pix-key-management
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve PIX dictionary entries"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/baas/api/v1/pix/dict/entries"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Fetch a list of PIX dictionary entries.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"x-delbank-api-key","in":"header","required":true,"schema":{"type":"string"},"description":"API key for authentication"},{"name":"x-delfinance-account-id","in":"header","required":true,"schema":{"type":"string"},"description":"Account Number linked to the API key used for validation"}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Successful response","content":{"application/json":{"schema":{"type":"array","items":{"type":"object","properties":{"key":{"type":"string"}}}},"example":[{"key":"14414076000118"},{"key":"d882fe5b-0b8a-4b35-ac30-ed862bfa2222"}]}}}}}
+>
+  
+</StatusCodes>
+
+
+      

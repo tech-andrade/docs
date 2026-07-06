@@ -1,0 +1,71 @@
+---
+title: "Introdução"
+description: "Padrões técnicos, URLs base e autenticação das APIs da Delfinance"
+---
+
+Esta seção detalha os padrões de comunicação, autenticação, headers obrigatórios e tratamento de erros utilizados por todas as nossas APIs. 
+
+Você pode utilizar o **Playground interativo** à direita de cada endpoint para testar as chamadas diretamente no nosso ambiente de testes (Sandbox).
+
+---
+
+## 1. URLs Base
+
+Todas as requisições devem ser feitas utilizando conexões HTTPS seguras:
+
+*   **Sandbox**: `https://apisandbox.delbank.com.br`
+*   **Produção**: `https://api.delbank.com.br`
+
+---
+
+## 2. Autenticação
+
+Nossas APIs utilizam uma autenticação baseada em 3 camadas de segurança:
+
+1. **Credenciais da API** via `x-delbank-api-key` e `x-delfinance-account-id`
+2. **mTLS** em Produção
+3. **Allowlist de IPs** em Produção
+
+```text
+x-delbank-api-key: SUA_API_KEY
+x-delfinance-account-id: SUA_ACCOUNT_ID
+```
+
+Consulte o guia de [Primeiros Passos](/iniciacao/primeiros-passos) para aprender a configurar credenciais, mTLS e IPs aprovados.
+
+---
+
+## 3. Headers Padrão
+
+| Header | Tipo | Obrigatório | Descrição |
+| :--- | :--- | :--- | :--- |
+| `x-delbank-api-key` | string | Sim | Chave de API da integração |
+| `x-delfinance-account-id` | string | Sim | Identificador da conta acessada |
+| `X-Request-Id` | string (UUID) | Não | Identificador único da requisição para fins de rastreio e debug. |
+
+---
+
+## 4. Padrão de Resposta de Erro
+
+Quando uma chamada de API falha, a Delfinance retorna o status HTTP adequado acompanhado de um JSON estruturado com detalhes do erro:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PARAMETER",
+    "message": "O campo 'amount' deve ser maior que zero.",
+    "field": "amount"
+  }
+}
+```
+
+### Códigos de Erro Comuns
+
+*   **`UNAUTHORIZED`** (HTTP 401): Token inválido ou expirado.
+*   **`FORBIDDEN`** (HTTP 403): O cliente não possui permissão para acessar o recurso solicitado.
+*   **`INVALID_PARAMETER`** (HTTP 400): Um ou mais campos no corpo da requisição possuem valores inválidos.
+*   **`RESOURCE_NOT_FOUND`** (HTTP 404): O recurso referenciado pelo ID não existe.
+*   **`CONFLICT`** (HTTP 409): A requisição falhou por conflito de estado ou por duplicidade (Idempotência).
+*   **`RATE_LIMITED`** (HTTP 429): Limite de requisições excedido.
+*   **`INTERNAL_SERVER_ERROR`** (HTTP 500): Ocorreu um erro inesperado em nossos servidores.

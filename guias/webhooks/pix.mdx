@@ -1,0 +1,293 @@
+---
+title: "Webhooks Pix"
+sidebarTitle: "Pix"
+description: "Eventos de Pix recebido, enviado e devoluções."
+icon: "pix"
+---
+
+Esta página cobre os quatro eventos de webhook relacionados a transações Pix.
+
+## PIX_RECEIVED
+
+Disparado quando um Pix é creditado na sua conta. É o principal evento para confirmar o recebimento de pagamentos Pix.
+
+**Como registrar:**
+```json
+{
+  "eventType": "PIX_RECEIVED",
+  "url": "https://seuservidor.com.br/webhooks/pix-recebido",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload recebido na sua URL:**
+```json
+{
+    "eventType": "PIX_RECEIVED",
+    "correlationId": "S110211111111111111111111",
+    "referenceId": "E182361202024041911111111111111",
+    "endToEndId": "E182361202024041911111111111111",
+    "amount": 100.0,
+    "createdAt": "2024-04-19T16:20:22.274Z",
+    "proof": {
+        "eventType": "PIX_PAYMENT_EFFECTIVE",
+        "endToEndId": "E182361202024041911111111111111",
+        "idempotencyKey": "E182361202024041911111111111111",
+        "correlationId": "S110211111111111111111111",
+        "status": "PIX_EFFECTIVE",
+        "amount": 100.0,
+        "payer": {
+            "number": "49041111116",
+            "branch": "0001",
+            "type": "PAYMENT",
+            "participant": { "name": "NU PAGAMENTOS - IP", "ispb": "18236120" },
+            "holder": { "name": "GUSTAVO EXEMPLO", "document": "94881558099", "type": "NATURAL" }
+        },
+        "beneficiary": {
+            "number": "11111",
+            "branch": "0001",
+            "type": "CURRENT",
+            "participant": { "name": "DELCRED SCD S.A.", "ispb": "38224857" },
+            "holder": { "document": "48689840000130", "type": "LEGAL" }
+        }
+    }
+}
+```
+
+<AccordionGroup>
+<Accordion title="Campos do payload PIX_RECEIVED">
+
+| Campo | Descrição |
+|---|---|
+| `eventType` | `"PIX_RECEIVED"` |
+| `correlationId` | Identificador de conciliação do QR Code ou cobrança |
+| `referenceId` | Identificador de rastreamento do pagamento |
+| `endToEndId` | Identificador único da transação Pix no SPI |
+| `amount` | Valor recebido em reais |
+| `createdAt` | Timestamp de criação da transação |
+| `proof.eventType` | Tipo de evento interno (`PIX_PAYMENT_EFFECTIVE`) |
+| `proof.status` | Status da transação (`PIX_EFFECTIVE`) |
+| `proof.payer` | Dados da conta pagadora (número, agência, tipo, banco, titular) |
+| `proof.beneficiary` | Dados da conta beneficiária (sua conta) |
+
+</Accordion>
+</AccordionGroup>
+
+---
+
+## PIX_PAYMENT_UPDATED
+
+Disparado quando o status de um Pix enviado é atualizado. Cobre tanto liquidações bem-sucedidas quanto erros. Também é acionado para devoluções Pix enviadas bem-sucedidas.
+
+<Warning>
+Para **erros em devoluções enviadas**, use `PIX_REFUND_PAYMENT_UPDATED` — não este evento.
+</Warning>
+
+**Como registrar:**
+```json
+{
+  "eventType": "PIX_PAYMENT_UPDATED",
+  "url": "https://seuservidor.com.br/webhooks/pix-enviado",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload — Pix enviado com sucesso:**
+```json
+{
+    "eventType": "PIX_PAYMENT_EFFECTIVE",
+    "endToEndId": "E3822485720231013020122659082578",
+    "idempotencyKey": "idempotencyKey999999",
+    "status": "PIX_EFFECTIVE",
+    "amount": 20.0,
+    "createdAt": "2023-10-13T05:01:22.953Z",
+    "description": "Pagamento de fatura",
+    "payer": {
+        "number": "999999",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participant": { "ispb": "38224857" },
+        "holder": { "name": "EMPRESA EXEMPLO", "document": "111111111111111", "type": "LEGAL" }
+    },
+    "beneficiary": {
+        "number": "1234556",
+        "branch": "0001",
+        "type": "PAYMENT",
+        "participant": { "ispb": "08561701" },
+        "holder": { "name": "FULANO DA SILVA", "document": "11111111111", "type": "NATURAL" }
+    }
+}
+```
+
+**Payload — Pix enviado com erro:**
+```json
+{
+    "eventType": "PIX_PAYMENT_ERROR",
+    "endToEndId": "E3822485720231013015126180935816",
+    "idempotencyKey": "idempotencyKey12345",
+    "status": "PIX_ERROR",
+    "error": {
+        "code": "AC06",
+        "description": "Conta transacional do usuário recebedor encontra-se bloqueada."
+    },
+    "amount": 100.0,
+    "createdAt": "2023-10-13T04:51:26.84Z",
+    "payer": { "..." : "..." },
+    "beneficiary": { "..." : "..." }
+}
+```
+
+<AccordionGroup>
+<Accordion title="Campos do payload PIX_PAYMENT_UPDATED">
+
+| Campo | Descrição |
+|---|---|
+| `eventType` | `"PIX_PAYMENT_EFFECTIVE"` (sucesso) ou `"PIX_PAYMENT_ERROR"` (erro) |
+| `endToEndId` | Identificador único da transação |
+| `idempotencyKey` | Chave de idempotência usada no envio |
+| `status` | `"PIX_EFFECTIVE"` ou `"PIX_ERROR"` |
+| `error.code` | Código de erro do SPI (quando `PIX_ERROR`) |
+| `error.description` | Descrição do motivo do erro |
+| `amount` | Valor da transação |
+| `createdAt` | Timestamp de criação |
+| `description` | Descrição informada pelo pagador |
+| `payer` | Dados da conta debitada (sua conta) |
+| `beneficiary` | Dados da conta creditada (destinatário) |
+
+</Accordion>
+</AccordionGroup>
+
+---
+
+## PIX_REFUNDED
+
+Disparado quando uma devolução Pix é creditada na sua conta — ou seja, quando alguém devolveu um Pix para você.
+
+**Como registrar:**
+```json
+{
+  "eventType": "PIX_REFUNDED",
+  "url": "https://seuservidor.com.br/webhooks/pix-devolucao-recebida",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "eventType": "PIX_REFUNDED",
+    "endToEndId": "D38224857202502281818Xo3VqKXafNW",
+    "originalEndToEndId": "E38224857202502281816OTCGIA6RVKG",
+    "amount": 10,
+    "bankAccount": "43028",
+    "refundCode": "MD06",
+    "reasonRefund": "Pedido reembolso",
+    "idempotencyKey": "9ee5dfcb-8733-4271-bceb-64130171b616",
+    "externalId": "13c5edd4-616e-43a1-aa80-c25b6ee15967",
+    "createdAt": "2025-02-28T18:18:35.861Z",
+    "proof": {
+        "endToEndId": "D38224857202502281818Xo3VqKXafNW",
+        "originalEndToEndId": "E38224857202502281816OTCGIA6RVKG",
+        "status": "PIX_EFFECTIVE",
+        "operationType": "CREDIT_REFUND",
+        "amount": 10,
+        "createdAt": "2025-02-28T18:18:35.776Z",
+        "finishedAt": "2025-02-28T18:18:35.776Z",
+        "description": "Pedido reembolso",
+        "payer": {
+            "number": "10138",
+            "branch": "0001",
+            "type": "CURRENT",
+            "participant": { "name": "DELCRED SCD S.A.", "ispb": "38224857" },
+            "holder": { "name": "FIDC DELCRED", "document": "11468192000181", "type": "LEGAL" }
+        },
+        "beneficiary": {
+            "number": "43028",
+            "branch": "0001",
+            "type": "CURRENT",
+            "participant": { "name": "DELCRED SCD S.A.", "ispb": "38224857" },
+            "holder": { "name": "JOSE WILSON DOS SANTOS JUNIOR", "document": "498925*", "type": "NATURAL" }
+        }
+    }
+}
+```
+
+<AccordionGroup>
+<Accordion title="Campos do payload PIX_REFUNDED">
+
+| Campo | Descrição |
+|---|---|
+| `eventType` | `"PIX_REFUNDED"` |
+| `endToEndId` | Identificador único da devolução |
+| `originalEndToEndId` | Identificador da transação Pix original que gerou esta devolução |
+| `amount` | Valor devolvido |
+| `bankAccount` | Número da conta que recebeu a devolução |
+| `refundCode` | Código de motivo da devolução (ex: `"MD06"`) |
+| `reasonRefund` | Descrição textual do motivo |
+| `idempotencyKey` | Chave de idempotência |
+| `externalId` | Identificador externo para conciliação |
+| `proof.operationType` | `"CREDIT_REFUND"` |
+| `proof.status` | Status da devolução (`PIX_EFFECTIVE`) |
+| `proof.payer` | Quem originou a devolução |
+| `proof.beneficiary` | Sua conta (que recebeu de volta) |
+
+</Accordion>
+</AccordionGroup>
+
+---
+
+## PIX_REFUND_PAYMENT_UPDATED
+
+Disparado quando ocorre um **erro** ao processar uma devolução Pix que você enviou. Não é acionado para devoluções bem-sucedidas — para essas, use `PIX_PAYMENT_UPDATED`.
+
+**Como registrar:**
+```json
+{
+  "eventType": "PIX_REFUND_PAYMENT_UPDATED",
+  "url": "https://seuservidor.com.br/webhooks/pix-devolucao-erro",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "status": "PIX_ERROR",
+    "error": {
+        "code": "DEL20",
+        "description": "Pix original ainda não foi processado."
+    },
+    "eventType": "PIX_REFUND_PAYMENT_ERROR",
+    "endToEndId": "D38224857202505151236QaPfJMQyyRj",
+    "idempotencyKey": "E38224857202505151235EU6L6UCKIAM",
+    "correlationId": null,
+    "amount": 0.01,
+    "createdAt": "2025-05-15T12:36:48",
+    "finishedAt": "2025-05-15T12:36:48",
+    "description": null,
+    "payer": null,
+    "beneficiary": null
+}
+```
+
+<AccordionGroup>
+<Accordion title="Campos do payload PIX_REFUND_PAYMENT_UPDATED">
+
+| Campo | Descrição |
+|---|---|
+| `eventType` | `"PIX_REFUND_PAYMENT_ERROR"` |
+| `status` | `"PIX_ERROR"` |
+| `error.code` | Código interno do erro |
+| `error.description` | Descrição do erro |
+| `endToEndId` | Identificador da devolução com erro |
+| `idempotencyKey` | Chave de idempotência da devolução original |
+| `correlationId` | Correlation ID da transação (pode ser nulo) |
+| `amount` | Valor que seria devolvido |
+| `createdAt` / `finishedAt` | Timestamps do processamento |
+
+</Accordion>
+</AccordionGroup>

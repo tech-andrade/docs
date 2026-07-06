@@ -1,0 +1,113 @@
+---
+title: "Inicializar Pagamento por Chave"
+api: "POST /pix/dict/payment-initialization"
+description: "Consulta uma chave Pix no DICT e retorna o endToEndId necessário para executar a transferência."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Pagar via Chave Pix](/guias/pix/pagar-pix/por-chave).
+</Note>
+
+Consulta a chave informada no DICT (Diretório de Identificadores de Contas Transacionais) do Banco Central e retorna os dados da conta vinculada, incluindo o `endToEndId` de uso único que deve ser enviado no `POST /transfers` para efetivar o pagamento.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="key" type="string" required>
+  Chave Pix do recebedor. Aceita: CPF, CNPJ, e-mail, número de telefone com DDD e código de país (`+55...`), ou chave aleatória (EVP).
+</ParamField>
+
+<ParamField body="holderDocument" type="string">
+  CPF ou CNPJ do titular esperado. Quando informado, a resposta inclui o campo `keyBelongsHolder` indicando se a chave pertence a esse documento — útil para validar que o pagamento vai para a pessoa certa.
+</ParamField>
+
+## Response
+
+<ResponseField name="endToEndId" type="string">
+  Identificador único de uso único. Deve ser enviado no corpo do `POST /transfers` para efetivar o pagamento. Expira após um curto período.
+</ResponseField>
+
+<ResponseField name="key" type="string">
+  Chave Pix consultada.
+</ResponseField>
+
+<ResponseField name="beneficiary" type="object">
+  Dados da conta vinculada à chave.
+
+  <Expandable title="beneficiary">
+    <ResponseField name="beneficiary.number" type="string">
+      Número da conta.
+    </ResponseField>
+    <ResponseField name="beneficiary.branch" type="string">
+      Agência.
+    </ResponseField>
+    <ResponseField name="beneficiary.type" type="string">
+      Tipo de conta (`CURRENT`, `PAYMENT`, `SAVING`, `SALARY`).
+    </ResponseField>
+    <ResponseField name="beneficiary.participant.name" type="string">
+      Nome da instituição financeira.
+    </ResponseField>
+    <ResponseField name="beneficiary.participant.ispb" type="string">
+      Código ISPB da instituição.
+    </ResponseField>
+    <ResponseField name="beneficiary.holder.name" type="string">
+      Nome do titular (pode vir mascarado por privacidade).
+    </ResponseField>
+    <ResponseField name="beneficiary.holder.document" type="string">
+      Documento do titular (mascarado).
+    </ResponseField>
+    <ResponseField name="beneficiary.holder.type" type="string">
+      `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="keyBelongsHolder" type="boolean">
+  Presente apenas quando `holderDocument` foi informado. `true` se a chave pertence ao documento informado, `false` caso contrário.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/dict/payment-initialization' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "key": "+5511999975734",
+    "holderDocument": "30287697789"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "endToEndId": "E38224857202412201244TP05NXG36QK",
+    "key": "+5511999975734",
+    "beneficiary": {
+        "number": "29823",
+        "branch": "1",
+        "type": "CURRENT",
+        "participant": {
+            "name": "DELCRED SCD S.A.",
+            "ispb": "38224857"
+        },
+        "holder": {
+            "name": "HOMOLOGACAO INTEGRACAO API",
+            "document": "***876977**",
+            "type": "NATURAL"
+        }
+    },
+    "keyBelongsHolder": true
+}
+```
+</ResponseExample>

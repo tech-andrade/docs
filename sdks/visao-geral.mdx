@@ -1,0 +1,47 @@
+---
+title: "SDKs e Bibliotecas"
+sidebarTitle: "Visão geral"
+description: "Bibliotecas oficiais para acelerar sua integração com a Delfinance."
+icon: "code"
+---
+
+Os SDKs oficiais abstraem autenticação, certificados mTLS, renovação de tokens, idempotência e tratamento de erros, você escreve menos código e integra mais rápido.
+
+## SDKs disponíveis
+
+<CardGroup cols={3}>
+  <Card title="Node.js" icon="node-js" href="/sdks/nodejs/introducao">
+    `@delbank/Delfinance-api-sdk`
+  </Card>
+  <Card title="Python" icon="python" href="/sdks/python/introducao">
+    `Delfinance-api-sdk`
+  </Card>
+  <Card title="PHP" icon="php" href="/sdks/php/introducao">
+    `Delfinance/Delfinance-api-sdk`
+  </Card>
+  <Card title="C# (.NET)" icon="microsoft" href="/sdks/csharp/introducao">
+    `Delfinance-api-sdk`
+  </Card>
+  <Card title="Java" icon="java" href="/sdks/java/introducao">
+    `br.com.Delfinance/Delfinance-api-sdk`
+  </Card>
+</CardGroup>
+
+## O que os SDKs fazem por você
+
+| Recurso | Sem SDK | Com SDK |
+|---|---|---|
+| Autenticação OAuth2 | Manual | Automática |
+| Renovação de token expirado | Manual | Automática |
+| Configuração mTLS | Manual | Uma linha |
+| `IdempotencyKey` | Você gera | Automático |
+| Retry com backoff | Você implementa | Incluído |
+| Tratamento de erros | Você parseia | Tipado |
+
+## Requisitos gerais
+
+Todos os SDKs precisam de:
+
+- **API Key** e **Account ID** — obtidos no Portal do Desenvolvedor
+- **Certificado mTLS** (`.crt`) e **chave privada** (`.key`) — gerados no portal e necessários para ambientes produtivos
+- Acesso à URL correta: `apisandbox.delbank.com.br` (sandbox) ou `api.delbank.com.br` (produção)

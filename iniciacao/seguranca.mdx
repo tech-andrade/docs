@@ -1,42 +1,52 @@
 ---
 title: "Segurança"
-description: "Boas práticas de segurança para integrações com a DelFinance"
+description: "Conteúdo consolidado na página de autenticação"
 icon: "shield"
 ---
 
-A segurança é pilar central da plataforma DelFinance. Siga estas práticas para proteger sua integração.
+<Warning>
+  Este conteúdo foi consolidado na página [Autenticação, mTLS e allowlist de IPs](/iniciacao/autenticacao).
+</Warning>
+
+## Camadas principais de segurança
+
+Sua integração deve combinar:
+
+1. **Credenciais da API**: `x-delbank-api-key` e `x-delfinance-account-id`
+2. **mTLS**: certificado do cliente e chave privada em Produção
+3. **Allowlist de IPs**: IPs públicos de saída aprovados em Produção
 
 ## Proteção de credenciais
 
 <Warning>
-  **Nunca** exponha `client_secret`, chaves privadas ou tokens em:
+  **Nunca** exponha chaves, certificados, chaves privadas ou tokens em:
 
-  - Repositórios públicos ou privados sem criptografia
-  - Logs de aplicação
-  - Front-end (JavaScript, mobile, apps)
+  - repositórios públicos ou privados sem criptografia
+  - logs de aplicação
+  - front-end (JavaScript, mobile, apps)
   - URLs (query strings)
-  - Mensagens de erro exibidas ao usuário final
+  - mensagens de erro exibidas ao usuário final
 </Warning>
 
 ### Recomendações
 
-- Utilize **cofres de segredos**: AWS Secrets Manager, HashiCorp Vault, Google Secret Manager, Azure Key Vault.
-- Aplique **rotação periódica** de `client_secret` (a cada 90 dias).
-- Restrinja acesso a chaves privadas com `chmod 600` e princípio do menor privilégio.
-- Use **HSM** (Hardware Security Module) em ambientes críticos.
+- utilize **cofres de segredos**: AWS Secrets Manager, HashiCorp Vault, Google Secret Manager, Azure Key Vault;
+- armazene credenciais separadas por ambiente;
+- restrinja acesso a chaves privadas com permissões adequadas;
+- use **HSM** (Hardware Security Module) em ambientes críticos.
 
 ## Transporte seguro
 
 - **TLS 1.2 ou superior** obrigatório.
-- **mTLS** em todas as chamadas (veja [mTLS](/iniciacao/mtls)).
-- Rejeite ciphers fracos (RC4, DES, MD5).
-- Habilite HSTS em aplicações que consomem tokens.
+- **mTLS** em Produção (veja [mTLS](/iniciacao/mtls)).
+- **Allowlist de IPs** em Produção (veja [Filtros de IPs](/iniciacao/filtros-ip)).
+- rejeite ciphers fracos (RC4, DES, MD5).
 
 ## Validação de webhooks
 
-Ao receber webhooks da DelFinance:
+Ao receber webhooks da Delfinance:
 
-1. Valide a assinatura HMAC no header `X-DelFinance-Signature`.
+1. Valide a assinatura HMAC no header `X-Delfinance-Signature`.
 2. Verifique se o timestamp está dentro de uma janela de 5 minutos.
 3. Confirme a origem via allowlist de IPs.
 
@@ -57,20 +67,16 @@ function validateWebhook(payload, signature, secret) {
 
 ## Rate limiting e proteção contra abuso
 
-- Respeite os limites de taxa retornados nos headers `X-RateLimit-*`.
-- Implemente **backoff exponencial** em caso de `429 Too Many Requests`.
-- Monitore anomalias de tráfego na sua aplicação.
-
-## Logs e auditoria
+- respeite os limites de taxa retornados nos headers `X-RateLimit-*`;
+- implemente **backoff exponencial** em caso de `429 Too Many Requests`;
+- monitore anomalias de tráfego na sua aplicação.
 
 ## Dados sensíveis (LGPD)
 
-- Colete apenas os dados necessários.
-- Criptografe dados em repouso (AES-256) e em trânsito (TLS).
-- Implemente controles de acesso baseados em função (RBAC).
-- Documente a base legal do tratamento de dados.
-
-## Checklist de segurança
+- colete apenas os dados necessários;
+- criptografe dados em repouso (AES-256) e em trânsito (TLS);
+- implemente controles de acesso baseados em função (RBAC);
+- documente a base legal do tratamento de dados.
 
 ## Reportando vulnerabilidades
 

@@ -1,0 +1,75 @@
+---
+title: "Consultar transação Pix"
+api: "GET /v1/pix/transactions/{transaction_id}"
+description: "Recupere os detalhes e o status completo de qualquer transação Pix recebida ou enviada"
+---
+
+Retorna os metadados de uma transação financeira Pix efetuada (Cash In ou Cash Out) a partir do seu identificador de transação.
+
+### Parâmetros de rota
+
+<ParamField path="transaction_id" type="string" required>
+  ID único da transação gerado pela Delfinance (ex: `pix_tx_123456`).
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  Identificador único da transação na Delfinance.
+</ResponseField>
+
+<ResponseField name="end_to_end_id" type="string" required>
+  Identificador único no SPI do Banco Central.
+</ResponseField>
+
+<ResponseField name="type" type="string" required>
+  Sentido do fluxo financeiro: `cash_in` (recebimento) ou `cash_out` (envio).
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual da transação:
+  - `pending`: Aguardando processamento.
+  - `confirmed`: Processado e liquidado com sucesso.
+  - `failed`: Falha no processamento.
+  - `refunded`: Transação estornada total ou parcialmente.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor total da transação.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Descrição informada no ato da criação.
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de criação da transação (ISO 8601).
+</ResponseField>
+
+<ResponseField name="confirmed_at" type="string">
+  Data de liquidação/confirmação da transação (ISO 8601).
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://apisandbox.delbank.com.br/v1/pix/transactions/pix_tx_123456 \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "pix_tx_123456",
+  "end_to_end_id": "E12345678202601011200abcdef12345",
+  "type": "cash_in",
+  "status": "confirmed",
+  "amount": 150.75,
+  "description": "Pagamento do pedido #1234",
+  "created_at": "2026-01-01T12:00:00Z",
+  "confirmed_at": "2026-01-01T12:01:20Z"
+}
+```
+</ResponseExample>

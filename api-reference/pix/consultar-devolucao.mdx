@@ -1,0 +1,60 @@
+---
+title: "Consultar devolução Pix"
+api: "GET /v1/pix/refunds/{refund_id}"
+description: "Consulte o status e as informações de uma devolução Pix solicitada"
+---
+
+Recupera os detalhes de um estorno Pix a partir do ID único da devolução.
+
+### Parâmetros de rota
+
+<ParamField path="refund_id" type="string" required>
+  ID único da devolução gerado pela Delfinance (ex: `ref_98127b`).
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  ID da devolução.
+</ResponseField>
+
+<ResponseField name="transaction_id" type="string" required>
+  ID da transação Pix original que foi estornada.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor devolvido.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual (`processing`, `completed`, `failed`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de solicitação.
+</ResponseField>
+
+<ResponseField name="failure_reason" type="string">
+  Mensagem explicativa caso o estorno tenha falhado.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET https://apisandbox.delbank.com.br/v1/pix/refunds/ref_98127b \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "ref_98127b",
+  "transaction_id": "pix_tx_123456",
+  "amount": 150.75,
+  "status": "completed",
+  "created_at": "2026-07-04T19:15:00Z"
+}
+```
+</ResponseExample>

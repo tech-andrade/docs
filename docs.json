@@ -1,76 +1,253 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "name": "Delfinance",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1A941A",
+    "light": "#25D325",
+    "dark": "#21B421"
   },
-  "favicon": "/favicon.svg",
+  "background": {
+    "color": {
+      "dark": "#0D0D0D"
+    }
+  },
+  "favicon": "https://conta.Delfinance.com.br/icon.png",
+  "fonts": {
+    "heading": {
+      "family": "Outfit"
+    },
+    "body": {
+      "family": "Outfit"
+    }
+  },
   "navigation": {
-    "pages": [
+    "tabs": [
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "groups": [
-      {
-        "group": "Iniciação",
-        "icon": "rocket",
-        "pages": [
-          "iniciacao/visao-geral",
-          "iniciacao/primeiros-passos",
-          "iniciacao/ambientes",
-          "iniciacao/url-base",
-          "iniciacao/autenticacao",
-          "iniciacao/mtls",
-          "iniciacao/seguranca",
-          "iniciacao/idempotencia",
-          "iniciacao/sdks"
+        "tab": "Como integrar",
+        "groups": [
+          {
+            "group": "Introdução",
+            "pages": [
+              "index",
+              "iniciacao/primeiros-passos",
+              "iniciacao/ida-producao",
+              "iniciacao/idempotencia"
+            ]
+          },
+          {
+            "group": "Autenticação",
+            "pages": [
+              "iniciacao/autenticacao",
+              "iniciacao/mtls",
+              "iniciacao/filtros-ip"
+            ]
+          },
+          {
+            "group": "Receber via Pix (Pix Cash-in)",
+            "pages": [
+              "guias/pix/receber-pix/visao-geral",
+              "guias/pix/receber-pix/chave-pix",
+              "guias/pix/receber-pix/cobranca-reutilizavel",
+              "guias/pix/receber-pix/cobranca-imediata",
+              "guias/pix/receber-pix/cobranca-com-vencimento",
+              "guias/pix/receber-pix/devolucao",
+              "guias/pix/receber-pix/simulacao-pagamento",
+              "guias/pix/receber-pix/troubleshooting"
+            ]
+          },
+          {
+            "group": "Pagar via Pix (Pix Cash-out)",
+            "pages": [
+              "guias/pix/pagar-pix/visao-geral",
+              "guias/pix/pagar-pix/por-chave",
+              "guias/pix/pagar-pix/por-dados-bancarios",
+              "guias/pix/pagar-pix/por-qrcode",
+              "guias/pix/pagar-pix/consultar-pagamento",
+              "guias/pix/pagar-pix/troubleshooting"
+            ]
+          },
+          {
+            "group": "Cobranças via Boleto",
+            "pages": [
+              "guias/boleto/visao-geral",
+              "guias/boleto/emitir-boleto",
+              "guias/boleto/consultar-boleto",
+              "guias/boleto/gerenciar-boleto",
+              "guias/boleto/simulacao-pagamento"
+            ]
+          },          
+          {
+            "group": "Webhooks",
+            "pages": [
+              "guias/webhooks/visao-geral",
+              "guias/webhooks/pix",
+              "guias/webhooks/boleto",
+              "guias/webhooks/meds"
+            ]
+          }
         ]
       },
       {
-        "group": "Pix",
-        "icon": "bolt",
-        "pages": [
-          "pix/visao-geral",
-          "pix/fluxo-recebimento",
-          "pix/fluxo-envio",
-          "pix/consultar-transacao",
-          "pix/status",
-          "pix/devolucao",
-          "pix/webhooks"
+        "tab": "Pix",
+        "groups": [
+          {
+            "group": "Pix",
+            "pages": [
+              "guias/pix"
+            ]
+          }
         ]
       },
       {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
+        "tab": "Boleto",
+        "groups": [
+          {
+            "group": "Boleto",
+            "pages": [
+              "guias/boleto"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Webhooks",
+        "groups": [
+          {
+            "group": "Webhooks",
+            "pages": [
+              "guias/webhooks"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Referência API",
+        "groups": [
+          {
+            "group": "Introdução",
+            "pages": [
+              "api-reference/introducao"
+            ]
+          },
+          {
+            "group": "Pix",
+            "pages": [
+              "api-reference/pix/criar-cobranca",
+              "api-reference/pix/consultar-cobranca",
+              "api-reference/pix/criar-transferencia",
+              "api-reference/pix/consultar-transferencia",
+              "api-reference/pix/criar-devolucao",
+              "api-reference/pix/consultar-devolucao",
+              "api-reference/pix/consultar-transacao",
+              "api-reference/pix/criar-qrcode-estatico",
+              "api-reference/pix/consultar-qrcode-estatico",
+              "api-reference/pix/cancelar-qrcode-estatico",
+              "api-reference/pix/criar-qrcode-dinamico",
+              "api-reference/pix/consultar-qrcode-dinamico",
+              "api-reference/pix/cancelar-qrcode-dinamico",
+              "api-reference/pix/criar-qrcode-vencimento",
+              "api-reference/pix/consultar-qrcode-vencimento",
+              "api-reference/pix/cancelar-qrcode-vencimento",
+              "api-reference/pix/inicializar-pagamento-chave",
+              "api-reference/pix/inicializar-pagamento-qrcode",
+              "api-reference/pix/criar-chave-pix",
+              "api-reference/pix/consultar-chaves-pix",
+              "api-reference/pix/remover-chave-pix"
+            ]
+          },
+          {
+            "group": "Boleto",
+            "pages": [
+              "api-reference/boleto/criar-boleto",
+              "api-reference/boleto/consultar-boleto",
+              "api-reference/boleto/atualizar-boleto",
+              "api-reference/boleto/cancelar-boleto",
+              "api-reference/boleto/imprimir-boleto",
+              "api-reference/boleto/simular-boleto"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/cadastrar-webhook",
+              "api-reference/webhooks/listar-webhooks",
+              "api-reference/webhooks/remover-webhook"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "SDKs",
+        "groups": [
+          {
+            "group": "Visão Geral",
+            "pages": [
+              "sdks/visao-geral"
+            ]
+          },
+          {
+            "group": "Node.js",
+            "pages": [
+              "sdks/nodejs/introducao"
+            ]
+          },
+          {
+            "group": "Python",
+            "pages": [
+              "sdks/python/introducao"
+            ]
+          },
+          {
+            "group": "PHP",
+            "pages": [
+              "sdks/php/introducao"
+            ]
+          },
+          {
+            "group": "C# (.NET)",
+            "pages": [
+              "sdks/csharp/introducao"
+            ]
+          },
+          {
+            "group": "Java",
+            "pages": [
+              "sdks/java/introducao"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "🤖 IA",
+        "url": "/iniciacao/contexto-ia",
+        "groups": [
+          {
+            "group": "IA",
+            "pages": [
+              "iniciacao/contexto-ia",
+              "guias/assistente-integracao"
+            ]
+          }
         ]
       }
     ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "https://conta.Delfinance.com.br/assets/delfinance-dark-CehGtYbD.png",
+    "dark": "https://conta.Delfinance.com.br/assets/delfinance-DbGOasZf.png"
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "Suporte",
+        "href": "mailto:suporte@Delfinance.com.br"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
+      "label": "Portal do Desenvolvedor",
+      "href": "https://portal-dev.Delfinance.com.br"
     }
   },
   "contextual": {
@@ -87,15 +264,18 @@
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/Delfinance",
+      "github": "https://github.com/Delfinance",
+      "linkedin": "https://linkedin.com/company/Delfinance"
     }
   },
   "api": {
     "examples": {
       "languages": [
-        ""
+        "bash",
+        "javascript",
+        "python",
+        "go"
       ]
     }
   }

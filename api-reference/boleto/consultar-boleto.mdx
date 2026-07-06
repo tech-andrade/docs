@@ -1,0 +1,128 @@
+---
+title: "Consultar boleto"
+api: "GET /baas/v1/charges/{correlationId}"
+description: "Consulte um boleto por correlationId ou liste cobranças por período com paginação."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar Boleto](/guias/boleto/consultar-boleto).
+</Note>
+
+## Consultar por correlationId
+
+`GET /baas/v1/charges/:correlationId`
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path
+
+<ParamField path="correlationId" type="string" required>
+  GUID do boleto informado na criação.
+</ParamField>
+
+## Consulta paginada por período
+
+`GET /baas/v1/charges?startDate=&endDate=&page=&limit=`
+
+### Query params
+
+<ParamField query="startDate" type="string" required>
+  Data inicial no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  Data final no formato `YYYY-MM-DD`. Intervalo máximo: 1 ano.
+</ParamField>
+
+<ParamField query="page" type="number">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Itens por página — máximo 100.
+</ParamField>
+
+## Response
+
+<ResponseField name="type" type="string">Tipo: `BANKSLIP` ou `BANKSLIP_PIX`.</ResponseField>
+<ResponseField name="correlationId" type="string">GUID de conciliação.</ResponseField>
+<ResponseField name="amount" type="number">Valor do boleto.</ResponseField>
+<ResponseField name="walletNumber" type="string">Carteira: `"112"` ou `"121"`.</ResponseField>
+<ResponseField name="yourNumber" type="string">Número do documento.</ResponseField>
+<ResponseField name="ourNumber" type="string">Nosso número.</ResponseField>
+<ResponseField name="dueDate" type="string">Data de vencimento em ISO 8601.</ResponseField>
+<ResponseField name="barCode" type="string">Código de barras.</ResponseField>
+<ResponseField name="digitableLine" type="string">Linha digitável.</ResponseField>
+<ResponseField name="payer" type="object">Dados do pagador.</ResponseField>
+<ResponseField name="beneficiary" type="object">Dados do beneficiário (cedente).</ResponseField>
+<ResponseField name="discount" type="object">Configuração de desconto por antecipação, se aplicável.</ResponseField>
+<ResponseField name="lateFine" type="object">Configuração de multa, se aplicável.</ResponseField>
+<ResponseField name="latePayment" type="object">Configuração de juros, se aplicável.</ResponseField>
+<ResponseField name="status" type="string">Status atual: `Pending`, `Paid`, `Expired` ou `Cancelled`.</ResponseField>
+<ResponseField name="payments" type="array">Histórico de pagamentos registrados.</ResponseField>
+<ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
+<ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
+
+<RequestExample>
+```bash cURL (por correlationId)
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```bash cURL (paginado)
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges?startDate=2025-01-01&endDate=2025-01-31&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "type": "BANKSLIP",
+    "correlationId": "304c439c-4b17-4a75-abb1-2526e356cdad",
+    "amount": 150.00,
+    "walletNumber": "112",
+    "yourNumber": "PED-2024-001",
+    "ourNumber": "00000520637",
+    "dueDate": "2025-12-30T00:00:00Z",
+    "barCode": "43595103800000000100001112000000600000520637",
+    "digitableLine": "43590001161200000060900005206370510380000000010",
+    "payer": {
+        "name": "JOÃO ALVES",
+        "document": "07034346593",
+        "email": "joao@email.com",
+        "phone": { "prefix": "79", "number": "988669383" },
+        "address": {
+            "zipCode": "49010030",
+            "publicPlace": "AV. RIO BRANCO",
+            "neighborhood": "CENTRO",
+            "number": "186",
+            "complement": "SALA 602",
+            "city": "ARACAJU",
+            "state": "SE"
+        }
+    },
+    "status": "Pending",
+    "payments": [],
+    "createdAt": "2024-12-05T17:55:55.08Z",
+    "updatedAt": "2024-12-05T18:00:55.56Z"
+}
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-72c40340fe67d8caed8275ee6e37a7a6-52bb2d57c1652859-00"
+}
+```
+</ResponseExample>

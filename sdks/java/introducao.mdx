@@ -1,0 +1,54 @@
+---
+title: "Java SDK"
+sidebarTitle: "Introdução"
+description: "Instale e configure o SDK oficial da Delfinance para Java."
+icon: "java"
+---
+
+## Instalação
+
+<CodeGroup>
+```xml Maven
+<dependency>
+  <groupId>br.com.Delfinance</groupId>
+  <artifactId>Delfinance-api-sdk</artifactId>
+  <version>1.0.0</version>
+</dependency>
+```
+```groovy Gradle
+implementation 'br.com.Delfinance:Delfinance-api-sdk:1.0.0'
+```
+</CodeGroup>
+
+Requer Java 11 ou superior.
+
+## Configuração inicial
+
+```java
+import br.com.Delfinance.sdk.DelfinanceClient;
+import br.com.Delfinance.sdk.DelfinanceConfig;
+
+DelfinanceConfig config = DelfinanceConfig.builder()
+    .environment("sandbox") // ou "production"
+    .clientId(System.getenv("DELFINANCE_CLIENT_ID"))
+    .clientSecret(System.getenv("DELFINANCE_CLIENT_SECRET"))
+    .certPath("./certificado.crt")
+    .keyPath("./chave-privada.key")
+    .build();
+
+DelfinanceClient client = new DelfinanceClient(config);
+```
+
+| Método | Tipo | Descrição |
+|---|---|---|
+| `.environment()` | `String` | `"sandbox"` ou `"production"` |
+| `.clientId()` | `String` | API key do Portal do Desenvolvedor |
+| `.clientSecret()` | `String` | Client secret do Portal do Desenvolvedor |
+| `.certPath()` | `String` | Caminho para o certificado mTLS (`.crt`) |
+| `.keyPath()` | `String` | Caminho para a chave privada (`.key`) |
+
+## Publicado em
+
+<Card title="Maven Central — br.com.Delfinance/Delfinance-api-sdk" icon="java" href="https://central.sonatype.com/artifact/br.com.Delfinance/Delfinance-api-sdk">
+  Veja versões e dependências no Maven Central.
+</Card>

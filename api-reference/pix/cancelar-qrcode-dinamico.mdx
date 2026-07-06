@@ -1,0 +1,46 @@
+---
+title: "Cancelar QR Code Dinâmico"
+api: "PATCH /pix/qrcode/dynamic/:transactionIdentifier/cancel"
+description: "Cancela um QR Code Dinâmico, impedindo que ele seja pago."
+---
+
+<Note>
+Para o passo a passo completo de uso, veja o guia [Cobrança Imediata (QR Code Dinâmico)](/guias/pix/receber-pix/cobranca-imediata).
+</Note>
+
+Cancela um QR Code Dinâmico ativo. Após o cancelamento, qualquer tentativa de pagamento será recusada. QR Codes já expirados não precisam ser cancelados manualmente.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="transactionIdentifier" type="string" required>
+  Identificador do QR Code: pode ser o `correlationId` ou o `transactionId`.
+</ParamField>
+
+## Response
+
+Um `status code 202` indica sucesso no cancelamento. **Nenhum corpo de resposta é retornado.**
+
+<RequestExample>
+```bash cURL
+curl -X 'PATCH' \
+  'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic/{{transactionIdentifier}}/cancel' \
+  -H 'x-delbank-api-key: {{apiKey}}' \
+  -H 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 202
+(sem corpo de resposta)
+```
+</ResponseExample>

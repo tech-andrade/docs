@@ -1,0 +1,95 @@
+---
+title: "Criar cobrança Pix"
+api: "POST /v1/pix/charges"
+description: "Gere uma nova cobrança Pix imediata (QR Code dinâmico) para recebimento"
+---
+
+Cria uma cobrança Pix associada a um valor específico e a um cliente. A API retorna a string Pix "Copia e Cola" e o link do QR Code para renderização.
+
+### Corpo da requisição
+
+<ParamField body="amount" type="number" required>
+  Valor da cobrança em reais (ex: `150.75`).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descrição ou nota da cobrança visível ao pagador (ex: `Pagamento do pedido #9817`).
+</ParamField>
+
+<ParamField body="expires_in" type="integer" default="86400">
+  Tempo de expiração da cobrança em segundos (padrão 24 horas).
+</ParamField>
+
+<ParamField body="customer" type="object" required>
+  Objeto contendo os dados do cliente (pagador).
+  <Expandable title="propriedades">
+    <ParamField body="name" type="string" required>
+      Nome completo do cliente.
+    </ParamField>
+    <ParamField body="document" type="string" required>
+      CPF ou CNPJ do cliente (apenas números).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  ID único da cobrança gerada na Delfinance.
+</ResponseField>
+
+<ResponseField name="txid" type="string" required>
+  Identificador único da transação Pix (Transaction ID).
+</ResponseField>
+
+<ResponseField name="copia_e_cola" type="string" required>
+  Payload da cobrança Pix para ser copiado e colado pelo cliente.
+</ResponseField>
+
+<ResponseField name="qr_code_url" type="string" required>
+  URL contendo a imagem do QR Code para ser exibida no front-end.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor original da cobrança.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual da cobrança (`pending`, `paid`, `expired`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de criação em formato ISO 8601.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://apisandbox.delbank.com.br/v1/pix/charges \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "amount": 150.75,
+    "description": "Pagamento do pedido #9817",
+    "customer": {
+      "name": "Maria Oliveira",
+      "document": "12345678909"
+    }
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "chg_981726a",
+  "txid": "9c8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c",
+  "copia_e_cola": "00020101021226830014br.gov.bcb.pix...",
+  "qr_code_url": "https://apisandbox.delbank.com.br/v1/pix/qr/chg_981726a",
+  "amount": 150.75,
+  "status": "pending",
+  "created_at": "2026-07-04T12:00:00Z"
+}
+```
+</ResponseExample>

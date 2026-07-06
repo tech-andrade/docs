@@ -1,10 +1,10 @@
 ---
 title: "Visão geral do Pix"
-description: "Introdução à API Pix da DelFinance e conceitos fundamentais"
+description: "Introdução à API Pix da Delfinance e conceitos fundamentais"
 icon: "bolt"
 ---
 
-A API Pix da DelFinance permite integrar sua aplicação ao arranjo de pagamentos instantâneos do Banco Central de forma segura e escalável.
+A API Pix da Delfinance permite integrar sua aplicação ao arranjo de pagamentos instantâneos do Banco Central de forma segura e escalável.
 
 ## O que você pode fazer
 
@@ -42,17 +42,17 @@ A API Pix da DelFinance permite integrar sua aplicação ao arranjo de pagamento
 | **Recebedor** | Pessoa ou empresa que recebe o valor. |
 | **Chave Pix** | Identificador do recebedor: CPF/CNPJ, e-mail, telefone, chave aleatória ou EVP. |
 | **EndToEndId** | Identificador único da transação no SPI/Bacen. Formato: `E` \+ ISPB \+ timestamp \+ sufixo. |
-| **TransactionId (TxId)** | Identificador da cobrança/transação na DelFinance. Usado para rastrear a operação. |
+| **TransactionId (TxId)** | Identificador da cobrança/transação na Delfinance. Usado para rastrear a operação. |
 | **QR Code** | Representação visual dos dados do Pix. Pode ser estático (reutilizável) ou dinâmico (uso único). |
-| **Webhook** | Notificação HTTP enviada pela DelFinance quando um evento ocorre (recebimento, falha, devolução). |
+| **Webhook** | Notificação HTTP enviada pela Delfinance quando um evento ocorre (recebimento, falha, devolução). |
 | **Devolução** | Operação que retorna valor total ou parcial de um Pix recebido ao pagador original. |
 
 ## Ambientes
 
 | Ambiente | URL base |
 | --- | --- |
-| Sandbox | `https://api.sandbox.delfinance.com.br` |
-| Produção | `https://api.delfinance.com.br` |
+| Sandbox | `https://apisandbox.delbank.com.br` |
+| Produção | `https://api.delbank.com.br` |
 
 <Tip>
   Comece sempre pelo [sandbox](/iniciacao/ambientes) e valide todos os fluxos antes de solicitar acesso à produção.

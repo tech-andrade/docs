@@ -1,0 +1,195 @@
+---
+title: "Consultar QR Code Dinâmico"
+api: "GET /pix/qrcode/dynamic/:transactionIdentifier"
+description: "Consulta os dados de um QR Code Dinâmico e o pagamento associado a ele, quando realizado."
+---
+
+<Note>
+Para o passo a passo completo de uso, veja o guia [Cobrança Imediata (QR Code Dinâmico)](/guias/pix/receber-pix/cobranca-imediata).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path Parameters
+
+<ParamField path="transactionIdentifier" type="string" required>
+  Identificador do QR Code: pode ser o `correlationId` ou o `transactionId`.
+</ParamField>
+
+## Response
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code.
+</ResponseField>
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação definido na criação.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Tipo da cobrança. Valor: `DYNAMIC_IMMEDIATE_PAYMENT`.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor da cobrança.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status atual do QR Code. Valores possíveis: `ACTIVE`, `CONCLUDED`, `CANCELLED`.
+</ResponseField>
+
+<ResponseField name="allowChangeAmount" type="boolean">
+  Indica se o pagador pode alterar o valor ao pagar.
+</ResponseField>
+
+<ResponseField name="payer" type="object">
+  Dados do pagador informados na criação, quando presentes.
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço da transação (`cityName`, `zipCode`, `state`, `street`).
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto — o "copia e cola".
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  Data e hora de expiração, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="additionalInfos" type="array">
+  Informações adicionais definidas na criação.
+</ResponseField>
+
+<ResponseField name="payments" type="array">
+  Lista de pagamentos realizados sobre este QR Code. Para um QR Code Dinâmico, conterá no máximo um item. O array estará vazio enquanto o pagamento não tiver ocorrido.
+
+  <Expandable title="payments[]">
+    <ResponseField name="payments[].idempotencyKey" type="string">
+      Chave de idempotência do pagamento.
+    </ResponseField>
+    <ResponseField name="payments[].transactionId" type="string">
+      Identificador do QR Code associado ao pagamento.
+    </ResponseField>
+    <ResponseField name="payments[].correlationId" type="string">
+      Identificador de correlação do QR Code.
+    </ResponseField>
+    <ResponseField name="payments[].endToEndId" type="string">
+      Identificador único do pagamento no Banco Central (E2E ID).
+    </ResponseField>
+    <ResponseField name="payments[].key" type="string">
+      Chave Pix do recebedor utilizada na transação.
+    </ResponseField>
+    <ResponseField name="payments[].status" type="string">
+      Status do pagamento. Valor esperado após liquidação: `PIX_EFFECTIVE`.
+    </ResponseField>
+    <ResponseField name="payments[].amount" type="number">
+      Valor efetivamente pago.
+    </ResponseField>
+    <ResponseField name="payments[].initiationType" type="string">
+      Tipo de iniciação do pagamento. Valor: `QR_CODE_DYNAMIC`.
+    </ResponseField>
+    <ResponseField name="payments[].payer" type="object">
+      Dados reais da conta que realizou o pagamento (banco, agência, titular).
+    </ResponseField>
+    <ResponseField name="payments[].beneficiary" type="object">
+      Dados da conta recebedora.
+    </ResponseField>
+    <ResponseField name="payments[].createdAt" type="string">
+      Data e hora em que o pagamento foi processado.
+    </ResponseField>
+    <ResponseField name="payments[].finishedAt" type="string">
+      Data e hora em que o pagamento foi liquidado.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic/{{transactionIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "transactionId": "vchargec9bdeb422c204c79b72b5de6e",
+    "correlationId": "0123e8d1-e193-4335-9ca6-8ad99b6822a1",
+    "type": "DYNAMIC_IMMEDIATE_PAYMENT",
+    "amount": 99.90,
+    "status": "CONCLUDED",
+    "allowChangeAmount": false,
+    "payer": {
+        "name": "PAYER NAME",
+        "document": "47779921018",
+        "validate": true
+    },
+    "address": {
+        "cityName": "SAO PAULO",
+        "zipCode": "49000000",
+        "state": "SP",
+        "street": "LOGRADOURO"
+    },
+    "payloadPix": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargec9bdeb422c204c79b72b5de6e5204000053039865802BR5907DELBANK6009SAO PAULO62070503***6304DCAD",
+    "createdAt": "2024-12-11T14:05:20.310Z",
+    "expiresAt": "2024-12-11T14:35:20.310Z",
+    "payments": [
+        {
+            "idempotencyKey": "c9d990bd-2752-42a3-912e-a10bc06eee68",
+            "transactionId": "vchargec9bdeb422c204c79b72b5de6e",
+            "correlationId": "0123e8d1-e193-4335-9ca6-8ad99b6822a1",
+            "endToEndId": "E382248572024121114111XCLOQ653D5",
+            "key": "+5511999975734",
+            "status": "PIX_EFFECTIVE",
+            "amount": 99.90,
+            "initiationType": "QR_CODE_DYNAMIC",
+            "payer": {
+                "number": "29823",
+                "branch": "0001",
+                "type": "CURRENT",
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                },
+                "holder": {
+                    "name": "HOMOLOGACAO INTEGRACAO API",
+                    "document": "30287697789",
+                    "type": "NATURAL"
+                }
+            },
+            "beneficiary": {
+                "number": "31712",
+                "branch": "0001",
+                "type": "CURRENT",
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                },
+                "holder": {
+                    "name": "BXXDBDE",
+                    "document": "32752023000149",
+                    "type": "LEGAL"
+                }
+            },
+            "createdAt": "2024-12-11T14:12:14.442Z",
+            "finishedAt": "2024-12-11T14:12:14.442Z"
+        }
+    ]
+}
+```
+</ResponseExample>

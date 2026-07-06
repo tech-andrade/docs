@@ -1,0 +1,78 @@
+---
+title: "Simulação de Pagamento"
+sidebarTitle: "Simular pagamento"
+description: "Simule o pagamento de um QR Code no sandbox para validar webhooks, extratos e o fluxo completo sem precisar realizar um Pix real."
+icon: "flask"
+---
+
+<Warning>
+Este endpoint existe **apenas no ambiente sandbox** (`apisandbox.delbank.com.br`). Não está disponível em produção.
+</Warning>
+
+Durante o desenvolvimento, refazer um Pix real a cada teste é trabalhoso — exige dois apps de banco, saldo disponível e dependência de terceiros. A simulação resolve isso: com uma única chamada você dispara o pagamento de qualquer QR Code criado na sua conta, fazendo o sistema se comportar exatamente como se um pagador real tivesse escaneado e pago.
+
+O que acontece após a simulação é o mesmo que aconteceria com um pagamento real:
+
+- O evento `PIX_RECEIVED` é disparado para o seu webhook.
+- O valor é creditado no extrato da sua conta sandbox.
+- O status do QR Code passa para `CONCLUDED`.
+- O array `payments` da consulta passa a ter o pagamento registrado.
+
+## Como simular
+
+Informe o `transactionId` ou `correlationId` do QR Code que você quer concluir:
+
+<CodeGroup>
+```bash cURL
+curl --request POST \
+  'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/{{transactionId}}/simulate-conclude' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+</CodeGroup>
+
+Uma resposta `202 Accepted` confirma que a simulação foi enfileirada. Os eventos de webhook e a atualização do extrato chegam em segundos.
+
+## Dados do pagador simulado
+
+O ambiente sandbox usa um pagador fictício gerado automaticamente. Esses dados aparecerão no array `payments` da consulta e no payload do webhook:
+
+```json
+{
+  "payer": {
+    "number": "00000001",
+    "branch": "0001",
+    "type": "PAYMENT",
+    "participant": {
+      "name": "BANCO DO BRASIL S.A.",
+      "ispb": "00000000"
+    },
+    "holder": {
+      "name": "DELBANK SIMULATOR",
+      "document": "0000000000191",
+      "type": "LEGAL"
+    }
+  }
+}
+```
+
+## Regras e comportamento
+
+- A simulação só funciona com QR Codes criados pela **mesma conta** que está fazendo a chamada.
+- O QR Code deve estar com status `ACTIVE`. Códigos expirados ou já cancelados retornam erro.
+- Se o QR Code tiver um `amount` definido, esse valor será usado na simulação.
+- Se o QR Code **não tiver valor** (caso comum na Cobrança Reutilizável com valor livre), o sandbox gera automaticamente um valor aleatório entre R$ 1,00 e R$ 10,00.
+
+## Erros possíveis
+
+```json
+{
+  "title": "Please refer to the errors property for additional details.",
+  "code": "QR_CODE_NOT_FOUND",
+  "errors": [
+    "QR Code não encontrado para o ID informado"
+  ]
+}
+```
+
+Esse erro ocorre quando o `transactionId` ou `correlationId` não pertence à conta autenticada, ou o QR Code não existe.

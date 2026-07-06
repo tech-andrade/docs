@@ -1,0 +1,229 @@
+---
+title: "Criar QR Code Dinâmico"
+api: "POST /pix/qrcode/dynamic"
+description: "Cria um QR Code Pix de uso único com expiração automática, ideal para checkout de e-commerce e cobranças pontuais."
+---
+
+<Note>
+Para entender quando usar este endpoint e ver o passo a passo completo, veja o guia [Cobrança Imediata (QR Code Dinâmico)](/guias/pix/receber-pix/cobranca-imediata).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="correlationId" type="string" required>
+  Identificador usado para conciliação com o seu sistema. Retornado no webhook de confirmação de pagamento. Deve ser um GUID.
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Valor da cobrança em reais.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descrição interna da cobrança.
+</ParamField>
+
+<ParamField body="expiresIn" type="number">
+  Prazo de expiração do QR Code em segundos, contados a partir da criação. O padrão é `86400` (24 horas).
+</ParamField>
+
+<ParamField body="formatResponse" type="string">
+  Controla se a imagem do QR Code é retornada na resposta. Valores aceitos:
+  - `ONLY_PAYLOAD` (padrão) — retorna apenas o `payloadPix`.
+  - `PAYLOAD_AND_QRCODE` — retorna também `qrCodeImageBase64` com a imagem pronta (250×250 px).
+</ParamField>
+
+<ParamField body="payer" type="object">
+  Dados do pagador esperado.
+
+  <Expandable title="payer">
+    <ParamField body="payer.name" type="string">
+      Nome do pagador.
+    </ParamField>
+    <ParamField body="payer.document" type="string">
+      CPF ou CNPJ do pagador.
+    </ParamField>
+    <ParamField body="payer.validate" type="boolean">
+      Quando `true`, o QR Code só pode ser pago pelo documento informado. Qualquer outra pessoa que tentar pagar será bloqueada.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="address" type="object">
+  Endereço da transação. Se omitido, o padrão é Aracaju/SE.
+
+  <Expandable title="address">
+    <ParamField body="address.cityName" type="string">
+      Nome da cidade.
+    </ParamField>
+    <ParamField body="address.zipCode" type="string">
+      CEP.
+    </ParamField>
+    <ParamField body="address.state" type="string">
+      UF do estado (ex: `SP`).
+    </ParamField>
+    <ParamField body="address.street" type="string">
+      Nome do logradouro.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="additionalInfos" type="array">
+  Lista de informações adicionais exibidas ao pagador no app do banco.
+
+  <Expandable title="additionalInfos[]">
+    <ParamField body="additionalInfos[].name" type="string">
+      Rótulo da informação.
+    </ParamField>
+    <ParamField body="additionalInfos[].value" type="string">
+      Valor da informação.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="splitInstructions" type="array">
+  Instruções de split: distribuição automática de parte do valor para outra conta no momento do recebimento. O `amount` total das divisões não pode ultrapassar 50% do valor da cobrança, e o valor da cobrança deve ser maior que R$ 1,00.
+
+  <Expandable title="splitInstructions[]">
+    <ParamField body="splitInstructions[].accountNumber" type="string" required>
+      Número da conta que receberá a parcela.
+    </ParamField>
+    <ParamField body="splitInstructions[].type" type="string" required>
+      Tipo do split: `FIXED` (valor fixo em reais) ou `PERCENTAGE` (porcentagem do total).
+    </ParamField>
+    <ParamField body="splitInstructions[].amount" type="number" required>
+      Valor ou percentual a ser transferido, conforme o `type`.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="finalBeneficiary" type="object">
+  Dados do beneficiário final da transação. Usado por gateways e subadquirentes para identificar o recebedor real — essa informação é exibida ao pagador no app do banco.
+
+  <Expandable title="finalBeneficiary">
+    <ParamField body="finalBeneficiary.name" type="string" required>
+      Nome do beneficiário final.
+    </ParamField>
+    <ParamField body="finalBeneficiary.document" type="string" required>
+      CPF ou CNPJ do beneficiário final.
+    </ParamField>
+    <ParamField body="finalBeneficiary.cityName" type="string" required>
+      Cidade do beneficiário final.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação enviado na criação.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code gerado.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor da cobrança.
+</ResponseField>
+
+<ResponseField name="allowChangeAmount" type="boolean">
+  Indica se o pagador pode alterar o valor ao pagar.
+</ResponseField>
+
+<ResponseField name="expiresIn" type="number">
+  Prazo de expiração em segundos.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status do QR Code. Valor inicial: `ACTIVE`.
+</ResponseField>
+
+<ResponseField name="payer" type="object">
+  Dados do pagador, quando informados na criação.
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço da transação (`cityName`, `zipCode`, `uf`, `state`, `street`).
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Data e hora da última atualização.
+</ResponseField>
+
+<ResponseField name="expiresAt" type="string">
+  Data e hora exata de expiração, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto — o "copia e cola".
+</ResponseField>
+
+<ResponseField name="qrCodeImageBase64" type="string">
+  Imagem do QR Code pronta para exibição, em base64 (250×250 px). Presente apenas quando `formatResponse` é `PAYLOAD_AND_QRCODE`.
+</ResponseField>
+
+<ResponseField name="additionalInfos" type="array">
+  Informações adicionais enviadas na criação.
+</ResponseField>
+
+<ResponseField name="splitInstructions" type="array">
+  Instruções de split enviadas na criação.
+</ResponseField>
+
+<ResponseField name="finalBeneficiary" type="object">
+  Dados do beneficiário final, quando informado na criação.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "{{$guid}}",
+    "amount": 99.90,
+    "expiresIn": 1800,
+    "formatResponse": "PAYLOAD_AND_QRCODE"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "correlationId": "40ede975-031d-4517-bdd4-31472d3f00a4",
+    "transactionId": "vchargeffab8b4c963344c283e491f5e",
+    "amount": 99.90,
+    "allowChangeAmount": false,
+    "expiresIn": 1800,
+    "status": "ACTIVE",
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "createdAt": "2024-12-10T13:19:26.501Z",
+    "updatedAt": "2024-12-10T13:19:26.501Z",
+    "expiresAt": "2024-12-10T13:49:26.501Z",
+    "payloadPix": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargeffab8b4c963344c283e491f5e5204000053039865802BR5907DELBANK6007ARACAJU62070503***6304CB42",
+    "qrCodeImageBase64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoA..."
+}
+```
+</ResponseExample>

@@ -1,0 +1,1112 @@
+---
+title: Assistente de Integração
+description: Converse com o assistente e receba um plano recomendado para sua integração.
+mode: custom
+---
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+export const ChatIntegrationAssistant = () => {
+  const PRIMARY = '#1A941A';
+  const PRIMARY_DARK = '#147814';
+  const PRIMARY_SOFT = '#F1FAF1';
+  const PRIMARY_SOFT_2 = '#E8F7E8';
+  const BORDER = '#E5E7EB';
+  const BORDER_SOFT = '#EEF0F3';
+  const TEXT = '#111827';
+  const TEXT_SECONDARY = '#6B7280';
+  const SURFACE = '#FFFFFF';
+  const BOT_BUBBLE = '#F4F4F5';
+
+  const chatBodyRef = useRef(null);
+  const bottomRef = useRef(null);
+
+  const [answers, setAnswers] = useState({ goal: '', niche: '', stack: '', hasApiKey: '' });
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [typing, setTyping] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const labels = {
+    goal: {
+      pix_receber: 'receber via Pix',
+      pix_pagar: 'pagar via Pix',
+      boleto: 'cobranças via Boleto',
+      webhooks: 'configurar webhooks',
+      go_live: 'ir para produção',
+    },
+    niche: {
+      ecommerce: 'e-commerce',
+      saas: 'SaaS',
+      gateway: 'gateway de pagamento',
+      marketplace: 'marketplace',
+      software_house: 'software house',
+      erp: 'ERP / sistema interno',
+    },
+    stack: {
+      node: 'Node.js',
+      csharp: 'C#',
+      php: 'PHP',
+      python: 'Python',
+      java: 'Java',
+    },
+    hasApiKey: {
+      yes: 'já tenho API Key sandbox',
+      no: 'ainda não tenho API Key sandbox',
+    },
+  };
+
+  const questions = [
+    {
+      key: 'goal',
+      question: 'Para começar, qual produto você quer integrar?',
+      userText: (value) => `Quero ${labels.goal[value]}.`,
+      options: [
+        { value: 'pix_receber', label: 'Receber via Pix', description: 'Cobranças, QR Codes e confirmações.' },
+        { value: 'pix_pagar', label: 'Pagar via Pix', description: 'Transferências e pagamentos por chave.' },
+        { value: 'boleto', label: 'Boleto', description: 'Emissão, consulta e conciliação.' },
+        { value: 'webhooks', label: 'Webhooks', description: 'Eventos de pagamento em tempo real.' },
+        { value: 'go_live', label: 'Ir para produção', description: 'Checklist de homologação.' },
+      ],
+    },
+    {
+      key: 'niche',
+      question: 'Boa. Onde essa integração vai rodar?',
+      userText: (value) => `A integração é para ${labels.niche[value]}.`,
+      options: [
+        { value: 'ecommerce', label: 'E-commerce', description: 'Checkout e confirmação de pedidos.' },
+        { value: 'saas', label: 'SaaS', description: 'Cobranças dentro da plataforma.' },
+        { value: 'gateway', label: 'Gateway', description: 'Orquestração de pagamentos.' },
+        { value: 'marketplace', label: 'Marketplace', description: 'Múltiplos vendedores.' },
+        { value: 'software_house', label: 'Software House', description: 'Integração para clientes.' },
+        { value: 'erp', label: 'ERP / Sistema interno', description: 'Automação e conciliação.' },
+      ],
+    },
+    {
+      key: 'stack',
+      question: 'Qual tecnologia você usa no backend?',
+      userText: (value) => `Meu backend usa ${labels.stack[value]}.`,
+      options: [
+        { value: 'node', label: 'Node.js', description: 'JavaScript ou TypeScript.' },
+        { value: 'csharp', label: 'C#', description: '.NET ou ASP.NET Core.' },
+        { value: 'php', label: 'PHP', description: 'Aplicações web em PHP.' },
+        { value: 'python', label: 'Python', description: 'APIs e automações.' },
+        { value: 'java', label: 'Java', description: 'Spring ou aplicações Java.' },
+      ],
+    },
+    {
+      key: 'hasApiKey',
+      question: 'Última pergunta: você já tem uma API Key sandbox?',
+      userText: (value) => `Eu ${labels.hasApiKey[value]}.`,
+      options: [
+        { value: 'yes', label: 'Sim, já tenho', description: 'Posso começar os testes.' },
+        { value: 'no', label: 'Ainda não tenho', description: 'Preciso gerar no portal.' },
+      ],
+    },
+  ];
+
+  const isComplete = answers.goal && answers.niche && answers.stack && answers.hasApiKey;
+
+  const { prompt, recommendedLinks, steps } = useMemo(() => {
+    if (!isComplete) return { prompt: '', recommendedLinks: [], steps: [] };
+
+    const g = answers.goal;
+    const n = answers.niche;
+    const s = answers.stack;
+    const k = answers.hasApiKey;
+
+    const roles = {
+      ecommerce: 'engenheiro de backend responsável pelo módulo de pagamentos de um e-commerce',
+      saas: 'desenvolvedor responsável pelo sistema de cobranças de uma plataforma SaaS',
+      gateway: 'arquiteto de software construindo um gateway de pagamentos',
+      marketplace: 'engenheiro de backend de um marketplace com múltiplos vendedores',
+      software_house: 'desenvolvedor de uma software house integrando meios de pagamento para clientes',
+      erp: 'desenvolvedor de sistemas responsável por integrar pagamentos em um ERP',
+    };
+
+    const productDesc = {
+      pix_receber: 'recebimentos via Pix (QR Codes de cobrança)',
+      pix_pagar: 'pagamentos via Pix (transferências e pagamentos por chave)',
+      boleto: 'cobranças via boleto bancário',
+      webhooks: 'webhooks para eventos de pagamento em tempo real',
+      go_live: 'homologação e migração para o ambiente de produção',
+    };
+
+    const rulesMap = {
+      pix_receber: [
+        'Use o sandbox (apisandbox.delbank.com.br) para todos os exemplos de código',
+        'Implemente idempotência com o header x-idempotency-key em toda criação de cobrança',
+        'Nunca confirme pagamento por polling — use o evento PIX_RECEIVED via webhook',
+        'Retorne sempre o campo pix_copy_paste além da imagem do QR Code',
+        'Trate os status: ACTIVE, CONCLUDED, CANCELLED, EXPIRED',
+      ],
+      pix_pagar: [
+        'Use o sandbox para todos os exemplos de código',
+        'Consulte sempre a chave Pix no DICT antes de inicializar o pagamento',
+        'Implemente idempotência em toda iniciação de pagamento',
+        'Confirme a liquidação pelo evento PIX_TRANSFERRED, nunca por polling',
+        'Trate o evento PIX_TRANSFER_FAILED para reverter o estado da operação',
+      ],
+      boleto: [
+        'Use o sandbox para todos os exemplos de código',
+        'Implemente idempotência com x-idempotency-key na criação do boleto',
+        'Aguarde o evento CHARGE_PAID via webhook para confirmar pagamento',
+        'Nunca libere o pedido antes de receber a confirmação do evento',
+        'Trate boletos vencidos com o evento CHARGE_OVERDUE',
+      ],
+      webhooks: [
+        'Responda sempre HTTP 200 ao receber um evento — falhas geram retentativas automáticas',
+        'Processe eventos de forma idempotente — o mesmo evento pode chegar mais de uma vez',
+        'Valide a autenticação conforme o esquema configurado (BEARER, BASIC ou HEADER)',
+        'Processe eventos de forma assíncrona — enfileire e responda rápido',
+        'Trate todos os tipos de evento relevantes para o seu fluxo',
+      ],
+      go_live: [
+        'Valide todos os fluxos no sandbox antes de migrar para produção',
+        'Configure mTLS para autenticação com segurança máxima',
+        'Adicione filtros de IP com os endereços dos seus servidores de produção',
+        'Use uma API Key de produção separada da de sandbox',
+        'Registre os webhooks de produção com URLs definitivas antes do go live',
+      ],
+    };
+
+    const endpointsMap = {
+      pix_receber: `POST   /baas/api/v2/pix/qrcode/static              Criar QR Code Estático (reutilizável)
+POST   /baas/api/v2/pix/qrcode/dynamic             Criar QR Code Dinâmico (uso único com expiração)
+POST   /baas/api/v2/pix/qrcode/due-date            Criar QR Code com Vencimento (juros, multa, desconto)
+GET    /baas/api/v2/pix/qrcode/static/:id          Consultar QR Code Estático
+GET    /baas/api/v2/pix/qrcode/dynamic/:id         Consultar QR Code Dinâmico
+GET    /baas/api/v2/pix/qrcode/due-date/:id        Consultar QR Code com Vencimento
+POST   /baas/api/v2/pix/qrcode/:id/simulate-conclude  Simular pagamento (apenas sandbox)
+POST   /baas/api/v1/webhooks                       Cadastrar webhook (evento: PIX_RECEIVED)`,
+      pix_pagar: `GET    /baas/api/v1/pix/dict/entries               Consultar chave Pix no DICT
+POST   /baas/api/v2/pix/payment/key                Inicializar pagamento por chave Pix
+POST   /baas/api/v2/pix/payment/qrcode             Inicializar pagamento por QR Code
+POST   /baas/api/v2/pix/transfer                   Criar transferência Pix
+GET    /baas/api/v2/pix/transfer/:id               Consultar transferência
+POST   /baas/api/v1/webhooks                       Cadastrar webhook (PIX_TRANSFERRED, PIX_TRANSFER_FAILED)`,
+      boleto: `POST   /baas/v1/charges                            Criar boleto
+GET    /baas/v1/charges/:id                        Consultar boleto
+PATCH  /baas/v1/charges/:id                        Atualizar boleto (vencimento, valor)
+DELETE /baas/v1/charges/:id                        Cancelar boleto
+GET    /baas/v1/charges/:id/pdf                    Download PDF do boleto
+POST   /baas/v1/charges/:id/simulate-payment       Simular pagamento (apenas sandbox)
+POST   /baas/api/v1/webhooks                       Cadastrar webhook (evento: CHARGE_PAID)`,
+      webhooks: `POST   /baas/api/v1/webhooks                       Cadastrar webhook
+GET    /baas/api/v1/webhooks                       Listar webhooks
+DELETE /baas/api/v1/webhooks/:id                   Remover webhook
+
+Tipos de evento disponíveis:
+  PIX_RECEIVED          Pix recebido via QR Code ou chave
+  PIX_REFUNDED          Devolução Pix confirmada
+  PIX_TRANSFERRED       Transferência Pix liquidada
+  PIX_TRANSFER_FAILED   Falha em transferência Pix
+  CHARGE_PAID           Boleto pago
+  CHARGE_OVERDUE        Boleto vencido
+  CHARGE_CANCELLED      Boleto cancelado
+  MED_REQUESTED         MED solicitado
+  MED_ACCEPTED          MED aceito
+  MED_REJECTED          MED rejeitado`,
+      go_live: `Não há endpoint específico para este fluxo.
+Consulte os guias de configuração:
+  /iniciacao/mtls            Configurar mTLS
+  /iniciacao/filtros-ip      Configurar filtros de IP
+  /iniciacao/ida-producao    Checklist completo de produção`,
+    };
+
+    const tasksMap = {
+      pix_receber: {
+        ecommerce: 'Implemente o fluxo de checkout Pix: criar uma cobrança imediata (QR Code Dinâmico) quando o pedido é gerado, exibir o QR Code e o Pix copia e cola na tela de checkout, e confirmar o pagamento via evento PIX_RECEIVED para liberar o pedido.',
+        saas: 'Implemente cobrança Pix para faturas do SaaS: criar um QR Code com Vencimento por fatura, enviar o código ao usuário e liberar acesso ao receber PIX_RECEIVED.',
+        gateway: 'Implemente a orquestração de QR Codes Pix no gateway: criação por cliente com idempotência, roteamento dos webhooks PIX_RECEIVED por conta e conciliação de pagamentos.',
+        marketplace: 'Implemente cobranças Pix para o marketplace: criar QR Codes por pedido e vendedor, receber via PIX_RECEIVED e registrar o recebimento para conciliação e repasse.',
+        software_house: 'Implemente um módulo reutilizável de cobranças Pix para entregar ao cliente final, cobrindo criação de QR Code, exibição, confirmação via webhook e tratamento de status.',
+        erp: 'Implemente recebimentos Pix no ERP: criar QR Codes via API, receber o evento PIX_RECEIVED e registrar a baixa automática do título correspondente.',
+      },
+      pix_pagar: {
+        ecommerce: 'Implemente pagamentos automáticos via Pix para fornecedores do e-commerce: consultar a chave no DICT, inicializar o pagamento com idempotência e aguardar PIX_TRANSFERRED.',
+        saas: 'Implemente repasse automático via Pix para usuários ou parceiros da plataforma SaaS.',
+        gateway: 'Implemente o roteamento de pagamentos Pix no gateway: consultar DICT, inicializar, gerenciar idempotência e tratar PIX_TRANSFERRED e PIX_TRANSFER_FAILED por cliente.',
+        marketplace: 'Implemente repasse automático para vendedores do marketplace via Pix após a confirmação do pagamento do comprador.',
+        software_house: 'Implemente um módulo de pagamentos Pix para o cliente final: consulta DICT, inicialização do pagamento, confirmação via webhook e tratamento de falhas.',
+        erp: 'Implemente pagamentos automáticos de fornecedores via Pix no ERP: inicializar o pagamento, aguardar PIX_TRANSFERRED e registrar a baixa de contas a pagar.',
+      },
+      boleto: {
+        ecommerce: 'Implemente boleto como método de pagamento no checkout: criar com vencimento e encargos, exibir o código digitável e o PDF ao comprador, e confirmar via CHARGE_PAID para liberar o pedido.',
+        saas: 'Implemente cobranças mensais via boleto: emitir com vencimento, desconto por antecipação e multa por atraso, e liberar acesso ao receber CHARGE_PAID.',
+        gateway: 'Implemente emissão de boletos no gateway para múltiplos clientes com conciliação, atualização de vencimento e cancelamento.',
+        marketplace: 'Implemente boleto para compradores do marketplace, com conciliação por pedido e repasse ao vendedor após CHARGE_PAID.',
+        software_house: 'Implemente o módulo de boleto para o cliente final: emissão, download do PDF, consulta de status e confirmação de pagamento via CHARGE_PAID.',
+        erp: 'Implemente emissão e conciliação de boletos no ERP: criar via API, fazer baixa automática ao receber CHARGE_PAID e tratar inadimplência via CHARGE_OVERDUE.',
+      },
+      webhooks: {
+        ecommerce: 'Implemente um handler de webhooks para o e-commerce que processe PIX_RECEIVED e CHARGE_PAID, atualize os pedidos automaticamente e notifique o cliente.',
+        saas: 'Implemente um handler de webhooks para liberar acesso ao receber PIX_RECEIVED ou CHARGE_PAID e bloquear ao receber CHARGE_OVERDUE.',
+        gateway: 'Implemente o sistema de webhooks do gateway: cadastrar e rotear eventos por cliente, processar de forma assíncrona e garantir idempotência.',
+        marketplace: 'Implemente processamento de webhooks no marketplace: rotear PIX_RECEIVED e CHARGE_PAID por vendedor e disparar o fluxo de repasse.',
+        software_house: 'Implemente um handler de webhooks reutilizável para múltiplos clientes, com validação de autenticação e processamento assíncrono.',
+        erp: 'Implemente um consumer de webhooks no ERP que processe PIX_RECEIVED e CHARGE_PAID e execute a baixa automática de títulos.',
+      },
+      go_live: {
+        ecommerce: 'Execute o checklist de homologação para levar o checkout Pix e boleto do e-commerce para produção.',
+        saas: 'Execute o checklist de homologação para levar o sistema de cobranças do SaaS para produção.',
+        gateway: 'Execute o checklist de homologação para levar o gateway para produção, com mTLS, filtros de IP e webhooks de produção por cliente.',
+        marketplace: 'Execute o checklist de homologação para levar o marketplace para produção com todos os fluxos validados.',
+        software_house: 'Monte um checklist de homologação padrão para usar com clientes que precisam migrar para produção.',
+        erp: 'Execute o checklist de homologação para levar a integração de pagamentos do ERP para produção.',
+      },
+    };
+
+    const task = tasksMap[g]?.[n] || 'Me ajude a integrar a API da Delfinance.';
+    const rules = rulesMap[g] || [];
+    const endpoints = endpointsMap[g] || '';
+    const apiKeyNote = k === 'no' ? '\nAinda preciso gerar minha API Key sandbox — inclua este passo.' : '';
+
+    const promptText = `## Papel
+Você é um ${roles[n] || 'desenvolvedor'}, especializado em APIs de pagamento brasileiras.
+
+## Contexto
+Estou integrando a API da Delfinance para ${productDesc[g] || g} em um contexto de ${labels.niche[n]}.
+Meu backend usa ${labels.stack[s]}.${apiKeyNote}
+
+Base de conhecimento da API:
+- Sandbox: https://apisandbox.delbank.com.br
+- Produção: https://api.delbank.com.br
+- Headers obrigatórios: x-delbank-api-key e x-delfinance-account-id
+
+## Regras
+${rules.map((r, i) => `${i + 1}. ${r}`).join('\n')}
+
+## Endpoints relevantes
+${endpoints}
+
+## O que preciso
+${task}
+Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do fluxo, com comentários em português.`;
+
+    const linksMap = {
+      pix_receber: [
+        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Receber via Pix', href: '/guias/pix/receber-pix/visao-geral' },
+        { label: 'Cobrança Imediata (QR Dinâmico)', href: '/guias/pix/receber-pix/cobranca-imediata' },
+        { label: 'Cobrança com Vencimento', href: '/guias/pix/receber-pix/cobranca-com-vencimento' },
+        { label: 'Simular Pagamento', href: '/guias/pix/receber-pix/simulacao-pagamento' },
+        { label: 'Webhooks', href: '/guias/webhooks/visao-geral' },
+      ],
+      pix_pagar: [
+        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Pagar via Pix', href: '/guias/pix/pagar-pix/visao-geral' },
+        { label: 'Pagar por Chave Pix', href: '/guias/pix/pagar-pix/por-chave' },
+        { label: 'Pagar por QR Code', href: '/guias/pix/pagar-pix/por-qrcode' },
+        { label: 'Webhooks', href: '/guias/webhooks/visao-geral' },
+      ],
+      boleto: [
+        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Boleto — Visão Geral', href: '/guias/boleto/visao-geral' },
+        { label: 'Emitir Boleto', href: '/guias/boleto/emitir-boleto' },
+        { label: 'Consultar Boleto', href: '/guias/boleto/consultar-boleto' },
+        { label: 'Webhooks', href: '/guias/webhooks/visao-geral' },
+      ],
+      webhooks: [
+        { label: 'Webhooks — Visão Geral', href: '/guias/webhooks/visao-geral' },
+        { label: 'Cadastrar Webhook (API)', href: '/api-reference/webhooks/cadastrar-webhook' },
+        { label: 'Listar Webhooks (API)', href: '/api-reference/webhooks/listar-webhooks' },
+        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+      ],
+      go_live: [
+        { label: 'Primeiros Passos', href: '/iniciacao/primeiros-passos' },
+        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'mTLS', href: '/iniciacao/mtls' },
+        { label: 'Filtros de IP', href: '/iniciacao/filtros-ip' },
+        { label: 'Indo para Produção', href: '/iniciacao/ida-producao' },
+      ],
+    };
+
+    const stepsMap = {
+      pix_receber: [
+        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        'Faça uma chamada de teste para validar a autenticação.',
+        'Crie a cobrança Pix no backend e retorne o QR Code ao frontend.',
+        'Configure o webhook para o evento PIX_RECEIVED.',
+        'Simule um pagamento no sandbox para validar o fluxo.',
+        'Trate a confirmação no handler de webhook e atualize o estado do pedido.',
+        'Execute o checklist de homologação antes de ir para produção.',
+      ],
+      pix_pagar: [
+        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        'Faça uma chamada de teste para validar a autenticação.',
+        'Consulte a chave Pix do destinatário no DICT.',
+        'Inicialize o pagamento com idempotência.',
+        'Configure o webhook para PIX_TRANSFERRED e PIX_TRANSFER_FAILED.',
+        'Trate o resultado de forma assíncrona pelo evento de webhook.',
+        'Execute o checklist de homologação antes de ir para produção.',
+      ],
+      boleto: [
+        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        'Faça uma chamada de teste para validar a autenticação.',
+        'Emita o boleto com vencimento, multa, juros e desconto.',
+        'Retorne o código digitável e o link do PDF ao pagador.',
+        'Configure o webhook para CHARGE_PAID.',
+        'Simule o pagamento no sandbox para validar o fluxo.',
+        'Execute o checklist de homologação antes de ir para produção.',
+      ],
+      webhooks: [
+        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        'Crie um endpoint HTTPS público para receber os eventos.',
+        'Cadastre o webhook via POST /baas/api/v1/webhooks com o tipo de evento.',
+        'Implemente o handler com resposta HTTP 200 imediata.',
+        'Processe os eventos de forma idempotente e assíncrona.',
+        'Configure a autenticação do webhook (BEARER, BASIC ou HEADER).',
+        'Simule um pagamento para disparar e validar o recebimento do evento.',
+      ],
+      go_live: [
+        'Valide todos os fluxos de pagamento no ambiente sandbox.',
+        'Configure mTLS com o certificado da Delfinance.',
+        'Ative os filtros de IP com os endereços dos seus servidores de produção.',
+        'Gere a API Key de produção no Portal do Desenvolvedor.',
+        'Cadastre os webhooks de produção com URLs e autenticação definitivas.',
+        'Realize um pagamento real de baixo valor para validar o fluxo ponta a ponta.',
+      ],
+    };
+
+    return {
+      prompt: promptText,
+      recommendedLinks: linksMap[g] || [],
+      steps: stepsMap[g] || [],
+    };
+  }, [answers, isComplete]);
+
+  const scrollToBottom = () => {
+    window.requestAnimationFrame(() => {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        if (chatBodyRef.current) {
+          chatBodyRef.current.scrollTo({ top: chatBodyRef.current.scrollHeight, behavior: 'smooth' });
+        }
+      }, 70);
+    });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [answers, activeQuestionIndex, typing, copied]);
+
+  const handleSelect = (key, value) => {
+    if (typing || answers[key]) return;
+    setAnswers((current) => ({ ...current, [key]: value }));
+    setTyping(true);
+    setTimeout(() => {
+      setTyping(false);
+      setActiveQuestionIndex((current) => current + 1);
+    }, 850);
+  };
+
+  const copyPrompt = async () => {
+    await navigator.clipboard.writeText(prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+
+  const reset = () => {
+    setAnswers({ goal: '', niche: '', stack: '', hasApiKey: '' });
+    setActiveQuestionIndex(0);
+    setTyping(false);
+    setCopied(false);
+    setTimeout(() => {
+      chatBodyRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 100);
+  };
+
+  const Bubble = ({ type = 'bot', children }) => {
+    const isUser = type === 'user';
+    return (
+      <div className={`df-message-row ${isUser ? 'df-user-row' : 'df-bot-row'}`}>
+        {!isUser && <div className="df-avatar"><span>D</span></div>}
+        <div className={`df-bubble ${isUser ? 'df-user-bubble' : 'df-bot-bubble'}`}>{children}</div>
+      </div>
+    );
+  };
+
+  const TypingBubble = () => (
+    <div className="df-message-row df-bot-row">
+      <div className="df-avatar"><span>D</span></div>
+      <div className="df-bubble df-bot-bubble df-typing-bubble" aria-label="Assistente digitando">
+        <span className="df-typing-dot" />
+        <span className="df-typing-dot" />
+        <span className="df-typing-dot" />
+      </div>
+    </div>
+  );
+
+  const Options = ({ question }) => {
+    const selected = answers[question.key];
+    if (selected) return null;
+    return (
+      <div className="df-options">
+        {question.options.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className="df-option-button"
+            disabled={typing}
+            onClick={() => handleSelect(question.key, item.value)}
+          >
+            <span className="df-option-title">{item.label}</span>
+            <span className="df-option-description">{item.description}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const PlanCard = () => (
+    <div className="df-plan-card">
+      <div className="df-llms-banner">
+        <div className="df-llms-text">
+          <span className="df-llms-eyebrow">Para melhores resultados</span>
+          <p>Baixe a documentação e cole no seu assistente antes de usar o prompt abaixo.</p>
+        </div>
+        <div className="df-llms-links">
+          <a
+            href="/llms.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="df-llms-btn-outline"
+          >
+            llms.txt ↗
+          </a>
+          <a
+            href="/llms-full.txt"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="df-llms-btn"
+          >
+            llms-full.txt ↗
+          </a>
+        </div>
+      </div>
+
+      <div className="df-plan-header">
+        <div>
+          <span className="df-plan-eyebrow">Plano recomendado</span>
+          <h3>Seu caminho de integração</h3>
+        </div>
+        <span className="df-plan-badge">Gerado</span>
+      </div>
+
+      <div className="df-summary-grid">
+        <div><span>Produto</span><strong>{labels.goal[answers.goal]}</strong></div>
+        <div><span>Contexto</span><strong>{labels.niche[answers.niche]}</strong></div>
+        <div><span>Backend</span><strong>{labels.stack[answers.stack]}</strong></div>
+        <div><span>API Key</span><strong>{answers.hasApiKey === 'yes' ? 'Disponível' : 'Pendente'}</strong></div>
+      </div>
+
+      <h4>Fluxo sugerido</h4>
+      <ol className="df-steps">
+        {steps.map((step, i) => <li key={i}>{step}</li>)}
+      </ol>
+
+      <h4>Guias recomendados</h4>
+      <div className="df-links">
+        {recommendedLinks.map((link, i) => (
+          <a key={i} href={link.href}>{link.label}</a>
+        ))}
+      </div>
+
+      <h4>Prompt para IA</h4>
+      <pre className="df-prompt">{prompt}</pre>
+
+      <div className="df-actions">
+        <button type="button" onClick={copyPrompt} className="df-action-primary">
+          {copied ? 'Copiado' : 'Copiar prompt'}
+        </button>
+        <button type="button" onClick={reset} className="df-action-secondary">
+          Reiniciar conversa
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="df-chat-shell">
+      <style>
+        {`
+          .df-chat-shell {
+            --df-primary: ${PRIMARY};
+            --df-primary-dark: ${PRIMARY_DARK};
+            --df-primary-soft: ${PRIMARY_SOFT};
+            --df-primary-soft-2: ${PRIMARY_SOFT_2};
+            --df-border: ${BORDER};
+            --df-border-soft: ${BORDER_SOFT};
+            --df-text: ${TEXT};
+            --df-text-secondary: ${TEXT_SECONDARY};
+            --df-surface: ${SURFACE};
+            --df-bot-bubble: ${BOT_BUBBLE};
+
+            margin-top: 28px;
+            border: 1px solid var(--df-border);
+            border-radius: 24px;
+            overflow: hidden;
+            background: var(--df-surface);
+            box-shadow:
+              0 24px 70px rgba(17, 24, 39, 0.08),
+              0 1px 0 rgba(17, 24, 39, 0.04);
+          }
+
+          .df-chat-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--df-border-soft);
+            background:
+              radial-gradient(circle at top left, rgba(26, 148, 26, 0.10), transparent 30%),
+              #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+          }
+
+          .df-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+          }
+
+          .df-header-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: var(--df-primary);
+            color: #FFFFFF;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            box-shadow: 0 10px 26px rgba(26, 148, 26, 0.22);
+            flex: 0 0 auto;
+          }
+
+          .df-header-title strong {
+            display: block;
+            color: var(--df-text);
+            font-size: 15px;
+            line-height: 1.2;
+          }
+
+          .df-header-title p {
+            margin: 4px 0 0;
+            color: var(--df-text-secondary);
+            font-size: 13px;
+            line-height: 1.35;
+          }
+
+          .df-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 10px;
+            border: 1px solid var(--df-border-soft);
+            border-radius: 999px;
+            color: var(--df-text-secondary);
+            font-size: 12px;
+            background: #FFFFFF;
+            white-space: nowrap;
+          }
+
+          .df-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--df-primary);
+            box-shadow: 0 0 0 4px rgba(26, 148, 26, 0.12);
+          }
+
+          .df-chat-body {
+            height: 640px;
+            overflow-y: auto;
+            padding: 24px 18px 26px;
+            scroll-behavior: smooth;
+            background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 42%, #F8FAFC 100%);
+          }
+
+          .df-chat-body::-webkit-scrollbar { width: 10px; }
+          .df-chat-body::-webkit-scrollbar-track { background: transparent; }
+          .df-chat-body::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 999px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+          }
+
+          .df-message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 9px;
+            margin-bottom: 13px;
+            animation: dfMessageIn 0.26s ease both;
+          }
+
+          .df-bot-row { justify-content: flex-start; }
+          .df-user-row { justify-content: flex-end; }
+
+          .df-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: #FFFFFF;
+            border: 1px solid var(--df-border);
+            color: var(--df-primary);
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 800;
+            flex: 0 0 auto;
+            box-shadow: 0 6px 18px rgba(17, 24, 39, 0.05);
+          }
+
+          .df-bubble {
+            max-width: min(76%, 620px);
+            padding: 12px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.55;
+          }
+
+          .df-bot-bubble {
+            background: var(--df-bot-bubble);
+            color: var(--df-text);
+            border-bottom-left-radius: 6px;
+          }
+
+          .df-user-bubble {
+            background: var(--df-primary);
+            color: #FFFFFF;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 10px 26px rgba(26, 148, 26, 0.18);
+          }
+
+          .df-typing-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 50px;
+            padding: 13px 14px;
+          }
+
+          .df-typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--df-text-secondary);
+            display: inline-block;
+            animation: dfTypingBounce 1.15s infinite ease-in-out;
+          }
+
+          .df-typing-dot:nth-child(1) { animation-delay: 0s; }
+          .df-typing-dot:nth-child(2) { animation-delay: 0.16s; }
+          .df-typing-dot:nth-child(3) { animation-delay: 0.32s; }
+
+          .df-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 4px 0 18px 37px;
+            max-width: 760px;
+            animation: dfMessageIn 0.26s ease both;
+          }
+
+          .df-option-button {
+            appearance: none;
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 9px 11px;
+            min-width: 140px;
+            max-width: 200px;
+            text-align: left;
+            cursor: pointer;
+            transition:
+              transform 0.18s ease,
+              border-color 0.18s ease,
+              background 0.18s ease,
+              box-shadow 0.18s ease;
+          }
+
+          .df-option-button:hover {
+            transform: translateY(-1px);
+            border-color: var(--df-primary);
+            background: var(--df-primary-soft);
+            box-shadow: 0 10px 24px rgba(26, 148, 26, 0.08);
+          }
+
+          .df-option-button:active { transform: translateY(0); }
+
+          .df-option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+          }
+
+          .df-option-title {
+            display: block;
+            color: var(--df-text);
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.2;
+            margin-bottom: 3px;
+          }
+
+          .df-option-description {
+            display: block;
+            color: var(--df-text-secondary);
+            font-size: 12px;
+            line-height: 1.35;
+          }
+
+          .df-plan-card {
+            margin: 10px 0 18px 37px;
+            padding: 20px;
+            border: 1px solid var(--df-border);
+            border-radius: 20px;
+            background: #FFFFFF;
+            box-shadow: 0 18px 46px rgba(17, 24, 39, 0.07);
+            max-width: 780px;
+            animation: dfMessageIn 0.28s ease both;
+          }
+
+          .df-llms-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(26, 148, 26, 0.06), rgba(26, 148, 26, 0.03));
+            border: 1px solid rgba(26, 148, 26, 0.18);
+          }
+
+          .df-llms-text { min-width: 0; }
+
+          .df-llms-eyebrow {
+            display: block;
+            color: var(--df-primary);
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+          }
+
+          .df-llms-banner p {
+            margin: 0;
+            color: var(--df-text-secondary);
+            font-size: 13px;
+            line-height: 1.45;
+          }
+
+          .df-llms-links {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+          }
+
+          .df-llms-btn,
+          .df-llms-btn-outline {
+            display: inline-flex;
+            align-items: center;
+            height: 34px;
+            padding: 0 13px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 750;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: background 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+          }
+
+          .df-llms-btn {
+            background: var(--df-primary);
+            color: #FFFFFF;
+            border: 1px solid var(--df-primary);
+          }
+
+          .df-llms-btn:hover {
+            background: var(--df-primary-dark);
+            transform: translateY(-1px);
+          }
+
+          .df-llms-btn-outline {
+            background: #FFFFFF;
+            color: var(--df-primary-dark);
+            border: 1px solid var(--df-border);
+          }
+
+          .df-llms-btn-outline:hover {
+            border-color: var(--df-primary);
+            background: var(--df-primary-soft);
+            transform: translateY(-1px);
+          }
+
+          .df-plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+          }
+
+          .df-plan-eyebrow {
+            display: block;
+            color: var(--df-primary);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+          }
+
+          .df-plan-card h3 {
+            margin: 0;
+            color: var(--df-text);
+            font-size: 21px;
+            line-height: 1.2;
+          }
+
+          .df-plan-card h4 {
+            color: var(--df-text);
+            margin: 20px 0 10px;
+            font-size: 15px;
+          }
+
+          .df-plan-card p {
+            color: var(--df-text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 14px;
+          }
+
+          .df-plan-card strong { color: var(--df-text); }
+
+          .df-plan-badge {
+            color: var(--df-primary);
+            background: var(--df-primary-soft);
+            border: 1px solid var(--df-primary-soft-2);
+            border-radius: 999px;
+            padding: 6px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+
+          .df-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 16px 0 6px;
+          }
+
+          .df-summary-grid div {
+            border: 1px solid var(--df-border-soft);
+            border-radius: 14px;
+            padding: 10px;
+            background: #FAFAFA;
+            min-width: 0;
+          }
+
+          .df-summary-grid span {
+            display: block;
+            color: var(--df-text-secondary);
+            font-size: 11px;
+            margin-bottom: 4px;
+          }
+
+          .df-summary-grid strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.3;
+          }
+
+          .df-steps {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--df-text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+          }
+
+          .df-steps li::marker {
+            color: var(--df-primary);
+            font-weight: 800;
+          }
+
+          .df-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .df-links a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            color: var(--df-primary-dark);
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            transition:
+              background 0.18s ease,
+              border-color 0.18s ease,
+              transform 0.18s ease;
+          }
+
+          .df-links a:hover {
+            background: var(--df-primary-soft);
+            border-color: var(--df-primary);
+            transform: translateY(-1px);
+          }
+
+          .df-prompt {
+            white-space: pre-wrap;
+            padding: 15px;
+            border-radius: 14px;
+            background: #111827;
+            color: #F9FAFB;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+
+          .df-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+          }
+
+          .df-action-primary,
+          .df-action-secondary {
+            appearance: none;
+            border-radius: 12px;
+            padding: 10px 13px;
+            font-size: 13px;
+            font-weight: 750;
+            cursor: pointer;
+            transition:
+              transform 0.18s ease,
+              box-shadow 0.18s ease,
+              background 0.18s ease;
+          }
+
+          .df-action-primary {
+            border: 1px solid var(--df-primary);
+            background: var(--df-primary);
+            color: #FFFFFF;
+            box-shadow: 0 10px 24px rgba(26, 148, 26, 0.16);
+          }
+
+          .df-action-primary:hover {
+            background: var(--df-primary-dark);
+            transform: translateY(-1px);
+          }
+
+          .df-action-secondary {
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            color: var(--df-text);
+          }
+
+          .df-action-secondary:hover {
+            background: #F9FAFB;
+            transform: translateY(-1px);
+          }
+
+          @keyframes dfTypingBounce {
+            0%, 70%, 100% { transform: translateY(0) scale(0.82); opacity: 0.35; }
+            35% { transform: translateY(-5px) scale(1); opacity: 1; }
+          }
+
+          @keyframes dfMessageIn {
+            from { opacity: 0; transform: translateY(7px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+
+          @media (max-width: 720px) {
+            .df-chat-shell { border-radius: 18px; }
+            .df-chat-header { align-items: flex-start; }
+            .df-status { display: none; }
+            .df-chat-body { height: 600px; padding: 20px 14px 24px; }
+            .df-bubble { max-width: 86%; }
+            .df-options { margin-left: 37px; flex-direction: column; }
+            .df-option-button { width: 100%; max-width: 100%; }
+            .df-plan-card { margin-left: 0; padding: 16px; }
+            .df-llms-banner { flex-direction: column; align-items: flex-start; }
+            .df-llms-links { flex-direction: column; width: 100%; }
+            .df-llms-btn, .df-llms-btn-outline { justify-content: center; }
+            .df-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          }
+
+          @media (max-width: 460px) {
+            .df-summary-grid { grid-template-columns: 1fr; }
+          }
+        `}
+      </style>
+
+      <div className="df-chat-header">
+        <div className="df-header-left">
+          <div className="df-header-avatar">D</div>
+          <div className="df-header-title">
+            <strong>Assistente Delfinance</strong>
+            <p>Converse comigo para montar seu caminho de integração.</p>
+          </div>
+        </div>
+        <div className="df-status">
+          <span className="df-status-dot" />
+          Online
+        </div>
+      </div>
+
+      <div ref={chatBodyRef} className="df-chat-body">
+        <Bubble>
+          Olá! Vou te ajudar a montar o melhor caminho para integrar com a Delfinance.
+        </Bubble>
+
+        {questions.map((question, index) => {
+          if (index > activeQuestionIndex) return null;
+          const answer = answers[question.key];
+          return (
+            <div key={question.key}>
+              <Bubble>{question.question}</Bubble>
+              <Options question={question} />
+              {answer && (
+                <Bubble type="user">{question.userText(answer)}</Bubble>
+              )}
+            </div>
+          );
+        })}
+
+        {typing && <TypingBubble />}
+
+        {activeQuestionIndex >= questions.length && isComplete && (
+          <>
+            <Bubble>
+              Pronto. Com base nas suas respostas, montei um plano e um prompt personalizado para sua integração.
+            </Bubble>
+            <PlanCard />
+          </>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+};
+
+<div className="min-h-screen bg-white px-4 py-8 sm:px-6 lg:px-8">
+  <div className="mx-auto w-full max-w-3xl">
+    <ChatIntegrationAssistant />
+  </div>
+</div>

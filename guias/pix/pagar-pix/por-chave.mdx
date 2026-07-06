@@ -1,0 +1,155 @@
+---
+title: "Pagar via Chave Pix"
+sidebarTitle: "Por chave Pix"
+description: "Envie um Pix informando a chave do recebedor. A API consulta o DICT, valida os dados e executa a transferência."
+icon: "key"
+---
+
+Quando você tem a chave Pix do recebedor (CPF, CNPJ, e-mail, telefone ou chave aleatória EVP), o fluxo acontece em dois passos: primeiro você consulta a chave para obter o `endToEndId` e os dados da conta destino, depois executa o pagamento com esse identificador.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Inicialize o pagamento consultando a chave">
+Chame o endpoint de inicialização informando a chave Pix do recebedor. A API consulta o DICT (Diretório de Identificadores de Contas Transacionais) do Banco Central e retorna os dados da conta vinculada.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/dict/payment-initialization' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "key": "+5511999975734"
+}'
+```
+```json Response
+{
+    "endToEndId": "E38224857202412201244TP05NXG36QK",
+    "key": "+5511999975734",
+    "beneficiary": {
+        "number": "29823",
+        "branch": "1",
+        "type": "CURRENT",
+        "participant": {
+            "name": "DELCRED SCD S.A.",
+            "ispb": "38224857"
+        },
+        "holder": {
+            "name": "HOMOLOGACAO INTEGRACAO API",
+            "document": "***876977**",
+            "type": "NATURAL"
+        }
+    },
+    "keyBelongsHolder": false
+}
+```
+</CodeGroup>
+
+O `endToEndId` retornado é de uso único e tem validade curta — use-o imediatamente na etapa seguinte.
+
+<Tip>
+Passe `holderDocument` no corpo da requisição se quiser verificar se a chave pertence a um CPF ou CNPJ específico. O campo `keyBelongsHolder` na resposta indica o resultado da verificação — útil para confirmar que o pagador está enviando para a pessoa certa.
+</Tip>
+</Step>
+
+<Step title="Confirme os dados do recebedor">
+Antes de executar o pagamento, exiba os dados do `beneficiary` retornado para que o usuário confirme que está enviando para a pessoa certa. Isso evita erros e é uma boa prática de UX para qualquer produto financeiro.
+
+Os dados do titular aparecem com o documento parcialmente mascarado — isso é comportamento padrão do DICT por privacidade.
+</Step>
+
+<Step title="Execute a transferência">
+Com o `endToEndId` em mãos, execute o pagamento. Use `initiationType: "KEY"` para indicar que a iniciação foi feita via chave Pix.
+
+<CodeGroup>
+```bash cURL
+curl --request POST \
+  'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --data '{
+    "amount": 50.00,
+    "description": "Pagamento ref. pedido #1234",
+    "endToEndId": "E38224857202412201244TP05NXG36QK",
+    "initiationType": "KEY"
+}'
+```
+```json Response
+{
+    "id": "0fc7821d-b488-4268-88c0-a2bc443d046e",
+    "endToEndId": "E38224857202412201244TP05NXG36QK",
+    "transactionNsu": 722355,
+    "status": "PIX_PROCESSING",
+    "type": "PIX_KEY",
+    "amount": 50.00,
+    "createdAt": "2024-12-20T12:44:00.251Z",
+    "description": "Pagamento ref. pedido #1234",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "29823",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "30287697789",
+            "name": "HOMOLOGACAO INTEGRACAO API",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "DELCRED SCD S.A.",
+            "ispb": "38224857"
+        }
+    }
+}
+```
+</CodeGroup>
+
+O status inicial é `PIX_PROCESSING`. O status final (`PIX_EFFECTIVE` ou `PIX_ERROR`) é entregue via webhook — não use polling.
+
+<Warning>
+O `IdempotencyKey` no header é obrigatório. Envie um GUID único por requisição. Se a mesma chamada for reenviada com o mesmo `IdempotencyKey`, a API retornará o resultado original sem criar um pagamento duplicado. Veja [Idempotência](/iniciacao/idempotencia).
+</Warning>
+</Step>
+
+</Steps>
+
+## Chaves disponíveis no sandbox
+
+No ambiente sandbox, você só pode transferir para chaves que existam nesse ambiente. Use as chaves abaixo para testar. **Um pagamento não pode ser feito de uma conta para ela mesma.**
+
+| Conta beneficiária | Chave | Tipo |
+|---|---|---|
+| 31712 | `+5511999975734` | Telefone |
+| 31712 | `dihete3589@mnsaf.com` | E-mail |
+| 31712 | `1aa5ef56-3b5f-4665-9ece-e7513efc03e5` | EVP |
+| 29823 | `30287697789` | CPF |
+| 29823 | `0a192461-051f-438b-b9c4-2db423039281` | EVP |
+| 30422 | `06790157000144` | CNPJ |
+| 30422 | `255d38b2-42c1-4593-844d-8e92bd6cb438` | EVP |
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Inicializar pagamento por chave" icon="magnifying-glass" href="/api-reference/pix/inicializar-pagamento-chave">
+    `POST /pix/dict/payment-initialization`
+  </Card>
+  <Card title="Executar transferência" icon="paper-plane" href="/api-reference/pix/criar-transferencia">
+    `POST /transfers`
+  </Card>
+</CardGroup>

@@ -1,0 +1,90 @@
+---
+title: "Outros Eventos"
+sidebarTitle: "Outros eventos"
+description: "Mudanças de status de conta e aprovação de contas whitelabel."
+icon: "bell"
+---
+
+Esta página cobre eventos de webhook relacionados a mudanças de conta e aprovação de contas whitelabel.
+
+## ACCOUNT_STATUS_UPDATED
+
+Disparado quando o status de uma conta registrada é alterado — por exemplo, de `ACTIVE` para `BLOCKED`.
+
+**Como registrar:**
+```json
+{
+  "eventType": "ACCOUNT_STATUS_UPDATED",
+  "url": "https://seuservidor.com.br/webhooks/conta-atualizada",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload:**
+```json
+{
+    "bankAccount": "999999",
+    "eventType": "ACCOUNT_STATUS_UPDATED",
+    "status": "BLOCKED",
+    "updatedAt": "2026-03-06T13:31:47.999Z"
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `bankAccount` | Número da conta Delfinance que sofreu a alteração |
+| `eventType` | `"ACCOUNT_STATUS_UPDATED"` |
+| `status` | Novo status da conta: `ACTIVE`, `BLOCKED` ou `FINISHED` |
+| `updatedAt` | Timestamp da mudança |
+
+---
+
+## WHITELABEL_CUSTOMER_APPROVED / DOCUMENTATION_REJECTED
+
+Disparado quando uma conta criada via Whitelabel é **aprovada** ou tem sua documentação **rejeitada**.
+
+**Como registrar:**
+
+<CodeGroup>
+```json Conta aprovada
+{
+  "eventType": "WHITELABEL_CUSTOMER_APPROVED",
+  "url": "https://seuservidor.com.br/webhooks/conta-aprovada",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+```json Documentação rejeitada
+{
+  "eventType": "WHITELABEL_CUSTOMER_DOCUMENTATION_REJECTED",
+  "url": "https://seuservidor.com.br/webhooks/conta-rejeitada",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+</CodeGroup>
+
+**Payload — Conta aprovada:**
+```json
+{
+    "name": "JOSEVALDO",
+    "document": "61263079091",
+    "bankAccountNumber": 13102
+}
+```
+
+**Payload — Documentação rejeitada:**
+```json
+{
+    "name": "Fulano da silva",
+    "document": "49126271869",
+    "bankAccountNumber": null
+}
+```
+
+| Campo | Descrição |
+|---|---|
+| `name` | Nome registrado na conta |
+| `document` | CPF ou CNPJ registrado |
+| `bankAccountNumber` | Número da conta criada (preenchido apenas quando aprovada; `null` quando rejeitada) |

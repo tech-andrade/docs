@@ -1,0 +1,54 @@
+---
+title: "Imprimir boleto (PDF)"
+api: "GET /baas/v1/charges/{correlationId}/stream"
+description: "Gere o PDF do boleto para download ou envio ao pagador."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Gerenciar Boleto](/guias/boleto/gerenciar-boleto).
+</Note>
+
+Retorna o boleto em formato PDF como um stream binário. Para `BANKSLIP_PIX`, o PDF inclui o QR Code Pix impresso no documento.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="correlationId" type="string" required>
+  GUID do boleto.
+</ParamField>
+
+## Response
+
+Retorna `200 OK` com `Content-Type: application/pdf` e o conteúdo binário do PDF no corpo da resposta.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output boleto.pdf
+```
+</RequestExample>
+
+<ResponseExample>
+```text 200
+(PDF binário — Content-Type: application/pdf)
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-f94523a9cff07f9f4b94a6f97837f657-e010fb53ce385f31-00"
+}
+```
+</ResponseExample>

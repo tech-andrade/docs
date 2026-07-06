@@ -1,0 +1,48 @@
+---
+title: "C# (.NET) SDK"
+sidebarTitle: "Introdução"
+description: "Instale e configure o SDK oficial da Delfinance para C# e .NET."
+icon: "microsoft"
+---
+
+## Instalação
+
+<CodeGroup>
+```bash .NET CLI
+dotnet add package Delfinance-api-sdk --version 0.2.5
+```
+```xml PackageReference
+<PackageReference Include="Delfinance-api-sdk" Version="0.2.5" />
+```
+</CodeGroup>
+
+Compatível com .NET 6.0 ou superior.
+
+## Configuração inicial
+
+```csharp
+using Delfinance.Sdk;
+
+var client = new DelfinanceClient(new DelfinanceConfig
+{
+    Environment = "sandbox", // ou "production"
+    ClientId = Environment.GetEnvironmentVariable("DELFINANCE_CLIENT_ID"),
+    ClientSecret = Environment.GetEnvironmentVariable("DELFINANCE_CLIENT_SECRET"),
+    CertPath = "./certificado.crt",
+    KeyPath = "./chave-privada.key"
+});
+```
+
+| Propriedade | Tipo | Descrição |
+|---|---|---|
+| `Environment` | `string` | `"sandbox"` ou `"production"` |
+| `ClientId` | `string` | API key do Portal do Desenvolvedor |
+| `ClientSecret` | `string` | Client secret do Portal do Desenvolvedor |
+| `CertPath` | `string` | Caminho para o certificado mTLS (`.crt`) |
+| `KeyPath` | `string` | Caminho para a chave privada (`.key`) |
+
+## Publicado em
+
+<Card title="NuGet — Delfinance-api-sdk" icon="microsoft" href="https://www.nuget.org/packages/Delfinance-api-sdk/0.2.5">
+  Veja versões e dependências no NuGet.
+</Card>

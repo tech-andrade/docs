@@ -1,45 +1,40 @@
 ---
 title: "URL Base"
-description: "URLs base das APIs DelFinance por ambiente"
+description: "URLs base das APIs Delfinance por ambiente"
 icon: "link"
 ---
 
-Todas as chamadas às APIs DelFinance devem ser realizadas sobre HTTPS, com mTLS habilitado.
+Todas as chamadas às APIs Delfinance devem ser realizadas sobre HTTPS, com as camadas de segurança apropriadas conforme o ambiente.
 
 ## URLs por ambiente
 
 <CodeGroup>
 
 ```bash Sandbox
-https://api.sandbox.delfinance.com.br
+https://apisandbox.delbank.com.br
 ```
 
 ```bash Produção
-https://api.delfinance.com.br
+https://api.delbank.com.br
 ```
 
 </CodeGroup>
 
-## URLs de autenticação (OAuth 2.0)
+## Autenticação por headers
 
-<CodeGroup>
+No modelo atual, a autenticação é feita com os headers abaixo:
 
-```bash Sandbox
-https://auth.sandbox.delfinance.com.br/oauth/token
-```
-
-```bash Produção
-https://auth.delfinance.com.br/oauth/token
-```
-
-</CodeGroup>
+| Cabeçalho | Obrigatório | Descrição |
+| --- | --- | --- |
+| `x-delbank-api-key` | Sim | Identifica a integração e autentica a organização |
+| `x-delfinance-account-id` | Sim | Identifica a conta acessada |
 
 ## Versionamento
 
 As APIs seguem versionamento via path. A versão atual é `v1`:
 
 ```text
-https://api.delfinance.com.br/v1/{recurso}
+https://api.delbank.com.br/v1/{recurso}
 ```
 
 <Info>
@@ -48,8 +43,10 @@ https://api.delfinance.com.br/v1/{recurso}
 
 ## Formato das requisições
 
-- **Protocolo:** HTTPS \+ TLS 1.2 ou superior
-- **Autenticação mTLS:** obrigatória em todas as chamadas
+- **Protocolo:** HTTPS + TLS 1.2 ou superior
+- **Autenticação por headers:** obrigatória em todos os ambientes
+- **mTLS:** obrigatório em Produção
+- **Allowlist de IPs:** obrigatória em Produção
 - **Content-Type:** `application/json`
 - **Encoding:** UTF-8
 
@@ -57,7 +54,8 @@ https://api.delfinance.com.br/v1/{recurso}
 
 | Cabeçalho | Obrigatório | Descrição |
 | --- | --- | --- |
-| `Authorization` | Sim | Bearer token OAuth 2.0 |
+| `x-delbank-api-key` | Sim | Chave de API da integração |
+| `x-delfinance-account-id` | Sim | Identificador da conta |
 | `Content-Type` | Sim | `application/json` |
-| `X-Idempotency-Key` | Em operações de escrita | Chave única de idempotência |
+| `IdempotencyKey` | Em operações de escrita | Chave única de idempotência |
 | `X-Request-Id` | Recomendado | UUID para rastrear a requisição |

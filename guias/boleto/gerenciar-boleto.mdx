@@ -1,0 +1,92 @@
+---
+title: "Gerenciar Boleto"
+sidebarTitle: "Gerenciar boleto"
+description: "Altere o vencimento, baixe e cancele boletos ou faça download do PDF para envio ao pagador."
+icon: "sliders"
+---
+
+Após emitir um boleto, você pode alterar sua data de vencimento, cancelar/baixar a cobrança ou gerar o PDF para envio ao pagador.
+
+## Alterar data de vencimento
+
+Use `PATCH /baas/v1/charges/:correlationId` para atualizar a data de vencimento de um boleto pendente. Somente o campo `dueDate` pode ser alterado.
+
+<CodeGroup>
+```bash cURL
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "dueDate": "2026-03-31"
+}'
+```
+</CodeGroup>
+
+A resposta de sucesso retorna `200 OK` com o corpo vazio (`text/plain`). O boleto continua com o mesmo `correlationId`, `ourNumber` e código de barras — apenas o vencimento muda.
+
+<Warning>
+Só é possível alterar o vencimento de boletos com status **Pending**. Boletos expirados, pagos ou cancelados não podem ser modificados.
+</Warning>
+
+## Baixar e cancelar boleto
+
+Use `PUT /baas/v1/charges/:correlationId/closeout` para baixar (cancelar) um boleto. Após a baixa, o boleto não pode mais ser pago.
+
+<CodeGroup>
+```bash cURL
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/closeout' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</CodeGroup>
+
+A resposta de sucesso retorna `200 OK`. Após a baixa, o status do boleto passa para `Cancelled`.
+
+<Note>
+A baixa não cancela um pagamento já realizado. Se o boleto foi pago antes da solicitação de baixa, o pagamento permanece registrado normalmente.
+</Note>
+
+## Gerar PDF do boleto
+
+Use `GET /baas/v1/charges/:correlationId/stream` para obter o boleto em formato PDF. A resposta é um stream binário com `Content-Type: application/pdf`.
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output boleto.pdf
+```
+
+O PDF gerado contém o código de barras e, para `BANKSLIP_PIX`, também o QR Code Pix impresso no documento.
+
+### Exemplo em código
+
+```javascript Node.js
+const response = await fetch(
+  `https://apisandbox.delbank.com.br/baas/v1/charges/${correlationId}/stream`,
+  {
+    headers: {
+      'x-delbank-api-key': apiKey,
+      'x-delfinance-account-id': accountId,
+    },
+  }
+);
+
+const pdfBuffer = await response.arrayBuffer();
+fs.writeFileSync('boleto.pdf', Buffer.from(pdfBuffer));
+```
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Atualizar boleto" icon="pen" href="/api-reference/boleto/atualizar-boleto">
+    `PATCH /baas/v1/charges/:correlationId`
+  </Card>
+  <Card title="Cancelar boleto" icon="xmark" href="/api-reference/boleto/cancelar-boleto">
+    `PUT /baas/v1/charges/:correlationId/closeout`
+  </Card>
+  <Card title="Imprimir PDF" icon="file-pdf" href="/api-reference/boleto/imprimir-boleto">
+    `GET /baas/v1/charges/:correlationId/stream`
+  </Card>
+</CardGroup>

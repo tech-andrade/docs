@@ -1,0 +1,94 @@
+---
+title: "Simular Pagamento de Boleto"
+sidebarTitle: "Simular pagamento"
+description: "Simule a conclusão de um pagamento de boleto no ambiente sandbox para validar webhooks e fluxos de integração."
+icon: "flask"
+---
+
+<Warning>
+Este endpoint está disponível **apenas no ambiente sandbox** (`apisandbox.delbank.com.br`). Não existe em produção.
+</Warning>
+
+A simulação permite disparar o evento de pagamento de um boleto sem precisar realizar uma transação financeira real. É útil para validar o recebimento de webhooks, testar a atualização de status e garantir que seu fluxo de conciliação funciona corretamente.
+
+## Como funciona
+
+Envie `POST /baas/v1/charges/{id}/simulate-conclude` com o tipo de simulação no corpo da requisição:
+
+- **`BANKSLIP`** — simula o pagamento pela linha digitável/código de barras. O `{id}` deve ser a linha digitável (`digitableLine`) ou o código de barras (`barCode`) do boleto.
+- **`PIX`** — simula o pagamento pelo QR Code Pix (apenas para `BANKSLIP_PIX`). O `{id}` deve ser o `correlationId` do boleto.
+
+## Simulação por boleto (BANKSLIP)
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/43590001161200000060900002156347693070000000010/simulate-conclude' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "BANKSLIP"
+}'
+```
+```json Response (202)
+{
+    "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
+    "referenceId": "sim-00000215634",
+    "amount": 150.00,
+    "source": "PCR",
+    "date": "2025-07-05T13:30:15Z",
+    "paymentDate": "2025-07-05T13:30:15Z",
+    "issuer": {
+        "ispb": "38224857",
+        "code": "435",
+        "branch": "0001",
+        "agency": "0001",
+        "name": "DELBANK",
+        "type": "PJ",
+        "document": "30287697789",
+        "fantasyName": "DELBANK SIMULADOR"
+    },
+    "additionalData": {
+        "simulator": "DelbankSimulator",
+        "message": "Pagamento de boleto simulado em ambiente de homologação",
+        "bankAccount": "29823",
+        "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
+        "ourNumber": "00000215634",
+        "barCode": "43596930700000000100001112000000600000215634",
+        "digitableLine": "43590001161200000060900002156347693070000000010"
+    }
+}
+```
+</CodeGroup>
+
+## Simulação por Pix (para BANKSLIP_PIX)
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/69577abe-3867-4e0b-85ee-21aa6bc9db9b/simulate-conclude' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "PIX"
+}'
+```
+</CodeGroup>
+
+Para simulação `PIX`, use o `correlationId` do boleto no path — não a linha digitável.
+
+## O que acontece após a simulação
+
+1. O status do boleto muda de `Pending` para `Paid`.
+2. O campo `payments` é preenchido com os dados da liquidação simulada.
+3. Um evento de webhook é disparado para a URL configurada (se houver).
+4. A transação aparece no extrato da conta.
+
+## Erros comuns
+
+| Erro | Causa |
+|---|---|
+| `400` — "Tipo de pagamento não pode ser nulo" | O campo `type` não foi enviado no corpo da requisição |
+| `400` — "Tipo de pagamento inválido" | O campo `type` recebeu um valor diferente de `BANKSLIP` ou `PIX` |
+| `400` — "Identificador da cobrança deve ser informado" | O `{id}` no path está vazio |
+| `404` — Not Found | O boleto não foi encontrado com o identificador informado |

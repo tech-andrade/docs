@@ -1,0 +1,141 @@
+---
+title: "Criar QR Code Estático"
+api: "POST /pix/qrcode/static"
+description: "Cria um QR Code Pix reutilizável, capaz de receber múltiplos pagamentos."
+---
+
+<Note>
+Para entender quando usar este endpoint e ver o passo a passo completo, veja o guia [Cobrança Reutilizável (QR Code Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+<ParamField header="idempotencyKey" type="string">
+  GUID usado para garantir que a mesma requisição não crie cobranças duplicadas caso seja reenviada.
+
+  <Warning>
+  Este header aparece como obrigatório na documentação original, mas nenhum exemplo de requisição o inclui. Confirmar se é de fato obrigatório antes de publicar.
+  </Warning>
+</ParamField>
+
+## Body
+
+<ParamField body="correlationId" type="string" required>
+  Identificador usado para conciliação com o seu sistema. Retornado no webhook de confirmação de pagamento. Deve ser um GUID.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Descrição interna da cobrança.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Valor da cobrança. Se omitido, o pagador escolhe livremente quanto deseja pagar.
+</ParamField>
+
+<ParamField body="pixKey" type="string">
+  Chave Pix específica a ser usada, caso sua conta tenha mais de uma cadastrada.
+</ParamField>
+
+<ParamField body="additionalInformation" type="string">
+  Texto exibido ao pagador no momento do pagamento. Máximo de 64 caracteres.
+
+  <Warning>
+  Confirmar nome do campo: a documentação original usa `additionalInformation` na tabela de parâmetros, mas `additionalInfo` nos exemplos e na resposta.
+  </Warning>
+</ParamField>
+
+<ParamField body="formatResponse" type="string">
+  Controla o formato da resposta (valor visto em exemplo: `PAYLOAD_AND_QRCODE`).
+
+  <Warning>
+  Campo não documentado na especificação original — confirmar valores aceitos e comportamento padrão.
+  </Warning>
+</ParamField>
+
+## Response
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code.
+</ResponseField>
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação enviado na criação.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor da cobrança, quando definido.
+</ResponseField>
+
+<ResponseField name="pixKey" type="string">
+  Chave Pix utilizada.
+</ResponseField>
+
+<ResponseField name="beneficiaryName" type="string">
+  Nome do recebedor.
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço do recebedor (`cityName`, `zipCode`, `uf`, `state`, `street`).
+</ResponseField>
+
+<ResponseField name="additionalInfo" type="string">
+  Informação exibida ao pagador.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação, em formato ISO 8601.
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto — o "copia e cola".
+</ResponseField>
+
+<ResponseField name="base64Image" type="string">
+  Imagem do QR Code, pronta para exibição, em base64.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "2f908499-685c-4e36-af04-30567dc08dc5",
+    "description": "pix estático com valor",
+    "amount": 9.99,
+    "additionalInformation": "Testando qrcode"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "transactionId": "vchargeffeeed94cdbc41",
+    "correlationId": "6f388279-0658-4bfa-80e5-e5c405cdb318",
+    "amount": 9.99,
+    "pixKey": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+    "beneficiaryName": "DELBANK",
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "additionalInfo": "testing qrcode",
+    "createdAt": "2024-12-10T11:51:55.306Z",
+    "payloadPix": "00026540014br.gov.bcb.pix0114+55119999757340214testing qrcode52040000530398654049.995802BR5907DELBANK6007ARACAJU62250521vchargeffeeed94cdbc41630494CD",
+    "base64Image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAA=="
+}
+```
+</ResponseExample>

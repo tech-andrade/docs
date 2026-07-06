@@ -1,0 +1,58 @@
+---
+title: "Remover chave Pix"
+api: "DELETE /baas/api/v1/pix/dict/entries"
+description: "Remova uma chave Pix cadastrada na conta."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Gerenciar Chave Pix](/guias/pix/receber-pix/chave-pix).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  GUID único por requisição.
+</ParamField>
+
+## Body
+
+<ParamField body="entryType" type="string" required>
+  Tipo da chave a remover: `EVP`, `DOCUMENT`, `EMAIL` ou `PHONE`.
+</ParamField>
+
+<ParamField body="key" type="string" required>
+  Valor da chave a remover.
+</ParamField>
+
+## Response
+
+Retorna `204 No Content` em caso de sucesso, sem corpo na resposta.
+
+<RequestExample>
+```bash cURL
+curl --request DELETE \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/pix/dict/entries' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}' \
+  --header 'IdempotencyKey: {{$guid}}' \
+  --data '{
+    "entryType": "EVP",
+    "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 204
+(sem conteúdo)
+```
+</ResponseExample>

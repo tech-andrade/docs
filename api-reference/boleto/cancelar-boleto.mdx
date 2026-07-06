@@ -1,0 +1,57 @@
+---
+title: "Cancelar boleto (closeout)"
+api: "PUT /baas/v1/charges/{correlationId}/closeout"
+description: "Baixe e cancele um boleto pendente. Após a baixa o boleto não pode mais ser pago."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Gerenciar Boleto](/guias/boleto/gerenciar-boleto).
+</Note>
+
+Realiza a baixa/cancelamento do boleto. A operação é irreversível — uma vez cancelado, o boleto não pode ser reativado.
+
+<Warning>
+A baixa não cancela um pagamento já realizado. Se o boleto foi pago antes desta chamada, o pagamento permanece registrado.
+</Warning>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="correlationId" type="string" required>
+  GUID do boleto a ser cancelado.
+</ParamField>
+
+## Response
+
+Retorna `200 OK` com corpo vazio em caso de sucesso. O status do boleto passa para `Cancelled`.
+
+<RequestExample>
+```bash cURL
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/closeout' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{}
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-8a3919c1917bff4f84367110dcf0680a-e156f57e8851b5be-00"
+}
+```
+</ResponseExample>

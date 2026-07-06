@@ -1,0 +1,193 @@
+---
+title: "Consultar QR Code Estático"
+api: "GET /pix/qrcode/static/:transactionIdentifier"
+description: "Consulta os dados de um QR Code Estático e, opcionalmente, o histórico de pagamentos recebidos por ele."
+---
+
+<Note>
+Para o passo a passo completo de uso, veja o guia [Cobrança Reutilizável (QR Code Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
+</Note>
+
+## Consultar o QR Code
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="transactionIdentifier" type="string" required>
+  Identificador do QR Code: pode ser o `correlationId` ou o `transactionId`.
+</ParamField>
+
+<Info>
+Só é possível consultar um QR Code criado com a mesma API key usada na consulta.
+</Info>
+
+### Response
+
+<ResponseField name="transactionId" type="string">
+  Identificador único do QR Code.
+</ResponseField>
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação.
+</ResponseField>
+
+<ResponseField name="type" type="string">
+  Tipo da cobrança (`QR_CODE_STATIC`).
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor da cobrança, quando definido.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status atual do QR Code (ex: `ACTIVE`).
+</ResponseField>
+
+<ResponseField name="address" type="object">
+  Endereço do recebedor.
+</ResponseField>
+
+<ResponseField name="payloadPix" type="string">
+  Payload Pix (BR Code) em texto.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location --request GET 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static/:transactionIdentifier' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "transactionId": "vchargef80c2fdcef614a",
+    "correlationId": "45db17ca-601c-486c-bb7b-4e8cfdd845f2",
+    "type": "QR_CODE_STATIC",
+    "amount": 9.99,
+    "status": "ACTIVE",
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "payloadPix": "00020126540014br.gov.bcb.pix0114+55119999757340214testing qrcode52040000530398654049.995802BR5907DELBANK6007ARACAJU62250521vchargef80c2fdcef614a63047878",
+    "createdAt": "2024-12-10T19:49:59.753Z"
+}
+```
+</ResponseExample>
+
+---
+
+## Consultar pagamentos do QR Code
+
+Como um QR Code Estático pode receber múltiplos pagamentos, use este endpoint para listar todos os pagamentos já realizados sobre ele.
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path Parameters
+
+<ParamField path="transactionIdentifier" type="string" required>
+  Identificador do QR Code: pode ser o `correlationId` ou o `transactionId`.
+</ParamField>
+
+### Response
+
+<ResponseField name="endToEndId" type="string">
+  Identificador único do pagamento no Banco Central (E2E ID).
+</ResponseField>
+
+<ResponseField name="correlationId" type="string">
+  Identificador de correlação do QR Code.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor pago nesta transação específica.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora do pagamento.
+</ResponseField>
+
+<ResponseField name="proof" type="object">
+  Comprovante detalhado do pagamento, incluindo dados do pagador (`payer`) e do recebedor (`beneficiary`).
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location --request GET 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static/:identifier/payments' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "endToEndId": "E3822485720241210195543SXPF4UBZ9",
+        "correlationId": "45db17ca-601c-486c-bb7b-4e8cfdd845f2",
+        "amount": 0.10,
+        "createdAt": "2024-12-10T19:55:44.341Z",
+        "proof": {
+            "endToEndId": "E3822485720241210195543SXPF4UBZ9",
+            "transactionId": "vchargef80c2fdcef614a",
+            "correlationId": "45db17ca-601c-486c-bb7b-4e8cfdd845f2",
+            "amount": 0.10,
+            "description": "description",
+            "payer": {
+                "number": "29823",
+                "branch": "0001",
+                "type": 0,
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                },
+                "holder": {
+                    "name": "HOMOLOGACAO INTEGRACAO API",
+                    "document": "30287697789",
+                    "type": "NATURAL"
+                }
+            },
+            "beneficiary": {
+                "number": "31712",
+                "branch": "0001",
+                "type": 0,
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                },
+                "holder": {
+                    "name": "BXXDBDE",
+                    "document": "32752023000149",
+                    "type": "LEGAL"
+                }
+            }
+        }
+    }
+]
+```
+</ResponseExample>

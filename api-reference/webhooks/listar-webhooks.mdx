@@ -1,0 +1,73 @@
+---
+title: "Listar webhooks"
+api: "GET /baas/api/v1/webhooks"
+description: "Retorna todos os webhooks cadastrados pela API key utilizada na requisição."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Webhooks](/guias/webhooks/visao-geral).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Response
+
+Retorna um array com os webhooks cadastrados.
+
+<ResponseField name="id" type="string">
+  ID único do webhook.
+</ResponseField>
+
+<ResponseField name="eventType" type="string">
+  Tipo de evento monitorado.
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  URL registrada para receber os eventos.
+</ResponseField>
+
+<ResponseField name="authorizationScheme" type="string">
+  Esquema de autenticação configurado: `NONE`, `BASIC`, `BEARER` ou `HEADER`.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação no formato ISO 8601.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --request GET \
+  --url 'https://apisandbox.delbank.com.br/baas/api/v1/webhooks' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+  {
+    "id": "wbh_a1b2c3d4",
+    "eventType": "PIX_RECEIVED",
+    "url": "https://seuservidor.com.br/webhooks/pix",
+    "authorizationScheme": "BEARER",
+    "createdAt": "2026-07-06T10:00:00Z"
+  },
+  {
+    "id": "wbh_e5f6g7h8",
+    "eventType": "CHARGE_PAID",
+    "url": "https://seuservidor.com.br/webhooks/boleto",
+    "authorizationScheme": "NONE",
+    "createdAt": "2026-07-06T10:05:00Z"
+  }
+]
+```
+</ResponseExample>

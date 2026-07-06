@@ -1,0 +1,201 @@
+---
+title: "Cobrança Imediata (QR Code Dinâmico)"
+sidebarTitle: "Cobrança imediata"
+description: "Crie um QR Code de uso único com expiração automática, ideal para checkout de e-commerce e cobranças pontuais."
+icon: "bolt"
+---
+
+O **QR Code Dinâmico** é gerado por cobrança: cada pedido tem o seu próprio código, com valor definido e prazo de expiração. Assim que o pagador escaneia e paga, o QR Code fica indisponível, ele não pode ser reutilizado.
+
+Essa unicidade é exatamente o que permite ao seu sistema saber qual pedido foi pago sem nenhuma ambiguidade: o `correlationId` que você escolheu na criação chega de volta no evento de webhook, amarrado àquele pagamento específico.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Checkout de e-commerce" icon="cart-shopping">
+    Gere um QR Code por pedido no momento do checkout. Quando o webhook chegar com o `correlationId`, você sabe exatamente qual pedido baixar, sem conciliação manual.
+  </Card>
+  <Card title="Cobranças avulsas" icon="file-invoice-dollar">
+    Envie um link de pagamento por e-mail, WhatsApp ou SMS. O QR Code expira no prazo que você definir, evitando pagamentos tardios indesejados.
+  </Card>
+</CardGroup>
+
+Se você precisa de um código **reutilizável**, sem expiração, capaz de receber múltiplos pagamentos, use a [Cobrança Reutilizável (QR Estático)](/guides/pix/cobranca-reutilizavel) em vez desta.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Crie o QR Code Dinâmico">
+O mínimo necessário é o `correlationId` e o `amount`. Por padrão, o QR Code expira em **24 horas** (86.400 segundos), mas você pode reduzir esse prazo com o campo `expiresIn`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "{{$guid}}",
+    "amount": 99.90
+}'
+```
+```json Response
+{
+    "correlationId": "40ede975-031d-4517-bdd4-31472d3f00a4",
+    "transactionId": "vchargeffab8b4c963344c283e491f5e",
+    "amount": 99.90,
+    "allowChangeAmount": false,
+    "expiresIn": 86400,
+    "status": "ACTIVE",
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "createdAt": "2024-12-10T13:19:26.501Z",
+    "updatedAt": "2024-12-10T13:19:26.501Z",
+    "expiresAt": "2024-12-11T13:19:26.501Z",
+    "payloadPix": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargeffab8b4c963344c283e491f5e5204000053039865802BR5907DELBANK6007ARACAJU62070503***6304CB42"
+}
+```
+</CodeGroup>
+
+Para checkouts, você normalmente vai querer um prazo mais curto e já receber a imagem do QR Code pronta:
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 99.90,
+    "expiresIn": 1800,
+    "formatResponse": "PAYLOAD_AND_QRCODE"
+}
+```
+
+<Tip>
+Use `"formatResponse": "PAYLOAD_AND_QRCODE"` para receber o campo `qrCodeImageBase64` com a imagem já pronta (250×250 px). O padrão é `ONLY_PAYLOAD`, que omite a imagem e deixa você renderizar o QR Code a partir do `payloadPix`.
+</Tip>
+</Step>
+
+<Step title="Exiba o QR Code para o pagador">
+A resposta traz tudo que você precisa para apresentar a cobrança:
+
+- **`payloadPix`**, o código "Pix Copia e Cola", para quem prefere colar manualmente no app do banco.
+- **`qrCodeImageBase64`**, imagem pronta do QR Code, disponível quando `formatResponse` é `PAYLOAD_AND_QRCODE`.
+- **`expiresAt`**, o instante exato de expiração; use para exibir um contador regressivo na tela de checkout.
+
+<Tip>
+Disponibilize sempre as duas opções (imagem e copia-e-cola). Pagadores em desktop ou com câmera indisponível dependem do copia-e-cola.
+</Tip>
+</Step>
+
+<Step title="Receba a confirmação via Webhook">
+Quando o pagamento é liquidado, a API dispara o evento `PIX_RECEIVED` para a URL de webhook que você configurou. Esse evento carrega o `correlationId` que você definiu na criação, use-o para identificar qual pedido foi pago e acionar a baixa no seu sistema.
+
+Veja [Processando a confirmação via Webhook](/guias/webhooks/visao-geral) para o passo a passo completo de tratamento desse evento.
+</Step>
+
+<Step title="Consulte o status quando necessário">
+A qualquer momento você pode buscar o estado de uma cobrança pelo `correlationId` ou pelo `transactionId`:
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic/{{correlationId}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+Quando o pagamento já tiver sido realizado, a resposta inclui o array `payments` com todos os detalhes da transação: `endToEndId`, dados do pagador real, valor e horário de liquidação.
+
+<Warning>
+Não use consulta por polling como mecanismo principal de confirmação de pagamento. Os webhooks existem para eliminar essa necessidade. Use a consulta apenas para reconciliação ou recuperação de falhas pontuais.
+</Warning>
+</Step>
+
+<Step title="Cancele se o pedido for cancelado">
+Se o pedido for cancelado antes do pagamento, cancele o QR Code para impedir que o cliente consiga pagar depois:
+
+```bash cURL
+curl -X 'PATCH' \
+  'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynamic/{{transactionId}}/cancel' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --header 'x-delfinance-account-id: {{accountId}}'
+```
+
+A operação retorna HTTP `202` sem corpo. QR Codes já expirados não precisam ser cancelados manualmente.
+</Step>
+
+</Steps>
+
+## Funcionalidades avançadas
+
+### Restringir o pagamento a um pagador específico
+
+Você pode vincular o QR Code a um CPF ou CNPJ específico. Com `payer.validate: true`, o código só será aceito quando o pagador que escanear for exatamente aquela pessoa.
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 150.00,
+    "payer": {
+        "name": "João Alves",
+        "document": "47779921018",
+        "validate": true
+    }
+}
+```
+
+### Split de pagamento
+
+Distribua parte do valor recebido para outra conta automaticamente no momento da criação. Útil para marketplaces e plataformas que precisam repassar comissões sem transferências manuais.
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 200.00,
+    "splitInstructions": [
+        {
+            "accountNumber": "10073",
+            "type": "PERCENTAGE",
+            "amount": 10
+        }
+    ]
+}
+```
+
+O `type` aceita `PERCENTAGE` (porcentagem do total) ou `FIXED` (valor fixo em reais).
+
+<Note>
+O split só funciona se o `amount` for maior que R$ 1,00, e o total das divisões não pode ultrapassar 50% do valor da cobrança.
+</Note>
+
+### Beneficiário final (para gateways)
+
+Se você opera como gateway ou subadquirente, use `finalBeneficiary` para indicar o recebedor final da transação. Esse dado é exibido ao pagador no app do banco no momento do pagamento.
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "amount": 300.00,
+    "finalBeneficiary": {
+        "name": "João Silva",
+        "document": "12345678901",
+        "cityName": "São Paulo"
+    }
+}
+```
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Criar" icon="plus" href="/api-reference/pix/criar-qrcode-dinamico">
+    `POST /pix/qrcode/dynamic`
+  </Card>
+  <Card title="Consultar" icon="magnifying-glass" href="/api-reference/pix/consultar-qrcode-dinamico">
+    `GET /pix/qrcode/dynamic/:id`
+  </Card>
+  <Card title="Cancelar" icon="ban" href="/api-reference/pix/cancelar-qrcode-dinamico">
+    `PATCH /pix/qrcode/dynamic/:id/cancel`
+  </Card>
+</CardGroup>

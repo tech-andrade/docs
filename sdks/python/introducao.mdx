@@ -1,0 +1,48 @@
+---
+title: "Python SDK"
+sidebarTitle: "Introdução"
+description: "Instale e configure o SDK oficial da Delfinance para Python."
+icon: "python"
+---
+
+## Instalação
+
+<CodeGroup>
+```bash pip
+pip install Delfinance-api-sdk
+```
+```bash poetry
+poetry add Delfinance-api-sdk
+```
+</CodeGroup>
+
+Requer Python 3.8 ou superior.
+
+## Configuração inicial
+
+```python
+from Delfinance import Delfinance
+import os
+
+client = Delfinance(
+    environment="sandbox",  # ou "production"
+    client_id=os.getenv("DELFINANCE_CLIENT_ID"),
+    client_secret=os.getenv("DELFINANCE_CLIENT_SECRET"),
+    cert_path="./certificado.crt",
+    key_path="./chave-privada.key"
+)
+```
+
+| Parâmetro | Tipo | Descrição |
+|---|---|---|
+| `environment` | `str` | `"sandbox"` ou `"production"` |
+| `client_id` | `str` | API key do Portal do Desenvolvedor |
+| `client_secret` | `str` | Client secret do Portal do Desenvolvedor |
+| `cert_path` | `str` | Caminho para o certificado mTLS (`.crt`) |
+| `key_path` | `str` | Caminho para a chave privada (`.key`) |
+
+## Publicado em
+
+<Card title="PyPI — Delfinance-api-sdk" icon="python" href="https://pypi.org/project/Delfinance-api-sdk/">
+  Veja versões, changelog e dependências no PyPI.
+</Card>

@@ -1,0 +1,90 @@
+# Delfinance
+
+API de Banking as a Service (BaaS) para emissão de cobranças Pix, boleto bancário e gerenciamento de webhooks.
+
+Sandbox: https://apisandbox.delbank.com.br
+Produção: https://api.delbank.com.br
+Documentação: https://docs.delfinance.com.br
+
+Headers obrigatórios em todas as requisições:
+- x-delbank-api-key: sua API key
+- x-delfinance-account-id: número da conta Delfinance
+
+## Introdução
+
+- [Primeiros Passos](https://docs.delfinance.com.br/iniciacao/primeiros-passos)
+- [Autenticação](https://docs.delfinance.com.br/iniciacao/autenticacao)
+- [mTLS](https://docs.delfinance.com.br/iniciacao/mtls)
+- [Filtros de IP](https://docs.delfinance.com.br/iniciacao/filtros-ip)
+- [Idempotência](https://docs.delfinance.com.br/iniciacao/idempotencia)
+- [Indo para Produção](https://docs.delfinance.com.br/iniciacao/ida-producao)
+
+## Receber via Pix
+
+- [Visão Geral](https://docs.delfinance.com.br/guias/pix/receber-pix/visao-geral)
+- [Chave Pix](https://docs.delfinance.com.br/guias/pix/receber-pix/chave-pix)
+- [Cobrança Reutilizável (QR Code Estático)](https://docs.delfinance.com.br/guias/pix/receber-pix/cobranca-reutilizavel)
+- [Cobrança Imediata (QR Code Dinâmico)](https://docs.delfinance.com.br/guias/pix/receber-pix/cobranca-imediata)
+- [Cobrança com Vencimento](https://docs.delfinance.com.br/guias/pix/receber-pix/cobranca-com-vencimento)
+- [Devolução](https://docs.delfinance.com.br/guias/pix/receber-pix/devolucao)
+- [Simulação de Pagamento](https://docs.delfinance.com.br/guias/pix/receber-pix/simulacao-pagamento)
+
+## Pagar via Pix
+
+- [Visão Geral](https://docs.delfinance.com.br/guias/pix/pagar-pix/visao-geral)
+- [Pagar por Chave](https://docs.delfinance.com.br/guias/pix/pagar-pix/por-chave)
+- [Pagar por Dados Bancários](https://docs.delfinance.com.br/guias/pix/pagar-pix/por-dados-bancarios)
+- [Pagar por QR Code](https://docs.delfinance.com.br/guias/pix/pagar-pix/por-qrcode)
+- [Consultar Pagamento](https://docs.delfinance.com.br/guias/pix/pagar-pix/consultar-pagamento)
+
+## Cobranças via Boleto
+
+- [Visão Geral](https://docs.delfinance.com.br/guias/boleto/visao-geral)
+- [Emitir Boleto](https://docs.delfinance.com.br/guias/boleto/emitir-boleto)
+- [Consultar Boleto](https://docs.delfinance.com.br/guias/boleto/consultar-boleto)
+- [Gerenciar Boleto](https://docs.delfinance.com.br/guias/boleto/gerenciar-boleto)
+- [Simulação de Pagamento](https://docs.delfinance.com.br/guias/boleto/simulacao-pagamento)
+
+## Webhooks
+
+- [Visão Geral](https://docs.delfinance.com.br/guias/webhooks/visao-geral)
+- [Webhooks Pix](https://docs.delfinance.com.br/guias/webhooks/pix)
+- [Webhooks Boleto](https://docs.delfinance.com.br/guias/webhooks/boleto)
+- [MEDs (Mecanismo Especial de Devolução)](https://docs.delfinance.com.br/guias/webhooks/meds)
+
+## API Reference — Pix
+
+- [Criar QR Code Estático](https://docs.delfinance.com.br/api-reference/pix/criar-qrcode-estatico)
+- [Consultar QR Code Estático](https://docs.delfinance.com.br/api-reference/pix/consultar-qrcode-estatico)
+- [Cancelar QR Code Estático](https://docs.delfinance.com.br/api-reference/pix/cancelar-qrcode-estatico)
+- [Criar QR Code Dinâmico](https://docs.delfinance.com.br/api-reference/pix/criar-qrcode-dinamico)
+- [Consultar QR Code Dinâmico](https://docs.delfinance.com.br/api-reference/pix/consultar-qrcode-dinamico)
+- [Cancelar QR Code Dinâmico](https://docs.delfinance.com.br/api-reference/pix/cancelar-qrcode-dinamico)
+- [Criar QR Code com Vencimento](https://docs.delfinance.com.br/api-reference/pix/criar-qrcode-vencimento)
+- [Consultar QR Code com Vencimento](https://docs.delfinance.com.br/api-reference/pix/consultar-qrcode-vencimento)
+- [Cancelar QR Code com Vencimento](https://docs.delfinance.com.br/api-reference/pix/cancelar-qrcode-vencimento)
+- [Inicializar Pagamento por Chave](https://docs.delfinance.com.br/api-reference/pix/inicializar-pagamento-chave)
+- [Inicializar Pagamento por QR Code](https://docs.delfinance.com.br/api-reference/pix/inicializar-pagamento-qrcode)
+- [Criar Transferência Pix](https://docs.delfinance.com.br/api-reference/pix/criar-transferencia)
+- [Consultar Transferência](https://docs.delfinance.com.br/api-reference/pix/consultar-transferencia)
+- [Criar Devolução Pix](https://docs.delfinance.com.br/api-reference/pix/criar-devolucao)
+- [Consultar Devolução](https://docs.delfinance.com.br/api-reference/pix/consultar-devolucao)
+- [Consultar Transação](https://docs.delfinance.com.br/api-reference/pix/consultar-transacao)
+- [Criar Chave Pix](https://docs.delfinance.com.br/api-reference/pix/criar-chave-pix)
+- [Consultar Chaves Pix](https://docs.delfinance.com.br/api-reference/pix/consultar-chaves-pix)
+- [Remover Chave Pix](https://docs.delfinance.com.br/api-reference/pix/remover-chave-pix)
+
+## API Reference — Boleto
+
+- [Criar Boleto](https://docs.delfinance.com.br/api-reference/boleto/criar-boleto)
+- [Consultar Boleto](https://docs.delfinance.com.br/api-reference/boleto/consultar-boleto)
+- [Atualizar Boleto](https://docs.delfinance.com.br/api-reference/boleto/atualizar-boleto)
+- [Cancelar Boleto](https://docs.delfinance.com.br/api-reference/boleto/cancelar-boleto)
+- [Imprimir Boleto (PDF)](https://docs.delfinance.com.br/api-reference/boleto/imprimir-boleto)
+- [Simular Pagamento de Boleto](https://docs.delfinance.com.br/api-reference/boleto/simular-boleto)
+
+## API Reference — Webhooks
+
+- [Cadastrar Webhook](https://docs.delfinance.com.br/api-reference/webhooks/cadastrar-webhook)
+- [Listar Webhooks](https://docs.delfinance.com.br/api-reference/webhooks/listar-webhooks)
+- [Remover Webhook](https://docs.delfinance.com.br/api-reference/webhooks/remover-webhook)

@@ -1,0 +1,70 @@
+---
+title: "Criar transferência Pix"
+api: "POST /v1/pix/transfers"
+description: "Realize um pagamento ou transferência instantânea (Pix Out) para qualquer chave Pix"
+---
+
+Executa uma transferência financeira imediata de sua conta Delfinance para a chave Pix informada.
+
+### Corpo da requisição
+
+<ParamField body="key" type="string" required>
+  Chave Pix do destinatário. Pode ser CPF/CNPJ, E-mail, Telefone ou Chave Aleatória (EVP) (ex: `123.456.789-00` ou `financeiro@fornecedor.com`).
+</ParamField>
+
+<ParamField body="amount" type="number" required>
+  Valor do Pix em reais (ex: `250.00`).
+</ParamField>
+
+<ParamField body="description" type="string">
+  Mensagem que será enviada ao destinatário junto com a transferência (ex: `Pagamento Prestação Serviços`).
+</ParamField>
+
+### Resposta
+
+<ResponseField name="id" type="string" required>
+  ID único da transferência gerada na Delfinance.
+</ResponseField>
+
+<ResponseField name="end_to_end_id" type="string" required>
+  Código EndToEndId gerado pelo Banco Central (SPI) que identifica de forma global a transação no Brasil.
+</ResponseField>
+
+<ResponseField name="amount" type="number" required>
+  Valor transferido.
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Status atual da transferência (`processing`, `completed`, `failed`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string" required>
+  Data de envio.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://apisandbox.delbank.com.br/v1/pix/transfers \
+  --cert ./certificado.crt --key ./chave-privada.key \
+  -H "x-delbank-api-key: SUA_API_KEY" \
+  -H "x-delfinance-account-id: SUA_ACCOUNT_ID" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "financeiro@fornecedor.com",
+    "amount": 250.00,
+    "description": "Pagamento Fornecedor Lote #1"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "trsf_28173a",
+  "end_to_end_id": "E12345678202607041900trsf28173a",
+  "amount": 250.00,
+  "status": "completed",
+  "created_at": "2026-07-04T19:00:00Z"
+}
+```
+</ResponseExample>

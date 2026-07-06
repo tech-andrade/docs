@@ -1,0 +1,992 @@
+---
+title: Assistente de Integração
+description: Converse com o assistente e receba um plano recomendado para sua integração.
+---
+
+import { useEffect, useMemo, useRef, useState } from 'react';
+
+export const ChatIntegrationAssistant = () => {
+  const PRIMARY = '#1A941A';
+  const PRIMARY_DARK = '#147814';
+  const PRIMARY_SOFT = '#F1FAF1';
+  const PRIMARY_SOFT_2 = '#E8F7E8';
+  const BORDER = '#E5E7EB';
+  const BORDER_SOFT = '#EEF0F3';
+  const TEXT = '#111827';
+  const TEXT_SECONDARY = '#6B7280';
+  const SURFACE = '#FFFFFF';
+  const BOT_BUBBLE = '#F4F4F5';
+
+  const chatBodyRef = useRef(null);
+  const bottomRef = useRef(null);
+
+  const [answers, setAnswers] = useState({
+    goal: '',
+    business: '',
+    stack: '',
+    hasApiKey: '',
+  });
+
+  const [activeQuestionIndex, setActiveQuestionIndex] = useState(0);
+  const [typing, setTyping] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const labels = {
+    goal: {
+      pix_qrcode: 'receber Pix com QR Code',
+      webhooks: 'configurar webhooks',
+      consult_charge: 'consultar cobranças Pix',
+      go_live: 'ir para produção',
+    },
+    business: {
+      ecommerce: 'e-commerce',
+      erp: 'ERP',
+      gateway: 'gateway de pagamento',
+      saas: 'SaaS',
+      internal: 'sistema interno',
+    },
+    stack: {
+      node: 'Node.js',
+      csharp: 'C#',
+      php: 'PHP',
+      python: 'Python',
+      java: 'Java',
+    },
+    hasApiKey: {
+      yes: 'já tenho API Key sandbox',
+      no: 'ainda não tenho API Key sandbox',
+    },
+  };
+
+  const questions = [
+    {
+      key: 'goal',
+      question: 'Para começar, o que você quer fazer agora?',
+      userText: (value) => `Quero ${labels.goal[value]}.`,
+      options: [
+        {
+          value: 'pix_qrcode',
+          label: 'Pix QR Code',
+          description: 'Criar cobrança e receber Pix.',
+        },
+        {
+          value: 'webhooks',
+          label: 'Webhooks',
+          description: 'Receber eventos em tempo real.',
+        },
+        {
+          value: 'consult_charge',
+          label: 'Consultar cobranças',
+          description: 'Acompanhar status via API.',
+        },
+        {
+          value: 'go_live',
+          label: 'Ir para produção',
+          description: 'Checklist para homologação.',
+        },
+      ],
+    },
+    {
+      key: 'business',
+      question: 'Perfeito. Onde essa integração será usada?',
+      userText: (value) => `A integração será usada em ${labels.business[value]}.`,
+      options: [
+        {
+          value: 'ecommerce',
+          label: 'E-commerce',
+          description: 'Checkout, pedido e pagamento.',
+        },
+        {
+          value: 'erp',
+          label: 'ERP',
+          description: 'Cobrança e conciliação.',
+        },
+        {
+          value: 'gateway',
+          label: 'Gateway',
+          description: 'Orquestração de pagamentos.',
+        },
+        {
+          value: 'saas',
+          label: 'SaaS',
+          description: 'Cobranças dentro da plataforma.',
+        },
+        {
+          value: 'internal',
+          label: 'Sistema interno',
+          description: 'Automação operacional.',
+        },
+      ],
+    },
+    {
+      key: 'stack',
+      question: 'Boa. Qual tecnologia você usa no backend?',
+      userText: (value) => `Meu backend usa ${labels.stack[value]}.`,
+      options: [
+        {
+          value: 'node',
+          label: 'Node.js',
+          description: 'JavaScript ou TypeScript.',
+        },
+        {
+          value: 'csharp',
+          label: 'C#',
+          description: '.NET ou ASP.NET Core.',
+        },
+        {
+          value: 'php',
+          label: 'PHP',
+          description: 'Aplicações web em PHP.',
+        },
+        {
+          value: 'python',
+          label: 'Python',
+          description: 'APIs e automações.',
+        },
+        {
+          value: 'java',
+          label: 'Java',
+          description: 'Spring ou aplicações Java.',
+        },
+      ],
+    },
+    {
+      key: 'hasApiKey',
+      question: 'Última pergunta: você já tem uma API Key sandbox?',
+      userText: (value) => `Eu ${labels.hasApiKey[value]}.`,
+      options: [
+        {
+          value: 'yes',
+          label: 'Sim, já tenho',
+          description: 'Já posso começar os testes.',
+        },
+        {
+          value: 'no',
+          label: 'Ainda não tenho',
+          description: 'Preciso gerar no portal.',
+        },
+      ],
+    },
+  ];
+
+  const isComplete =
+    answers.goal &&
+    answers.business &&
+    answers.stack &&
+    answers.hasApiKey;
+
+  const prompt = useMemo(() => {
+    if (!isComplete) return '';
+
+    return `Estou integrando a API da Delfinance para ${labels.goal[answers.goal]} em um contexto de ${labels.business[answers.business]}. Meu backend usa ${labels.stack[answers.stack]} e eu ${labels.hasApiKey[answers.hasApiKey]}.
+
+Preciso de um plano de integração seguindo as boas práticas da documentação Delfinance.
+
+Inclua:
+- autenticação com API Key;
+- ambiente sandbox;
+- criação da cobrança Pix com QR Code, se aplicável;
+- exibição do QR Code ou Pix copia e cola no frontend;
+- configuração de webhook de confirmação;
+- tratamento de status;
+- idempotência;
+- checklist para homologação;
+- exemplo de código em ${labels.stack[answers.stack]}.`;
+  }, [answers, isComplete]);
+
+  const scrollToBottom = () => {
+    window.requestAnimationFrame(() => {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+        });
+
+        if (chatBodyRef.current) {
+          chatBodyRef.current.scrollTo({
+            top: chatBodyRef.current.scrollHeight,
+            behavior: 'smooth',
+          });
+        }
+      }, 70);
+    });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [answers, activeQuestionIndex, typing, copied]);
+
+  const handleSelect = (key, value) => {
+    if (typing || answers[key]) return;
+
+    setAnswers((current) => ({
+      ...current,
+      [key]: value,
+    }));
+
+    setTyping(true);
+
+    setTimeout(() => {
+      setTyping(false);
+      setActiveQuestionIndex((current) => current + 1);
+    }, 850);
+  };
+
+  const copyPrompt = async () => {
+    await navigator.clipboard.writeText(prompt);
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 1800);
+  };
+
+  const reset = () => {
+    setAnswers({
+      goal: '',
+      business: '',
+      stack: '',
+      hasApiKey: '',
+    });
+
+    setActiveQuestionIndex(0);
+    setTyping(false);
+    setCopied(false);
+
+    setTimeout(() => {
+      chatBodyRef.current?.scrollTo({
+        top: 0,
+        behavior: 'smooth',
+      });
+    }, 100);
+  };
+
+  const Bubble = ({ type = 'bot', children }) => {
+    const isUser = type === 'user';
+
+    return (
+      <div
+        className={`df-message-row ${isUser ? 'df-user-row' : 'df-bot-row'}`}
+      >
+        {!isUser && (
+          <div className="df-avatar">
+            <span>D</span>
+          </div>
+        )}
+
+        <div className={`df-bubble ${isUser ? 'df-user-bubble' : 'df-bot-bubble'}`}>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  const TypingBubble = () => {
+    return (
+      <div className="df-message-row df-bot-row">
+        <div className="df-avatar">
+          <span>D</span>
+        </div>
+
+        <div className="df-bubble df-bot-bubble df-typing-bubble" aria-label="Assistente digitando">
+          <span className="df-typing-dot" />
+          <span className="df-typing-dot" />
+          <span className="df-typing-dot" />
+        </div>
+      </div>
+    );
+  };
+
+  const Options = ({ question }) => {
+    const selected = answers[question.key];
+
+    if (selected) return null;
+
+    return (
+      <div className="df-options">
+        {question.options.map((item) => (
+          <button
+            key={item.value}
+            type="button"
+            className="df-option-button"
+            disabled={typing}
+            onClick={() => handleSelect(question.key, item.value)}
+          >
+            <span className="df-option-title">{item.label}</span>
+            <span className="df-option-description">{item.description}</span>
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  const PlanCard = () => {
+    return (
+      <div className="df-plan-card">
+        <div className="df-plan-header">
+          <div>
+            <span className="df-plan-eyebrow">Plano recomendado</span>
+            <h3>Seu caminho de integração</h3>
+          </div>
+
+          <span className="df-plan-badge">Gerado</span>
+        </div>
+
+        <p>
+          Você quer <strong>{labels.goal[answers.goal]}</strong> em um contexto de{' '}
+          <strong>{labels.business[answers.business]}</strong>, usando{' '}
+          <strong>{labels.stack[answers.stack]}</strong>.
+        </p>
+
+        <div className="df-summary-grid">
+          <div>
+            <span>Objetivo</span>
+            <strong>{labels.goal[answers.goal]}</strong>
+          </div>
+
+          <div>
+            <span>Negócio</span>
+            <strong>{labels.business[answers.business]}</strong>
+          </div>
+
+          <div>
+            <span>Backend</span>
+            <strong>{labels.stack[answers.stack]}</strong>
+          </div>
+
+          <div>
+            <span>API Key</span>
+            <strong>{answers.hasApiKey === 'yes' ? 'Disponível' : 'Pendente'}</strong>
+          </div>
+        </div>
+
+        <h4>Fluxo sugerido</h4>
+
+        <ol className="df-steps">
+          {answers.hasApiKey === 'no' && (
+            <li>Crie sua conta no Portal do Desenvolvedor.</li>
+          )}
+          {answers.hasApiKey === 'no' && (
+            <li>Gere sua API Key sandbox.</li>
+          )}
+          <li>Faça uma chamada inicial para validar a autenticação.</li>
+          <li>Crie a cobrança Pix pelo backend.</li>
+          <li>Retorne o QR Code e o Pix copia e cola para o frontend.</li>
+          <li>Configure o webhook de confirmação de pagamento.</li>
+          <li>Atualize o pedido após receber o evento de pagamento.</li>
+          <li>Execute o checklist de homologação antes de ir para produção.</li>
+        </ol>
+
+        <h4>Guias recomendados</h4>
+
+        <div className="df-links">
+          <a href="/start-here/authentication">Autenticação</a>
+          <a href="/pix-charge/create-qrcode">Criar QR Code Pix</a>
+          <a href="/pix-charge/paid-webhook">Webhook de cobrança paga</a>
+          <a href="/sandbox/homologation-checklist">Checklist de homologação</a>
+          <a href="/api-reference">API Reference</a>
+        </div>
+
+        <h4>Prompt para IA</h4>
+
+        <pre className="df-prompt">{prompt}</pre>
+
+        <div className="df-actions">
+          <button type="button" onClick={copyPrompt} className="df-action-primary">
+            {copied ? 'Copiado' : 'Copiar prompt'}
+          </button>
+
+          <button type="button" onClick={reset} className="df-action-secondary">
+            Reiniciar conversa
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="df-chat-shell">
+      <style>
+        {`
+          .df-chat-shell {
+            --df-primary: ${PRIMARY};
+            --df-primary-dark: ${PRIMARY_DARK};
+            --df-primary-soft: ${PRIMARY_SOFT};
+            --df-primary-soft-2: ${PRIMARY_SOFT_2};
+            --df-border: ${BORDER};
+            --df-border-soft: ${BORDER_SOFT};
+            --df-text: ${TEXT};
+            --df-text-secondary: ${TEXT_SECONDARY};
+            --df-surface: ${SURFACE};
+            --df-bot-bubble: ${BOT_BUBBLE};
+
+            margin-top: 28px;
+            border: 1px solid var(--df-border);
+            border-radius: 24px;
+            overflow: hidden;
+            background: var(--df-surface);
+            box-shadow:
+              0 24px 70px rgba(17, 24, 39, 0.08),
+              0 1px 0 rgba(17, 24, 39, 0.04);
+          }
+
+          .df-chat-header {
+            padding: 16px 18px;
+            border-bottom: 1px solid var(--df-border-soft);
+            background:
+              radial-gradient(circle at top left, rgba(26, 148, 26, 0.10), transparent 30%),
+              #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+          }
+
+          .df-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+          }
+
+          .df-header-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            background: var(--df-primary);
+            color: #FFFFFF;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            box-shadow: 0 10px 26px rgba(26, 148, 26, 0.22);
+            flex: 0 0 auto;
+          }
+
+          .df-header-title {
+            min-width: 0;
+          }
+
+          .df-header-title strong {
+            display: block;
+            color: var(--df-text);
+            font-size: 15px;
+            line-height: 1.2;
+          }
+
+          .df-header-title p {
+            margin: 4px 0 0;
+            color: var(--df-text-secondary);
+            font-size: 13px;
+            line-height: 1.35;
+          }
+
+          .df-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 10px;
+            border: 1px solid var(--df-border-soft);
+            border-radius: 999px;
+            color: var(--df-text-secondary);
+            font-size: 12px;
+            background: #FFFFFF;
+            white-space: nowrap;
+          }
+
+          .df-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--df-primary);
+            box-shadow: 0 0 0 4px rgba(26, 148, 26, 0.12);
+          }
+
+          .df-chat-body {
+            height: 640px;
+            overflow-y: auto;
+            padding: 24px 18px 26px;
+            scroll-behavior: smooth;
+            background:
+              linear-gradient(180deg, #FFFFFF 0%, #FAFAFA 42%, #F8FAFC 100%);
+          }
+
+          .df-chat-body::-webkit-scrollbar {
+            width: 10px;
+          }
+
+          .df-chat-body::-webkit-scrollbar-track {
+            background: transparent;
+          }
+
+          .df-chat-body::-webkit-scrollbar-thumb {
+            background: #D1D5DB;
+            border-radius: 999px;
+            border: 3px solid transparent;
+            background-clip: content-box;
+          }
+
+          .df-message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 9px;
+            margin-bottom: 13px;
+            animation: dfMessageIn 0.26s ease both;
+          }
+
+          .df-bot-row {
+            justify-content: flex-start;
+          }
+
+          .df-user-row {
+            justify-content: flex-end;
+          }
+
+          .df-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 999px;
+            background: #FFFFFF;
+            border: 1px solid var(--df-border);
+            color: var(--df-primary);
+            display: grid;
+            place-items: center;
+            font-size: 12px;
+            font-weight: 800;
+            flex: 0 0 auto;
+            box-shadow: 0 6px 18px rgba(17, 24, 39, 0.05);
+          }
+
+          .df-bubble {
+            max-width: min(76%, 620px);
+            padding: 12px 14px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.55;
+          }
+
+          .df-bot-bubble {
+            background: var(--df-bot-bubble);
+            color: var(--df-text);
+            border-bottom-left-radius: 6px;
+          }
+
+          .df-user-bubble {
+            background: var(--df-primary);
+            color: #FFFFFF;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 10px 26px rgba(26, 148, 26, 0.18);
+          }
+
+          .df-typing-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 50px;
+            padding: 13px 14px;
+          }
+
+          .df-typing-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--df-text-secondary);
+            display: inline-block;
+            animation: dfTypingBounce 1.15s infinite ease-in-out;
+          }
+
+          .df-typing-dot:nth-child(1) {
+            animation-delay: 0s;
+          }
+
+          .df-typing-dot:nth-child(2) {
+            animation-delay: 0.16s;
+          }
+
+          .df-typing-dot:nth-child(3) {
+            animation-delay: 0.32s;
+          }
+
+          .df-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 4px 0 18px 37px;
+            max-width: 760px;
+            animation: dfMessageIn 0.26s ease both;
+          }
+
+          .df-option-button {
+            appearance: none;
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 9px 11px;
+            min-width: 150px;
+            max-width: 210px;
+            text-align: left;
+            cursor: pointer;
+            transition:
+              transform 0.18s ease,
+              border-color 0.18s ease,
+              background 0.18s ease,
+              box-shadow 0.18s ease;
+          }
+
+          .df-option-button:hover {
+            transform: translateY(-1px);
+            border-color: var(--df-primary);
+            background: var(--df-primary-soft);
+            box-shadow: 0 10px 24px rgba(26, 148, 26, 0.08);
+          }
+
+          .df-option-button:active {
+            transform: translateY(0);
+          }
+
+          .df-option-button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+            transform: none;
+          }
+
+          .df-option-title {
+            display: block;
+            color: var(--df-text);
+            font-size: 13px;
+            font-weight: 750;
+            line-height: 1.2;
+            margin-bottom: 3px;
+          }
+
+          .df-option-description {
+            display: block;
+            color: var(--df-text-secondary);
+            font-size: 12px;
+            line-height: 1.35;
+          }
+
+          .df-plan-card {
+            margin: 10px 0 18px 37px;
+            padding: 20px;
+            border: 1px solid var(--df-border);
+            border-radius: 20px;
+            background: #FFFFFF;
+            box-shadow: 0 18px 46px rgba(17, 24, 39, 0.07);
+            max-width: 780px;
+            animation: dfMessageIn 0.28s ease both;
+          }
+
+          .df-plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+          }
+
+          .df-plan-eyebrow {
+            display: block;
+            color: var(--df-primary);
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+          }
+
+          .df-plan-card h3 {
+            margin: 0;
+            color: var(--df-text);
+            font-size: 21px;
+            line-height: 1.2;
+          }
+
+          .df-plan-card h4 {
+            color: var(--df-text);
+            margin: 20px 0 10px;
+            font-size: 15px;
+          }
+
+          .df-plan-card p {
+            color: var(--df-text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0 0 14px;
+          }
+
+          .df-plan-card strong {
+            color: var(--df-text);
+          }
+
+          .df-plan-badge {
+            color: var(--df-primary);
+            background: var(--df-primary-soft);
+            border: 1px solid var(--df-primary-soft-2);
+            border-radius: 999px;
+            padding: 6px 9px;
+            font-size: 12px;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+
+          .df-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin: 16px 0 6px;
+          }
+
+          .df-summary-grid div {
+            border: 1px solid var(--df-border-soft);
+            border-radius: 14px;
+            padding: 10px;
+            background: #FAFAFA;
+            min-width: 0;
+          }
+
+          .df-summary-grid span {
+            display: block;
+            color: var(--df-text-secondary);
+            font-size: 11px;
+            margin-bottom: 4px;
+          }
+
+          .df-summary-grid strong {
+            display: block;
+            font-size: 13px;
+            line-height: 1.3;
+          }
+
+          .df-steps {
+            margin: 0;
+            padding-left: 20px;
+            color: var(--df-text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+          }
+
+          .df-steps li::marker {
+            color: var(--df-primary);
+            font-weight: 800;
+          }
+
+          .df-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+          }
+
+          .df-links a {
+            display: inline-flex;
+            align-items: center;
+            min-height: 34px;
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            color: var(--df-primary-dark);
+            font-size: 13px;
+            font-weight: 650;
+            text-decoration: none;
+            transition:
+              background 0.18s ease,
+              border-color 0.18s ease,
+              transform 0.18s ease;
+          }
+
+          .df-links a:hover {
+            background: var(--df-primary-soft);
+            border-color: var(--df-primary);
+            transform: translateY(-1px);
+          }
+
+          .df-prompt {
+            white-space: pre-wrap;
+            padding: 15px;
+            border-radius: 14px;
+            background: #111827;
+            color: #F9FAFB;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+          }
+
+          .df-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+          }
+
+          .df-action-primary,
+          .df-action-secondary {
+            appearance: none;
+            border-radius: 12px;
+            padding: 10px 13px;
+            font-size: 13px;
+            font-weight: 750;
+            cursor: pointer;
+            transition:
+              transform 0.18s ease,
+              box-shadow 0.18s ease,
+              background 0.18s ease;
+          }
+
+          .df-action-primary {
+            border: 1px solid var(--df-primary);
+            background: var(--df-primary);
+            color: #FFFFFF;
+            box-shadow: 0 10px 24px rgba(26, 148, 26, 0.16);
+          }
+
+          .df-action-primary:hover {
+            background: var(--df-primary-dark);
+            transform: translateY(-1px);
+          }
+
+          .df-action-secondary {
+            border: 1px solid var(--df-border);
+            background: #FFFFFF;
+            color: var(--df-text);
+          }
+
+          .df-action-secondary:hover {
+            background: #F9FAFB;
+            transform: translateY(-1px);
+          }
+
+          @keyframes dfTypingBounce {
+            0%, 70%, 100% {
+              transform: translateY(0) scale(0.82);
+              opacity: 0.35;
+            }
+
+            35% {
+              transform: translateY(-5px) scale(1);
+              opacity: 1;
+            }
+          }
+
+          @keyframes dfMessageIn {
+            from {
+              opacity: 0;
+              transform: translateY(7px);
+            }
+
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+
+          @media (max-width: 720px) {
+            .df-chat-shell {
+              border-radius: 18px;
+            }
+
+            .df-chat-header {
+              align-items: flex-start;
+            }
+
+            .df-status {
+              display: none;
+            }
+
+            .df-chat-body {
+              height: 600px;
+              padding: 20px 14px 24px;
+            }
+
+            .df-bubble {
+              max-width: 86%;
+            }
+
+            .df-options {
+              margin-left: 37px;
+              flex-direction: column;
+            }
+
+            .df-option-button {
+              width: 100%;
+              max-width: 100%;
+            }
+
+            .df-plan-card {
+              margin-left: 0;
+              padding: 16px;
+            }
+
+            .df-summary-grid {
+              grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+          }
+
+          @media (max-width: 460px) {
+            .df-summary-grid {
+              grid-template-columns: 1fr;
+            }
+          }
+        `}
+      </style>
+
+      <div className="df-chat-header">
+        <div className="df-header-left">
+          <div className="df-header-avatar">D</div>
+
+          <div className="df-header-title">
+            <strong>Assistente Delfinance</strong>
+            <p>Converse comigo para montar seu caminho de integração.</p>
+          </div>
+        </div>
+
+        <div className="df-status">
+          <span className="df-status-dot" />
+          Online
+        </div>
+      </div>
+
+      <div ref={chatBodyRef} className="df-chat-body">
+        <Bubble>
+          Olá! Vou te ajudar a encontrar o melhor caminho para integrar com a Delfinance.
+        </Bubble>
+
+        {questions.map((question, index) => {
+          if (index > activeQuestionIndex) return null;
+
+          const answer = answers[question.key];
+
+          return (
+            <div key={question.key}>
+              <Bubble>{question.question}</Bubble>
+
+              <Options question={question} />
+
+              {answer && (
+                <Bubble type="user">
+                  {question.userText(answer)}
+                </Bubble>
+              )}
+            </div>
+          );
+        })}
+
+        {typing && <TypingBubble />}
+
+        {activeQuestionIndex >= questions.length && isComplete && (
+          <>
+            <Bubble>
+              Pronto. Com base nas suas respostas, montei um plano recomendado para sua integração.
+            </Bubble>
+
+            <PlanCard />
+          </>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+    </div>
+  );
+};
+
+<ChatIntegrationAssistant />

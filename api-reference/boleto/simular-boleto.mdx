@@ -1,0 +1,116 @@
+---
+title: "Simular pagamento de boleto"
+api: "POST /baas/v1/charges/{id}/simulate-conclude"
+description: "Simule a conclusão de um pagamento de boleto no ambiente sandbox."
+---
+
+<Warning>
+Disponível apenas no ambiente **sandbox** (`apisandbox.delbank.com.br`). Não existe em produção.
+</Warning>
+
+<Note>
+Para o passo a passo completo, veja o guia [Simular Pagamento](/guias/boleto/simulacao-pagamento).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="id" type="string" required>
+  Identificador da cobrança. Para `type: BANKSLIP`, use a linha digitável (`digitableLine`) ou o código de barras (`barCode`). Para `type: PIX`, use o `correlationId` do boleto.
+</ParamField>
+
+## Body
+
+<ParamField body="type" type="string" required>
+  Tipo de simulação. Valores aceitos: `BANKSLIP` ou `PIX`.
+</ParamField>
+
+## Response
+
+<ResponseField name="correlationId" type="string">GUID do boleto simulado.</ResponseField>
+<ResponseField name="referenceId" type="string">Identificador interno da simulação.</ResponseField>
+<ResponseField name="amount" type="number">Valor simulado do pagamento.</ResponseField>
+<ResponseField name="source" type="string">Origem do pagamento simulado (ex: `"PCR"`).</ResponseField>
+<ResponseField name="date" type="string">Data/hora da simulação em ISO 8601.</ResponseField>
+<ResponseField name="paymentDate" type="string">Data/hora do pagamento simulado em ISO 8601.</ResponseField>
+<ResponseField name="issuer" type="object">Dados da instituição pagadora simulada.</ResponseField>
+<ResponseField name="additionalData" type="object">
+  Dados adicionais da simulação.
+  <Expandable title="propriedades">
+    <ResponseField name="simulator" type="string">Identificador do simulador (`"DelbankSimulator"`).</ResponseField>
+    <ResponseField name="message" type="string">Mensagem descritiva da simulação.</ResponseField>
+    <ResponseField name="bankAccount" type="string">Conta bancária associada.</ResponseField>
+    <ResponseField name="correlationId" type="string">GUID do boleto.</ResponseField>
+    <ResponseField name="ourNumber" type="string">Nosso número do boleto.</ResponseField>
+    <ResponseField name="barCode" type="string">Código de barras do boleto.</ResponseField>
+    <ResponseField name="digitableLine" type="string">Linha digitável do boleto.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL (BANKSLIP)
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/43590001161200000060900002156347693070000000010/simulate-conclude' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "BANKSLIP"
+}'
+```
+```bash cURL (PIX)
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/69577abe-3867-4e0b-85ee-21aa6bc9db9b/simulate-conclude' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "type": "PIX"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 202
+{
+    "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
+    "referenceId": "sim-00000215634",
+    "amount": 150.00,
+    "source": "PCR",
+    "date": "2025-07-05T13:30:15Z",
+    "paymentDate": "2025-07-05T13:30:15Z",
+    "issuer": {
+        "ispb": "38224857",
+        "code": "435",
+        "branch": "0001",
+        "agency": "0001",
+        "name": "DELBANK",
+        "type": "PJ",
+        "document": "30287697789",
+        "fantasyName": "DELBANK SIMULADOR"
+    },
+    "additionalData": {
+        "simulator": "DelbankSimulator",
+        "message": "Pagamento de boleto simulado em ambiente de homologação",
+        "bankAccount": "29823",
+        "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
+        "ourNumber": "00000215634",
+        "barCode": "43596930700000000100001112000000600000215634",
+        "digitableLine": "43590001161200000060900002156347693070000000010"
+    }
+}
+```
+```json 400 (tipo inválido)
+{
+    "title": "Please refer to the errors property for additional details.",
+    "errors": ["Tipo de pagamento inválido"]
+}
+```
+</ResponseExample>

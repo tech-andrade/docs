@@ -1,0 +1,157 @@
+---
+title: Integrar com IA
+description: Escolha como levar a documentação técnica da Delfinance para o seu fluxo.
+mode: custom
+---
+
+import AIContextCard from '/snippets/AIContextCard.mdx';
+import AIAssistant from '/snippets/AIAssistant.mdx';
+
+<div className="min-h-screen bg-white px-4 py-6 sm:px-6 lg:px-12">
+  <div className="space-y-7">
+    {/* Header / Hero */}
+    <section className="relative overflow-hidden rounded-2xl border border-[#1A941A]/20 bg-[#1A941A]/5 p-7 md:p-10">
+      {/* grid de fundo */}
+      <div className="absolute inset-0 opacity-40 pointer-events-none bg-[linear-gradient(to_right,rgba(26,148,26,0.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(26,148,26,0.22)_1px,transparent_1px)] bg-[size:24px_24px]" />
+
+      {/* glow suave */}
+      <div className="absolute right-0 top-0 h-full w-1/2 bg-[radial-gradient(circle_at_center,rgba(26,148,26,0.18),transparent_65%)] pointer-events-none" />
+
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_0.85fr] gap-10 items-center">
+        {/* Conteúdo esquerdo */}
+        <div>
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#1A941A]/30 bg-[#1A941A]/10 px-4 py-2 text-xs font-bold text-[#1A941A]">
+            ✨ Hub de IA
+          </span>
+
+          <h1 className="mb-5 max-w-3xl text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-gray-950">
+            Documentação pensada para <span className="text-[#1A941A]">IA</span>
+          </h1>
+
+          <p className="max-w-2xl text-base md:text-lg leading-8 text-gray-600">
+            Use a documentação da Delfinance no seu assistente favorito para gerar código,
+            entender endpoints e acelerar sua integração com mais segurança.
+          </p>
+
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+            <label
+              htmlFor="assistant-modal-toggle"
+              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#1A941A] px-5 text-sm font-bold text-white no-underline hover:bg-[#147814] transition-colors"
+            >
+              ✨ Gerar prompt guiado
+              <span className="text-lg leading-none">›</span>
+            </label>
+
+            <label
+              htmlFor="llms-modal-toggle"
+              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 text-sm font-bold text-gray-950 no-underline hover:bg-gray-50 transition-colors"
+            >
+              ↓ Baixar contexto para IA
+            </label>
+          </div>
+        </div>
+
+        {/* Preview direito */}
+        <div className="hidden lg:block relative">
+          {/* cards flutuantes */}
+          <div className="absolute -left-10 top-28 z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg text-2xl">
+            🤖
+          </div>
+
+          <div className="absolute -right-5 top-10 z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg text-2xl text-[#1A941A]">
+            AI
+          </div>
+
+          <div className="absolute -right-8 bottom-12 z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg text-2xl">
+            {"</>"}
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-xl shadow-[#1A941A]/10">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-bold text-gray-950">
+                <span className="text-gray-500">▤</span>
+                prompt.md
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#1A941A]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+                <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+              </div>
+            </div>
+
+            <div className="rounded-xl bg-gray-950 p-5 font-mono text-sm leading-7 text-gray-100 shadow-inner">
+              <div>
+                <span className="text-gray-500">1</span>
+                <span className="ml-4 text-[#6EE76E]"># Integração Delfinance</span>
+              </div>
+
+              <div className="mt-3">
+                <span className="text-gray-500">2</span>
+                <span className="ml-4 text-[#6EE76E]">## Objetivo</span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">3</span>
+                <span className="ml-4 text-gray-200">
+                  Você é um assistente especializado
+                </span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">4</span>
+                <span className="ml-4 text-gray-200">
+                  na API da Delfinance.
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <span className="text-gray-500">5</span>
+                <span className="ml-4 text-[#6EE76E]">## Contexto</span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">6</span>
+                <span className="ml-4 text-gray-200">
+                  API: Delfinance v1
+                </span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">7</span>
+                <span className="ml-4 text-gray-200">
+                  Authentication: x-delbank-api-key
+                </span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">8</span>
+                <span className="ml-4 text-gray-200">
+                  Recursos: Pix, webhooks e consultas
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <span className="text-gray-500">9</span>
+                <span className="ml-4 text-[#6EE76E]">## Instruções</span>
+              </div>
+
+              <div>
+                <span className="text-gray-500">10</span>
+                <span className="ml-4 text-gray-200">
+                  Gere exemplos práticos e seguros.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Cards */}
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <AIContextCard />
+      <AIAssistant />
+    </div>
+  </div>
+</div>

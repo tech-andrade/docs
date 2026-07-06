@@ -1,0 +1,143 @@
+---
+title: "Cobrança Reutilizável (QR Code Estático)"
+sidebarTitle: "Cobrança reutilizável"
+description: "Crie um QR Code Pix reutilizável, capaz de receber múltiplos pagamentos, ideal para pontos de venda físicos e doações."
+icon: "repeat"
+---
+
+O **QR Code Estático** carrega informações fixas que não mudam ao longo do tempo: uma vez criado, ele pode ser pago **quantas vezes for necessário**, por pagadores diferentes, até que você decida cancelá-lo.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Ponto de venda físico" icon="store">
+    Imprima ou exiba o QR Code no seu estabelecimento. O cliente escaneia e paga direto pelo app do banco dele, sem precisar de uma maquininha.
+  </Card>
+  <Card title="Doações" icon="hand-holding-heart">
+    ONGs e projetos podem manter um único QR Code fixo (ex: num site ou cartaz), recebendo contribuições de valor livre de qualquer pessoa, a qualquer momento.
+  </Card>
+</CardGroup>
+
+Se você precisa de um código de **uso único** com expiração curta, por exemplo, para o checkout de um pedido específico, use a [Cobrança Imediata (QR Dinâmico)](/guides/pix/cobranca-imediata) em vez desta.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Crie o QR Code Estático">
+Chame o endpoint de criação informando pelo menos um `correlationId` — o identificador que você vai usar para conciliar essa cobrança com o seu sistema.
+
+O `amount` é **opcional**: se você não enviar, o próprio pagador escolhe quanto quer pagar ao escanear o código. Esse comportamento é o que torna esse modelo ideal para doações.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "correlationId": "2f908499-685c-4e36-af04-30567dc08dc5",
+    "description": "Doação para o projeto X",
+    "additionalInformation": "Toda contribuição ajuda"
+}'
+```
+```json Response
+{
+    "transactionId": "vchargeffeeed94cdbc41",
+    "correlationId": "2f908499-685c-4e36-af04-30567dc08dc5",
+    "pixKey": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+    "beneficiaryName": "DELBANK",
+    "address": {
+        "cityName": "ARACAJU",
+        "zipCode": "49000000",
+        "uf": "SE",
+        "state": "SE",
+        "street": "LOGRADOURO"
+    },
+    "additionalInformation": "Toda contribuição ajuda",
+    "createdAt": "2024-12-10T11:51:55.306Z",
+    "payloadPix": "00026540014br.gov.bcb.pix0114+55119999757340214testing qrcode52040000530398654049.995802BR5907DELBANK6007ARACAJU62250521vchargeffeeed94cdbc41630494CD",
+    "base64Image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAA=="
+}
+```
+</CodeGroup>
+
+Se quiser um valor fixo (ex: um produto de preço único), basta informar `amount`:
+
+```json
+{
+    "correlationId": "{{$guid}}",
+    "description": "Pix estático com valor fixo",
+    "amount": 9.99,
+    "additionalInformation": "Testando QR Code"
+}
+```
+
+Também é possível vincular o QR Code a uma **chave Pix específica** da sua conta, caso você tenha mais de uma cadastrada:
+
+```json
+{
+    "pixKey": "5b0ac9a4-fad6-43f9-be70-6d7c9a2fad26",
+    "correlationId": "{{$guid}}",
+    "description": "Pix estático com chave específica",
+    "amount": 9.99
+}
+```
+</Step>
+
+<Step title="Exiba o QR Code para o pagador">
+A resposta da criação já retorna tudo que você precisa para exibir a cobrança:
+
+- **`base64Image`** — uma imagem pronta do QR Code, para exibir diretamente numa tela ou impressão.
+- **`payloadPix`** — o código "Pix Copia e Cola", para quando o pagador preferir colar o código manualmente no app do banco em vez de escanear.
+
+<Tip>
+Disponibilize sempre as duas opções (imagem e copia-e-cola) na sua interface. Pagadores usando desktop ou apps sem câmera dependem do copia-e-cola.
+</Tip>
+</Step>
+
+<Step title="Receba múltiplos pagamentos">
+Diferente da Cobrança Imediata, o mesmo QR Code Estático pode ser pago repetidas vezes por pessoas diferentes. Cada pagamento realizado dispara um evento de webhook (`PIX_RECEIVED`) contendo o `correlationId` que você definiu na criação, use-o para identificar a qual QR Code o pagamento pertence.
+
+Veja [Processando a confirmação via Webhook](/guias/webhooks/visao-geral) para o passo a passo de tratamento desse evento.
+</Step>
+
+<Step title="Consulte os pagamentos recebidos">
+A qualquer momento você pode consultar o histórico de pagamentos feitos sobre um QR Code específico, útil para reconciliação ou para exibir um extrato de doações recebidas, por exemplo.
+
+```bash cURL
+curl --location --request GET 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static/:identifier/payments' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+Veja a referência completa em [Consultar Pagamentos do QR Code Estático](/api-reference/pix/static-qrcode-query).
+</Step>
+
+<Step title="Cancele quando não precisar mais">
+Quando o QR Code não fizer mais sentido (fim de uma campanha, encerramento de um ponto de venda), cancele-o para impedir novos pagamentos:
+
+```bash cURL
+curl -X 'PATCH' 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static/:identifier/cancel' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+Pagamentos já realizados antes do cancelamento não são afetados.
+</Step>
+
+</Steps>
+
+## Referência da API
+
+<CardGroup cols={3}>
+  <Card title="Criar" icon="plus" href="api-reference/pix/criar-qrcode-estatico">
+    `POST /pix/qrcode/static`
+  </Card>
+  <Card title="Consultar" icon="magnifying-glass" href="/api-reference/pix/consultar-qrcode-estatico">
+    `GET /pix/qrcode/static/:id`
+  </Card>
+  <Card title="Cancelar" icon="ban" href="/api-reference/pix/cancelar-qrcode-estatico">
+    `PATCH /pix/qrcode/static/:id/cancel`
+  </Card>
+</CardGroup>
