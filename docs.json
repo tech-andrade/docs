@@ -12,6 +12,10 @@
       "dark": "#0D0D0D"
     }
   },
+  "appearance": {
+    "default": "light",
+    "strict": true
+  },
   "favicon": "https://conta.Delfinance.com.br/icon.png",
   "fonts": {
     "heading": {
