@@ -7,7 +7,7 @@ icon: "qrcode"
 
 Receber via Pix, na prática, significa gerar um **QR Code de cobrança** que o seu pagador escaneia (ou copia e cola) no aplicativo do banco dele. Assim que o pagamento é liquidado no Banco Central, você recebe uma notificação em tempo real via **webhook**, e o valor cai na sua conta.
 
-Toda cobrança Pix na API segue o mesmo ciclo de vida — o que muda entre os modelos é **quem define o valor**, **quantas vezes o QR Code pode ser pago** e **por quanto tempo ele fica válido**. Escolher o modelo certo aqui evita retrabalho de integração mais adiante.
+Toda cobrança Pix na API segue o mesmo ciclo de vida, o que muda entre os modelos é **quem define o valor**, **quantas vezes o QR Code pode ser pago** e **por quanto tempo ele fica válido**. Escolher o modelo certo aqui evita retrabalho de integração mais adiante.
 
 ## Modelos de cobrança disponíveis
 
@@ -67,22 +67,6 @@ sequenceDiagram
 <Warning>
 Não use consulta por polling como mecanismo principal de confirmação de pagamento. Os webhooks existem justamente para eliminar essa necessidade e evitar rate limiting desnecessário. Use a consulta apenas para reconciliação ou recuperação de falhas.
 </Warning>
-
-## Antes de começar
-
-Para criar qualquer cobrança Pix você vai precisar:
-
-<Steps>
-  <Step title="Autenticação">
-    Ter uma API Key válida (sandbox ou produção) e saber como autenticar suas requisições. Veja o guia de [Autenticação](/start-here/authentication).
-  </Step>
-  <Step title="Webhook configurado (recomendado)">
-    Configurar uma URL de webhook para receber a notificação `PIX_RECEIVED` em tempo real. Veja [Configurando Webhooks](/guias/webhooks/visao-geral).
-  </Step>
-  <Step title="Ambiente de testes">
-    Usar o ambiente sandbox para testar a criação e a simulação de pagamento antes de ir para produção. Veja [Testando no Sandbox](/guides/pix/testando-no-sandbox).
-  </Step>
-</Steps>
 
 ## Próximos passos
 

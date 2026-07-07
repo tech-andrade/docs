@@ -14,14 +14,16 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
 
       <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_0.85fr] gap-10 items-center">
         <div>
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#1A941A]/30 bg-[#1A941A]/10 px-4 py-2 text-xs font-bold text-[#1A941A]">
-            ⚡ Pix API
+          <span className="mb-5 inline-flex flex-row items-center gap-2 rounded-full border border-[#1A941A]/30 bg-[#1A941A]/10 px-4 py-2 text-xs font-bold text-[#1A941A]">
+            <img src="/icons/pix.svg" className="w-4 h-4 object-contain shrink-0" alt="" /><span>Pix API</span>
           </span>
 
-          <h1 className="mb-5 max-w-3xl text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-gray-950">
-            Pix completo.<br />
-            <span className="text-[#1A941A]">Do QR Code ao webhook.</span>
+          <h1 className="mb-2 max-w-3xl text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-gray-950">
+            Pix completo.
           </h1>
+          <h2 className="mb-5 max-w-3xl text-xl md:text-2xl font-semibold tracking-tight text-[#1A941A]">
+            Do QR Code ao webhook.
+          </h2>
 
           <p className="max-w-2xl text-base md:text-lg leading-8 text-gray-600">
             Receba, pague e concilie transações Pix via API. Com notificações em tempo real, split de pagamento e suporte a todos os tipos de QR Code.
@@ -45,8 +47,8 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
         </div>
 
         <div className="hidden lg:block relative">
-          <div className="absolute -left-10 top-20 z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg text-2xl">
-            ⚡
+          <div className="absolute -left-10 top-20 z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg">
+            <img src="/icons/pix.svg" className="w-8 h-8 object-contain" alt="" />
           </div>
           <div className="absolute -right-5 top-8 z-10 flex h-14 w-14 items-center justify-center rounded-2xl border border-[#1A941A]/20 bg-white shadow-lg text-xs font-extrabold text-[#1A941A]">
             PIX
@@ -73,8 +75,9 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
               <div><span className="text-gray-500">2</span><span className="ml-8 text-[#6EE76E]">"event"</span><span className="text-gray-400">: </span><span className="text-amber-300">"PIX_RECEIVED"</span><span className="text-gray-400">,</span></div>
               <div><span className="text-gray-500">3</span><span className="ml-8 text-[#6EE76E]">"amount"</span><span className="text-gray-400">: </span><span className="text-blue-300">150.00</span><span className="text-gray-400">,</span></div>
               <div><span className="text-gray-500">4</span><span className="ml-8 text-[#6EE76E]">"payer"</span><span className="text-gray-400">: </span><span className="text-amber-300">"João Silva"</span><span className="text-gray-400">,</span></div>
-              <div><span className="text-gray-500">5</span><span className="ml-8 text-[#6EE76E]">"status"</span><span className="text-gray-400">: </span><span className="text-[#6EE76E]">"RECEIVED"</span></div>
-              <div><span className="text-gray-500">6</span><span className="ml-4 text-gray-400">{"}"}</span></div>
+              <div><span className="text-gray-500">5</span><span className="ml-8 text-[#6EE76E]">"status"</span><span className="text-gray-400">: </span><span className="text-[#6EE76E]">"RECEIVED"</span><span className="text-gray-400">,</span></div>
+              <div><span className="text-gray-500">6</span><span className="ml-8 text-[#6EE76E]">"txid"</span><span className="text-gray-400">: </span><span className="text-amber-300">"a1b2c3d4e5f6..."</span></div>
+              <div><span className="text-gray-500">7</span><span className="ml-4 text-gray-400">{"}"}</span></div>
             </div>
 
             <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
@@ -93,37 +96,37 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           {
-            icon: "⚡",
+            icon: "/icons/zap.png",
             title: "QR Code Dinâmico",
             desc: "Cobrança por QR Code com valor fixo e expiração. Ideal para checkouts e faturas individuais.",
             href: "/guias/pix/receber-pix/cobranca-imediata",
           },
           {
-            icon: "🔁",
+            icon: "/icons/qrcode.png",
             title: "QR Code Estático",
             desc: "Um QR Code para múltiplos pagamentos. Ideal para pontos de venda e links permanentes.",
             href: "/guias/pix/receber-pix/cobranca-reutilizavel",
           },
           {
-            icon: "📅",
+            icon: "/icons/duedate.png",
             title: "QR Code com Vencimento",
             desc: "Cobrança com data, multa, juros e desconto por antecipação. Alternativa moderna ao boleto.",
             href: "/guias/pix/receber-pix/cobranca-com-vencimento",
           },
           {
-            icon: "🔑",
+            icon: "/icons/pix.png",
             title: "Pagar por Chave",
             desc: "Valide a chave no DICT e transfira. O fluxo mais comum para pagamentos a fornecedores.",
             href: "/guias/pix/pagar-pix/por-chave",
           },
           {
-            icon: "📷",
+            icon: "/icons/qrscan.png",
             title: "Pagar por QR Code",
             desc: "Leia qualquer QR Code estático ou dinâmico e execute o pagamento via API.",
             href: "/guias/pix/pagar-pix/por-qrcode",
           },
           {
-            icon: "↩️",
+            icon: "/icons/refund.png",
             title: "Devoluções",
             desc: "Devolva total ou parcialmente em até 90 dias, com rastreamento por webhook.",
             href: "/guias/pix/receber-pix/devolucao",
@@ -134,11 +137,15 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
             href={item.href}
             className="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 no-underline hover:border-[#1A941A]/40 hover:shadow-md hover:shadow-[#1A941A]/10 transition-all"
           >
-            <span className="text-2xl">{item.icon}</span>
-            <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              {item.icon.startsWith('/') ? (
+                <img src={item.icon} className="w-8 h-8 object-contain" alt="" />
+              ) : (
+                <span className="text-2xl">{item.icon}</span>
+              )}
               <p className="font-bold text-gray-950 group-hover:text-[#1A941A] transition-colors">{item.title}</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
             </div>
+            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
             <span className="mt-auto text-xs font-semibold text-[#1A941A] opacity-0 group-hover:opacity-100 transition-opacity">
               Ver documentação →
             </span>
@@ -154,45 +161,36 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
           {
-            icon: "🏢",
             title: "SaaS e Assinaturas",
             desc: "Gere cobranças para clientes recorrentes com QR Code e data de expiração. A confirmação chega via webhook, sem precisar consultar a API nem verificar o extrato manualmente.",
           },
           {
-            icon: "🌐",
             title: "Gateway de Pagamento",
             desc: "Emita cobranças em nome dos seus subcomerciantes usando finalBeneficiary e split nativo. Um contrato com a Delfinance, pagamentos para múltiplos recebedores.",
           },
           {
-            icon: "🛒",
             title: "Marketplace",
             desc: "Receba do comprador e repasse ao vendedor no mesmo fluxo. O split permite definir até 50% do valor para um beneficiário secundário direto na criação do QR Code.",
           },
           {
-            icon: "💻",
             title: "Software House",
             desc: "Integre Pix nos sistemas dos seus clientes sem precisar de um contrato bancário para cada um. Uma única integração gerencia múltiplas contas via x-delfinance-account-id.",
           },
           {
-            icon: "🤖",
             title: "Automação Financeira",
             desc: "Programe pagamentos em lote, reconcilie o extrato automaticamente e acione regras de negócio com base nos eventos recebidos. Sem operador no meio do fluxo.",
           },
           {
-            icon: "⚙️",
             title: "ERPs e Sistemas de Gestão",
             desc: "Adicione Pix como meio de pagamento no seu ERP ou sistema de gestão. As cobranças são emitidas pelo sistema e a confirmação chega automaticamente via webhook, sem acesso ao internet banking.",
           },
         ].map((item) => (
           <div
             key={item.title}
-            className="flex gap-4 rounded-xl border border-gray-100 bg-gray-50 p-5 hover:border-[#1A941A]/30 hover:bg-[#1A941A]/5 transition-all"
+            className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-5 hover:border-[#1A941A]/30 hover:bg-[#1A941A]/5 transition-all"
           >
-            <span className="text-2xl shrink-0">{item.icon}</span>
-            <div className="flex flex-col gap-2">
-              <p className="font-bold text-gray-950">{item.title}</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-            </div>
+            <p className="font-bold text-gray-950">{item.title}</p>
+            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -226,11 +224,11 @@ description: "Tudo que você precisa para construir produtos financeiros com Pix
             cta: "Ver webhooks Pix",
           },
         ].map((item) => (
-          <div key={item.step} className="flex flex-col gap-3">
+          <div key={item.step} className="flex flex-col gap-3 h-full">
             <span className="text-5xl font-extrabold text-[#1A941A]/20 leading-none">{item.step}</span>
             <p className="font-bold text-gray-950">{item.title}</p>
-            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-            <a href={item.href} className="mt-auto text-sm font-bold text-[#1A941A] no-underline hover:underline">
+            <p className="text-sm text-gray-500 leading-relaxed flex-1">{item.desc}</p>
+            <a href={item.href} className="text-sm font-bold text-[#1A941A] no-underline hover:underline">
               {item.cta} →
             </a>
           </div>

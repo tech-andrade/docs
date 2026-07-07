@@ -18,10 +18,12 @@ description: "Emita boletos bancários com registro instantâneo na Febraban, su
             🧾 Boleto API
           </span>
 
-          <h1 className="mb-5 max-w-3xl text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-gray-950">
-            Boleto bancário.<br />
-            <span className="text-[#1A941A]">Da emissão ao pagamento, tudo via API.</span>
+          <h1 className="mb-2 max-w-3xl text-4xl md:text-6xl font-extrabold tracking-tight leading-[1.05] text-gray-950">
+            Boleto bancário.
           </h1>
+          <h2 className="mb-5 max-w-3xl text-xl md:text-2xl font-semibold tracking-tight text-[#1A941A]">
+            Da emissão ao pagamento, tudo via API.
+          </h2>
 
           <p className="max-w-2xl text-base md:text-lg leading-8 text-gray-600">
             Emita boletos registrados com uma chamada de API. Todos os boletos são híbridos por padrão, com código de barras e QR Code Pix no mesmo documento.
@@ -94,37 +96,37 @@ description: "Emita boletos bancários com registro instantâneo na Febraban, su
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[
           {
-            icon: "⚡",
+            icon: "/icons/document-qrcode.png",
             title: "Boleto Híbrido",
             desc: "Todo boleto emitido pela API inclui código de barras e QR Code Pix no mesmo documento, sem configuração adicional.",
             href: "/guias/boleto/emitir-boleto",
           },
           {
-            icon: "📊",
+            icon: "/icons/price-tag-discount.png",
             title: "Encargos e Descontos",
             desc: "Configure multa por atraso, juros ao dia e desconto por antecipação diretamente na emissão do boleto.",
             href: "/guias/boleto/emitir-boleto",
           },
           {
-            icon: "🔍",
+            icon: "/icons/loupe.png",
             title: "Consultar e Conciliar",
             desc: "Consulte um boleto por correlationId ou busque lotes por período com paginação de até 100 registros por página.",
             href: "/guias/boleto/consultar-boleto",
           },
           {
-            icon: "📅",
+            icon: "/icons/update.png",
             title: "Atualizar Vencimento",
             desc: "Altere a data de vencimento de um boleto pendente sem precisar cancelar e reemitir.",
             href: "/guias/boleto/gerenciar-boleto",
           },
           {
-            icon: "📄",
+            icon: "/icons/export-pdf.png",
             title: "Download do PDF",
             desc: "Gere o PDF pronto para impressão ou envio via e-mail com uma chamada ao endpoint de stream.",
             href: "/guias/boleto/gerenciar-boleto",
           },
           {
-            icon: "🧪",
+            icon: "/icons/simulate-payment.png",
             title: "Simulação de Pagamento",
             desc: "Simule o pagamento de um boleto no sandbox para testar o fluxo de webhook sem precisar de um banco real.",
             href: "/guias/boleto/simulacao-pagamento",
@@ -135,11 +137,11 @@ description: "Emita boletos bancários com registro instantâneo na Febraban, su
             href={item.href}
             className="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 no-underline hover:border-[#1A941A]/40 hover:shadow-md hover:shadow-[#1A941A]/10 transition-all"
           >
-            <span className="text-2xl">{item.icon}</span>
-            <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <img src={item.icon} className="w-8 h-8 object-contain shrink-0" alt="" />
               <p className="font-bold text-gray-950 group-hover:text-[#1A941A] transition-colors">{item.title}</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
             </div>
+            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
             <span className="mt-auto text-xs font-semibold text-[#1A941A] opacity-0 group-hover:opacity-100 transition-opacity">
               Ver documentação →
             </span>
@@ -155,45 +157,36 @@ description: "Emita boletos bancários com registro instantâneo na Febraban, su
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
           {
-            icon: "🏢",
             title: "Cobranças B2B",
             desc: "Empresas que faturam outras empresas ainda preferem boleto como meio de pagamento. Emita, gerencie e concilie cobranças corporativas sem acessar o internet banking.",
           },
           {
-            icon: "🏫",
             title: "Educação",
             desc: "Mensalidades escolares, cursos e treinamentos têm alta adesão por boleto. Emita com vencimento e encargos por atraso, e receba a confirmação via webhook assim que o pagamento for processado.",
           },
           {
-            icon: "🏥",
             title: "Saúde e Clínicas",
             desc: "Particulares e convênios muitas vezes exigem boleto como comprovante de pagamento. Gere o PDF e envie direto para o paciente sem sair do seu sistema.",
           },
           {
-            icon: "🏠",
             title: "Imobiliárias e Aluguéis",
             desc: "Emita boletos mensais para locatários com juros e multa configurados. A atualização de vencimento via API elimina a necessidade de reemitir o boleto a cada negociação.",
           },
           {
-            icon: "🛒",
             title: "E-commerce",
             desc: "Parte dos compradores ainda prefere boleto, especialmente em compras de valor maior. O Boleto Híbrido permite que o cliente escolha pagar via código de barras ou QR Code Pix no mesmo documento.",
           },
           {
-            icon: "⚙️",
             title: "ERPs e Sistemas de Gestão",
             desc: "Integre a emissão de boletos direto no seu ERP ou sistema de gestão. As cobranças são criadas pelo sistema e a baixa chega automaticamente via webhook, sem acesso ao internet banking.",
           },
         ].map((item) => (
           <div
             key={item.title}
-            className="flex gap-4 rounded-xl border border-gray-100 bg-gray-50 p-5 hover:border-[#1A941A]/30 hover:bg-[#1A941A]/5 transition-all"
+            className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-5 hover:border-[#1A941A]/30 hover:bg-[#1A941A]/5 transition-all"
           >
-            <span className="text-2xl shrink-0">{item.icon}</span>
-            <div className="flex flex-col gap-2">
-              <p className="font-bold text-gray-950">{item.title}</p>
-              <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-            </div>
+            <p className="font-bold text-gray-950">{item.title}</p>
+            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -227,11 +220,11 @@ description: "Emita boletos bancários com registro instantâneo na Febraban, su
             cta: "Ver webhooks Boleto",
           },
         ].map((item) => (
-          <div key={item.step} className="flex flex-col gap-3">
+          <div key={item.step} className="flex flex-col gap-3 h-full">
             <span className="text-5xl font-extrabold text-[#1A941A]/20 leading-none">{item.step}</span>
             <p className="font-bold text-gray-950">{item.title}</p>
-            <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
-            <a href={item.href} className="mt-auto text-sm font-bold text-[#1A941A] no-underline hover:underline">
+            <p className="text-sm text-gray-500 leading-relaxed flex-1">{item.desc}</p>
+            <a href={item.href} className="text-sm font-bold text-[#1A941A] no-underline hover:underline">
               {item.cta} →
             </a>
           </div>
