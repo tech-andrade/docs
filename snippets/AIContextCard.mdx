@@ -1,31 +1,28 @@
-<div className="relative">
+<div className="relative h-full">
   <input id="llms-modal-toggle" type="checkbox" className="peer hidden" />
 
   <label
     htmlFor="llms-modal-toggle"
-    className="group block cursor-pointer rounded-2xl border border-gray-200 bg-white p-6 md:p-7 no-underline hover:border-gray-300 hover:shadow-lg transition-all overflow-hidden relative"
+    className="group flex flex-col h-full cursor-pointer rounded-2xl border border-gray-200 bg-white p-6 md:p-7 no-underline hover:border-gray-300 hover:shadow-lg transition-all overflow-hidden relative"
   >
     <div className="absolute inset-0 opacity-30 pointer-events-none bg-[linear-gradient(to_right,#e5e7eb_1px,transparent_1px),linear-gradient(to_bottom,#e5e7eb_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-    <div className="relative flex min-h-[220px] flex-col justify-between">
-      <div>
-        <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl border border-[#1A941A]/20 bg-[#1A941A]/10 text-xl">
-          ⬇️
-        </div>
-
-        <h2 className="mb-3 text-xl font-bold tracking-tight text-gray-950">
+    <div className="relative flex flex-col gap-3 h-full">
+      <div className="flex items-center gap-3">
+        <img src="/icons/context.png" className="w-8 h-8 object-contain shrink-0" alt="" />
+        <h2 className="text-xl font-bold tracking-tight text-gray-950">
           Baixar contexto para IA
         </h2>
-
-        <p className="max-w-sm text-sm leading-6 text-gray-500">
-          Leve a documentação da Delfinance em um formato pronto para usar
-          no ChatGPT, Claude, Cursor ou Copilot, com APIs, exemplos e boas práticas.
-        </p>
       </div>
 
-      <div className="mt-7 flex items-center gap-2 text-sm font-bold text-[#1A941A]">
-        Continuar <span>›</span>
-      </div>
+      <p className="flex-1 text-sm leading-6 text-gray-500">
+        Leve a documentação da Delfinance em um formato pronto para usar
+        no ChatGPT, Claude, Cursor ou Copilot, com APIs, exemplos e boas práticas.
+      </p>
+
+      <span className="text-xs font-semibold text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+        Continuar →
+      </span>
     </div>
   </label>
 
