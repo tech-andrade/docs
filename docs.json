@@ -44,7 +44,8 @@
             "pages": [
               "iniciacao/autenticacao",
               "iniciacao/mtls",
-              "iniciacao/filtros-ip"
+              "iniciacao/filtros-ip",
+              "iniciacao/chaves-sandbox"
             ]
           },
           {
