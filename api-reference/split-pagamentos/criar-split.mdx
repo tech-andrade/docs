@@ -1,0 +1,110 @@
+---
+title: "Criar configuração de Split"
+api: "POST /baas/api/v1/split-payments/configurations"
+description: "Crie uma configuração de Split de Pagamento com um ou mais beneficiários."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+</Note>
+
+Cria uma configuração de Split de Pagamento associada a uma conta de recebimento. Assim que um pagamento for recebido nessa conta, o valor será distribuído automaticamente entre os beneficiários informados, de acordo com as regras configuradas.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Body
+
+<ParamField body="bankAccountNumber" type="string" required>
+  Conta onde os pagamentos serão recebidos e divididos.
+</ParamField>
+
+<ParamField body="beneficiaries" type="array" required>
+  Lista de beneficiários que receberão parte de cada pagamento recebido.
+  <Expandable title="propriedades do item">
+    <ParamField body="ruleType" type="string" required>
+      Tipo de regra aplicada ao valor repassado. Valores aceitos:
+      - `PERCENTAGE`: o valor é calculado como uma porcentagem do pagamento total. O percentual máximo permitido por beneficiário é **5%**.
+      - `FIXED`: o valor é fixo e absoluto. Se o valor especificado exceder **50%** do valor da transação, o split não é realizado para aquele beneficiário naquele pagamento.
+    </ParamField>
+    <ParamField body="ruleAmount" type="number" required>
+      Valor a ser aplicado, conforme o `ruleType` selecionado.
+    </ParamField>
+    <ParamField body="bankAccountNumber" type="string" required>
+      Conta de destino para a qual essa regra será aplicada.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="number">Identificador único da configuração de split.</ResponseField>
+<ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
+<ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
+<ResponseField name="beneficiaries" type="array">
+  Lista de beneficiários cadastrados na configuração.
+  <Expandable title="propriedades">
+    <ResponseField name="id" type="number">Identificador único do beneficiário.</ResponseField>
+    <ResponseField name="splitPaymentConfigurationId" type="number">Configuração à qual o beneficiário pertence.</ResponseField>
+    <ResponseField name="ruleAmount" type="number">Valor configurado para a regra.</ResponseField>
+    <ResponseField name="ruleType" type="string">`PERCENTAGE` ou `FIXED`.</ResponseField>
+    <ResponseField name="pixKey" type="string">Chave Pix associada à conta de destino, quando aplicável.</ResponseField>
+    <ResponseField name="bankIspb" type="string">ISPB da instituição de destino.</ResponseField>
+    <ResponseField name="bankAccountNumber" type="string">Conta de destino do repasse.</ResponseField>
+    <ResponseField name="bankAccountBranch" type="string">Agência da conta de destino.</ResponseField>
+    <ResponseField name="holderDocument" type="string">CPF/CNPJ do titular da conta de destino.</ResponseField>
+    <ResponseField name="holderName" type="string">Nome do titular da conta de destino.</ResponseField>
+    <ResponseField name="bankAccountType" type="string">Tipo da conta de destino (ex: `PAYMENT`).</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "bankAccountNumber": "123456",
+    "beneficiaries": [
+        {
+            "ruleType": "PERCENTAGE",
+            "ruleAmount": 5,
+            "bankAccountNumber": "654321"
+        }
+    ]
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "654321",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+</ResponseExample>

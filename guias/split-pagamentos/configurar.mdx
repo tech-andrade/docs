@@ -1,0 +1,113 @@
+---
+title: "Configurar Split de Pagamentos"
+sidebarTitle: "Configurar"
+description: "Crie uma configuração de Split de Pagamento e cadastre ou atualize beneficiários."
+icon: "gear"
+---
+
+Configurar um Split de Pagamento envolve dois passos: criar a configuração associada à conta de recebimento e cadastrar os beneficiários que receberão parte de cada pagamento. Você também pode adicionar novos beneficiários ou alterar a regra de um beneficiário existente a qualquer momento.
+
+## Criar configuração com beneficiários
+
+Use `POST /baas/api/v1/split-payments/configurations` para criar a configuração já com um ou mais beneficiários.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "bankAccountNumber": "123456",
+    "beneficiaries": [
+        {
+            "ruleType": "PERCENTAGE",
+            "ruleAmount": 5,
+            "bankAccountNumber": "654321"
+        }
+    ]
+}'
+```
+```json Response
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "654321",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+<Note>
+`bankAccountNumber`, no nível raiz do corpo, é a conta que **recebe** os pagamentos originais. Cada item de `beneficiaries` define uma conta de **destino** do repasse.
+</Note>
+
+## Adicionar um beneficiário a uma configuração existente
+
+Use `POST /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries` para incluir um novo beneficiário em uma configuração já criada.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "ruleType": "FIXED",
+    "ruleAmount": 20.00,
+    "beneficiaryBankAccountNumber": "789012"
+}'
+```
+</CodeGroup>
+
+## Atualizar a regra de um beneficiário
+
+Use `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para alterar o `ruleType` e/ou `ruleAmount` de um beneficiário já cadastrado. A conta de destino do beneficiário não é alterada por esse endpoint.
+
+<CodeGroup>
+```bash cURL
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries/18' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "ruleType": "PERCENTAGE",
+    "ruleAmount": 3
+}'
+```
+</CodeGroup>
+
+## Regras de negócio
+
+<Warning>
+- Para `ruleType: PERCENTAGE`, o percentual máximo por beneficiário é **5%** do valor do pagamento.
+- Para `ruleType: FIXED`, se o `ruleAmount` exceder **50%** do valor da transação recebida, o split não é realizado para aquele beneficiário naquele pagamento.
+</Warning>
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Criar configuração" icon="plus" href="/api-reference/split-pagamentos/criar-split">
+    `POST /baas/api/v1/split-payments/configurations`
+  </Card>
+  <Card title="Adicionar beneficiário" icon="user-plus" href="/api-reference/split-pagamentos/adicionar-beneficiario">
+    `POST /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries`
+  </Card>
+  <Card title="Atualizar beneficiário" icon="pen" href="/api-reference/split-pagamentos/atualizar-beneficiario">
+    `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId`
+  </Card>
+</CardGroup>

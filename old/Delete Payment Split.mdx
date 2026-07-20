@@ -1,0 +1,52 @@
+---
+sidebar_position: 4
+---
+
+## Deletar um Split de Pagamentos por Id
+
+### Request
+
+```curl curl
+DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Obrigatório**. Chave de API                                           |
+| x-delfinance-account-id | **Obrigatório**. O número da conta bancária Delfinance |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| splitPaymentId | **Obrigatório**. O ID de configuração da Split de Pagamento                                           |
+
+### Response
+
+Em caso de resposta bem-sucedida, você receberá No content
+
+## Deletar um beneficiário em uma configuração de Split de Pagamento
+
+### Request
+
+```curl curl
+DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Obrigatório**. Chave de API                                           |
+| x-delfinance-account-id | **Obrigatório**. O número da conta bancária Delfinance |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| splitPaymentId | **Obrigatório**. O ID de configuração da divisão de pagamento                                           |
+| splitPaymentBeneficiaryId | **Obrigatório**. O ID do beneficiário                                           |
+
+### Response
+
+Em caso de resposta bem-sucedida, você receberá No content

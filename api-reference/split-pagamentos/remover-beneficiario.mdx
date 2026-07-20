@@ -1,0 +1,57 @@
+---
+title: "Remover beneficiário"
+api: "DELETE /baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}"
+description: "Remova um beneficiário específico de uma configuração de Split de Pagamento."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Remover Split de Pagamentos](/guias/split-pagamentos/remover).
+</Note>
+
+Remove um beneficiário específico de uma configuração de Split de Pagamento, mantendo a configuração e os demais beneficiários ativos. A operação é irreversível.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="splitPaymentId" type="string" required>
+  ID da configuração de Split de Pagamento.
+</ParamField>
+
+<ParamField path="splitPaymentBeneficiaryId" type="string" required>
+  ID do beneficiário a ser removido.
+</ParamField>
+
+## Response
+
+Retorna `204 No Content` em caso de sucesso.
+
+<RequestExample>
+```bash cURL
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries/18' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 204
+(corpo vazio)
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-8a3919c1917bff4f84367110dcf0680a-e156f57e8851b5be-00"
+}
+```
+</ResponseExample>

@@ -1,0 +1,381 @@
+# Delfinance API — REST Client (VS Code)
+# Extensão necessária: REST Client (humao.rest-client)
+#
+# Preencha as variáveis abaixo com suas credenciais de Sandbox.
+# Nunca commite valores reais — use um arquivo .env ou mantenha local.
+
+@baseUrl    = https://apisandbox.delbank.com.br
+@apiKey     = SUA_API_KEY_AQUI
+@accountId  = SUA_ACCOUNT_ID_AQUI
+
+
+# =============================================================================
+# PIX — COBRANÇAS (CASH-IN)
+# =============================================================================
+
+### Criar cobrança Pix
+POST {{baseUrl}}/v1/pix/charges
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "amount": 150.75,
+  "description": "Pagamento do pedido #9817",
+  "customer": {
+    "name": "Maria Oliveira",
+    "document": "12345678909"
+  }
+}
+
+###
+
+### Consultar cobrança Pix
+# @prompt chargeId ID da cobrança (ex: chg_981726a)
+GET {{baseUrl}}/v1/pix/charges/chg_981726a
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Consultar transação Pix
+GET {{baseUrl}}/v1/pix/transactions/pix_tx_123456
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+
+# =============================================================================
+# PIX — QR CODE ESTÁTICO
+# =============================================================================
+
+### Criar QR Code Estático
+POST {{baseUrl}}/baas/api/v2/pix/qrcode/static
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "correlationId": "2f908499-685c-4e36-af04-30567dc08dc5",
+  "description": "QR Code reutilizável",
+  "amount": 9.99,
+  "additionalInformation": "Testando qrcode"
+}
+
+###
+
+### Consultar QR Code Estático
+# Substitua :transactionIdentifier pelo ID retornado na criação
+GET {{baseUrl}}/baas/api/v2/pix/qrcode/static/vchargeffeeed94cdbc41
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Cancelar QR Code Estático
+PATCH {{baseUrl}}/baas/api/v2/pix/qrcode/static/vchargeffeeed94cdbc41/cancel
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+
+# =============================================================================
+# PIX — QR CODE DINÂMICO
+# =============================================================================
+
+### Criar QR Code Dinâmico
+POST {{baseUrl}}/baas/api/v2/pix/qrcode/dynamic
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "correlationId": "40ede975-031d-4517-bdd4-31472d3f00a4",
+  "amount": 99.90,
+  "expiresIn": 1800,
+  "formatResponse": "PAYLOAD_AND_QRCODE"
+}
+
+###
+
+### Consultar QR Code Dinâmico
+GET {{baseUrl}}/baas/api/v2/pix/qrcode/dynamic/vchargeffab8b4c963344c283e491f5e
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Cancelar QR Code Dinâmico
+PATCH {{baseUrl}}/baas/api/v2/pix/qrcode/dynamic/vchargeffab8b4c963344c283e491f5e/cancel
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+
+# =============================================================================
+# PIX — QR CODE COM VENCIMENTO
+# =============================================================================
+
+### Criar QR Code com Vencimento
+POST {{baseUrl}}/baas/api/v2/pix/qrcode/due-date
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "correlationId": "ac7a235a-1a91-47b0-8da5-0eb75abf3617",
+  "amount": 150.00,
+  "dueDate": "2026-12-30",
+  "formatResponse": "PAYLOAD_AND_QRCODE",
+  "payer": {
+    "name": "João Alves",
+    "document": "07034346593"
+  },
+  "address": {
+    "cityName": "ARACAJU",
+    "zipCode": "49000000",
+    "state": "SE",
+    "street": "LOGRADOURO"
+  },
+  "taxes": {
+    "interestType": "PERCENTAGE_PER_MONTH_CALENDAR_DAY",
+    "interestAmount": 1,
+    "fineType": "PERCENTAGE",
+    "fineAmount": 2,
+    "discountType": "FIXED_AMOUNT",
+    "discountAmount": 10.00
+  }
+}
+
+###
+
+### Consultar QR Code com Vencimento
+GET {{baseUrl}}/baas/api/v2/pix/qrcode/due-date/wcharge0aac4378c3cf4c37b0ec16c7c
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Cancelar QR Code com Vencimento
+PATCH {{baseUrl}}/baas/api/v2/pix/qrcode/due-date/wcharge0aac4378c3cf4c37b0ec16c7c/cancel
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+
+# =============================================================================
+# PIX — TRANSFERÊNCIAS (CASH-OUT)
+# =============================================================================
+
+### 1. Inicializar pagamento por Chave Pix (obtém endToEndId)
+POST {{baseUrl}}/baas/api/v2/pix/dict/payment-initialization
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "key": "+5511999975734",
+  "holderDocument": "30287697789"
+}
+
+###
+
+### 2. Criar transferência Pix (use o endToEndId acima)
+POST {{baseUrl}}/v1/pix/transfers
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "key": "financeiro@fornecedor.com",
+  "amount": 250.00,
+  "description": "Pagamento Fornecedor Lote #1"
+}
+
+###
+
+### Consultar transferência Pix
+GET {{baseUrl}}/v1/pix/transfers/trsf_28173a
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### 1. Inicializar pagamento por QR Code (obtém endToEndId + transactionId)
+POST {{baseUrl}}/baas/api/v2/pix/qrcode/payment-initialization
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "payload": "00020101021226820014br.gov.bcb.pix2560pix-h.delbank.com.br/v2/cob/vchargeffab8b4c963344c283e491f5e5204000053039865802BR5907DELBANK6007ARACAJU62070503***6304CB42"
+}
+
+
+# =============================================================================
+# PIX — DEVOLUÇÕES
+# =============================================================================
+
+### Criar devolução Pix
+# Substitua {endToEndIdOriginal} pelo endToEndId da transação recebida
+PUT {{baseUrl}}/baas/api/v1/transactions/pix/E182361202024041911111111111111/refund
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+IdempotencyKey: {{$guid}}
+
+{
+  "amount": 100.00,
+  "externalId": "devolucao-pedido-9817",
+  "description": "Devolução solicitada pelo cliente"
+}
+
+###
+
+### Consultar devolução Pix
+GET {{baseUrl}}/v1/pix/refunds/ref_98127b
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+
+# =============================================================================
+# PIX — CHAVES PIX (DICT)
+# =============================================================================
+
+### Consultar chaves Pix da conta
+GET {{baseUrl}}/baas/api/v1/pix/dict/entries
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Criar chave Pix (EVP — chave aleatória)
+POST {{baseUrl}}/baas/api/v1/pix/dict/entries
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+IdempotencyKey: {{$guid}}
+
+{
+  "entryType": "EVP"
+}
+
+###
+
+### Remover chave Pix
+DELETE {{baseUrl}}/baas/api/v1/pix/dict/entries
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "key": "d882fe5b-0b8a-4b35-ac30-ed862bfa2222"
+}
+
+
+# =============================================================================
+# BOLETO
+# =============================================================================
+
+### Criar boleto (BANKSLIP_PIX)
+POST {{baseUrl}}/baas/v1/charges
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "type": "BANKSLIP_PIX",
+  "correlationId": "{{$guid}}",
+  "yourNumber": "PED-2024-001",
+  "dueDate": "2026-12-30",
+  "Amount": 150.00,
+  "payer": {
+    "name": "João Alves",
+    "document": "07034346593",
+    "email": "joao@email.com",
+    "phone": { "prefix": "79", "number": "988669383" },
+    "address": {
+      "zipCode": "49010030",
+      "publicPlace": "AV. RIO BRANCO",
+      "neighborhood": "CENTRO",
+      "number": "186",
+      "city": "ARACAJU",
+      "state": "SE"
+    }
+  }
+}
+
+###
+
+### Consultar boleto
+# Substitua o correlationId pelo GUID do boleto criado
+GET {{baseUrl}}/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Atualizar vencimento do boleto
+PATCH {{baseUrl}}/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "dueDate": "2027-03-31"
+}
+
+###
+
+### Cancelar boleto
+PUT {{baseUrl}}/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/closeout
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Imprimir boleto (retorna PDF — salvo via output)
+# Nota: o REST Client salvará o binário; use "Save Response Body" no VS Code
+GET {{baseUrl}}/baas/v1/charges/304c439c-4b17-4a75-abb1-2526e356cdad/stream
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Simular pagamento de boleto (Sandbox)
+# Use o barCode ou digitableLine retornados na criação como {id}
+POST {{baseUrl}}/baas/v1/charges/43590001161200000060900002156347693070000000010/simulate-conclude
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{}
+
+
+# =============================================================================
+# WEBHOOKS
+# =============================================================================
+
+### Cadastrar webhook
+POST {{baseUrl}}/baas/api/v1/webhooks
+Content-Type: application/json
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+{
+  "eventType": "PIX_RECEIVED",
+  "url": "https://seuservidor.com.br/webhooks/pix",
+  "authorizationScheme": "BEARER",
+  "authorization": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+
+###
+
+### Listar webhooks cadastrados
+GET {{baseUrl}}/baas/api/v1/webhooks
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}
+
+###
+
+### Remover webhook
+# Substitua o ID pelo retornado no cadastro
+DELETE {{baseUrl}}/baas/api/v1/webhooks/wbh_a1b2c3d4
+x-delbank-api-key: {{apiKey}}
+x-delfinance-account-id: {{accountId}}

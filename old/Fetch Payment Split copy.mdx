@@ -1,0 +1,114 @@
+---
+sidebar_position: 2
+---
+
+## Fetch all configured Payment Splits
+
+### Request
+
+```curl
+curl --location --request GET 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+### Response
+
+On a successful response, here's what you'll receive:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+},
+{
+  "id": 16,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 16,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+
+## Fetch configured Payment Split by Id
+
+### Request
+
+```curl
+curl --location --request GET 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{id}' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| Id | **Required**. The Payment Split configuration Id                                           |
+
+### Response
+
+On a successful response, here's what you'll receive:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```

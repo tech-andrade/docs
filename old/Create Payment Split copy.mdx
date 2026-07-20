@@ -1,0 +1,57 @@
+---
+sidebar_position: 1
+---
+
+The endpoint below allows you to create Payment Split configurations. Once a payment is received by the specified account, the amount will be automatically distributed to the designated recipient accounts based on the configured split rules.
+
+### Request
+
+```curl
+curl --location --request POST 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Body
+
+| Name      | Type     | Description                                                                                                                                                                             |
+| :-------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bankAccountNumber | `string`   | **Required** The account number where the payments will be received and split             |
+| beneficiaries     | `object`   | **Required** Object containing information regarding the account that will receive the split payments |
+| beneficiaries.ruleType | `enum` | **Required** The type of amount that will be calculated.  Domains:<br/>- `PERCENTAGE` - The amount is calculated as a percentage of the total payment, the maximum percentage allowed is 5%.<br/>- `FIXED` - The amount is a fixed, absolute value. If the specified amount exceeds 50% of the transaction amount, the split will not be made |
+| beneficiaries.ruleAmount | `number` | **Required** The amount to be applied, depending on the selected ruleType |
+| beneficiaries.bankAccountNumber | `string` | **Required** The destination account where these rules will be applied |
+
+
+### Response
+
+On a successful response, here's what you'll receive:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```

@@ -1,0 +1,51 @@
+---
+title: "Remover Split de Pagamentos"
+sidebarTitle: "Remover"
+description: "Remova uma configuração de Split de Pagamento por completo ou apenas um beneficiário específico."
+icon: "trash"
+---
+
+Você pode remover uma configuração de Split de Pagamento inteira, encerrando a divisão automática para a conta de recebimento, ou remover apenas um beneficiário específico, mantendo a configuração e os demais beneficiários ativos.
+
+<Warning>
+A remoção é irreversível. Após remover uma configuração ou um beneficiário, os pagamentos seguintes recebidos na conta deixam de ser divididos para aquele destino.
+</Warning>
+
+## Remover uma configuração por completo
+
+Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId` para remover a configuração e todos os seus beneficiários.
+
+<CodeGroup>
+```bash cURL
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</CodeGroup>
+
+A resposta de sucesso retorna `204 No Content`. A partir dessa chamada, os pagamentos recebidos na conta original deixam de ser divididos.
+
+## Remover um beneficiário específico
+
+Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para remover apenas um beneficiário, mantendo a configuração e os demais beneficiários ativos.
+
+<CodeGroup>
+```bash cURL
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries/18' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</CodeGroup>
+
+A resposta de sucesso também retorna `204 No Content`.
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Remover configuração" icon="trash" href="/api-reference/split-pagamentos/remover-split">
+    `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId`
+  </Card>
+  <Card title="Remover beneficiário" icon="user-xmark" href="/api-reference/split-pagamentos/remover-beneficiario">
+    `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId`
+  </Card>
+</CardGroup>

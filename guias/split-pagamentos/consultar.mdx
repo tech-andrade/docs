@@ -1,0 +1,109 @@
+---
+title: "Consultar Split de Pagamentos"
+sidebarTitle: "Consultar"
+description: "Liste todas as configurações de Split de Pagamento ou consulte uma configuração específica por ID."
+icon: "magnifying-glass"
+---
+
+Existem duas formas de consultar configurações de Split de Pagamento: listando todas as configurações cadastradas para a conta ou buscando uma configuração específica pelo seu `id`.
+
+## Listar todas as configurações
+
+Use `GET /baas/api/v1/split-payments/configurations` para obter todas as configurações de split cadastradas para a conta informada em `x-delfinance-account-id`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+[
+  {
+    "id": 15,
+    "createdAt": "2025-09-19T20:04:38.112Z",
+    "updatedAt": "2025-09-19T20:04:38.112Z",
+    "beneficiaries": [
+      {
+        "id": 18,
+        "splitPaymentConfigurationId": 15,
+        "ruleAmount": 5,
+        "ruleType": "PERCENTAGE",
+        "pixKey": "string",
+        "bankIspb": "string",
+        "bankAccountNumber": "string",
+        "bankAccountBranch": "string",
+        "holderDocument": "string",
+        "holderName": "string",
+        "bankAccountType": "PAYMENT"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "createdAt": "2025-09-19T20:04:38.112Z",
+    "updatedAt": "2025-09-19T20:04:38.112Z",
+    "beneficiaries": [
+      {
+        "id": 19,
+        "splitPaymentConfigurationId": 16,
+        "ruleAmount": 5,
+        "ruleType": "PERCENTAGE",
+        "pixKey": "string",
+        "bankIspb": "string",
+        "bankAccountNumber": "string",
+        "bankAccountBranch": "string",
+        "holderDocument": "string",
+        "holderName": "string",
+        "bankAccountType": "PAYMENT"
+      }
+    ]
+  }
+]
+```
+</CodeGroup>
+
+## Consultar uma configuração por ID
+
+Use `GET /baas/api/v1/split-payments/configurations/:id` para obter os detalhes de uma configuração específica, incluindo todos os seus beneficiários.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Listar configurações" icon="list" href="/api-reference/split-pagamentos/listar-splits">
+    `GET /baas/api/v1/split-payments/configurations`
+  </Card>
+  <Card title="Consultar configuração por ID" icon="magnifying-glass" href="/api-reference/split-pagamentos/consultar-split">
+    `GET /baas/api/v1/split-payments/configurations/:id`
+  </Card>
+</CardGroup>

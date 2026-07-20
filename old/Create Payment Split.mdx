@@ -1,0 +1,57 @@
+---
+sidebar_position: 1
+---
+
+# Criar um Split de Pagamentos
+
+O endpoint abaixo permite que você crie configurações de Split de Pagamento. Assim que um pagamento for recebido pela conta especificada, o valor será distribuído automaticamente para as contas de destinatários designadas, com base nas regras de divisão configuradas.
+
+### Request
+
+```curl curl
+POST 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Obrigatório**. Chave de API                                           |
+| x-delfinance-account-id | **Obrigatório**. O número da conta bancária Delfinance |
+
+#### Body
+
+| Name      | Type     | Description                                                                                                                                                                             |
+| :-------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bankAccountNumber | `string`   | **Obrigatório** O número da conta onde os pagamentos serão recebidos e divididos             |
+| beneficiaries     | `object`   | **Obrigatório** Objeto contendo informações sobre a conta que receberá os pagamentos parcelados |
+| beneficiaries.ruleType | `enum` | **Obrigatório** O tipo de valor que será calculado. Domínios:<br/>- `PERCENTUAL` - O valor é calculado como uma porcentagem do pagamento total, a porcentagem máxima permitida é 5%.<br/>- `FIXO` - O valor é um valor fixo e absoluto. Se o valor especificado exceder 50% do valor da transação, a divisão não será realizada.
+| beneficiaries.ruleAmount | `number` | **Obrigatório** O valor a ser aplicado, dependendo do ruleType selecionado |
+| beneficiaries.bankAccountNumber | `string` | **Obrigatório** A conta de destino onde essas regras serão aplicadas |
+
+
+### Response
+
+Em caso de resposta bem-sucedida:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```

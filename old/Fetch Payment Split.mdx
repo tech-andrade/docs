@@ -1,0 +1,112 @@
+---
+sidebar_position: 2
+---
+
+# Buscar Split de Pagamentos
+
+## Buscar Todos os Split de Pagamentos configurados
+
+### Request
+
+```curl curl
+GET 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Obrigatório**. Chave de API                                           |
+| x-delfinance-account-id | **Obrigatório**. O número da conta bancária Delfinance |
+
+### Response
+
+Em caso de sucesso, você receberá:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+},
+{
+  "id": 16,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 16,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+
+## Buscar configuração de Split de Pagamento por ID
+
+### Request
+
+```curl curl
+GET 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{id}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Obrigatório**. Chave de API                                           |
+| x-delfinance-account-id | **Obrigatório**. O número da conta bancária Delfinance |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| Id | **Obrigatório**. O ID da configuração de Split de Pagamento a ser buscado                                           |
+
+### Response
+
+Em caso de sucesso, você receberá:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```

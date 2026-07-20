@@ -1,0 +1,80 @@
+---
+title: "Listar configurações de Split"
+api: "GET /baas/api/v1/split-payments/configurations"
+description: "Liste todas as configurações de Split de Pagamento cadastradas para a conta."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar Split de Pagamentos](/guias/split-pagamentos/consultar).
+</Note>
+
+Retorna todas as configurações de Split de Pagamento cadastradas para a conta informada em `x-delfinance-account-id`, incluindo seus respectivos beneficiários.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Response
+
+Array de objetos de configuração, cada um com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split).
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+  {
+    "id": 15,
+    "createdAt": "2025-09-19T20:04:38.112Z",
+    "updatedAt": "2025-09-19T20:04:38.112Z",
+    "beneficiaries": [
+      {
+        "id": 18,
+        "splitPaymentConfigurationId": 15,
+        "ruleAmount": 5,
+        "ruleType": "PERCENTAGE",
+        "pixKey": "string",
+        "bankIspb": "string",
+        "bankAccountNumber": "string",
+        "bankAccountBranch": "string",
+        "holderDocument": "string",
+        "holderName": "string",
+        "bankAccountType": "PAYMENT"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "createdAt": "2025-09-19T20:04:38.112Z",
+    "updatedAt": "2025-09-19T20:04:38.112Z",
+    "beneficiaries": [
+      {
+        "id": 19,
+        "splitPaymentConfigurationId": 16,
+        "ruleAmount": 5,
+        "ruleType": "PERCENTAGE",
+        "pixKey": "string",
+        "bankIspb": "string",
+        "bankAccountNumber": "string",
+        "bankAccountBranch": "string",
+        "holderDocument": "string",
+        "holderName": "string",
+        "bankAccountType": "PAYMENT"
+      }
+    ]
+  }
+]
+```
+</ResponseExample>

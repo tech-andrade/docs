@@ -1,0 +1,56 @@
+---
+sidebar_position: 4
+---
+
+## Delete a Payment Split by Id
+
+### Request
+
+```curl
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| splitPaymentId | **Required**. The Payment Split configuration Id                                           |
+
+### Response
+
+On a successful response you'll receive no content
+
+## Delete a beneficiary in a Payment Split configuration
+
+### Request
+
+```curl
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| splitPaymentId | **Required**. The Payment Split configuration Id                                           |
+| splitPaymentBeneficiaryId | **Required**. The beneficiary Id                                           |
+
+### Response
+
+On a successful response you'll receive no content

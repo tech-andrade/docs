@@ -1,0 +1,110 @@
+---
+sidebar_position: 3
+---
+
+## Update Payment Split configuration to add a new beneficiary
+
+### Request
+
+```curl
+curl --location --request POST 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Body
+
+| Name      | Type     | Description                                                                                                                                                                             |
+| :-------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ruleType | `enum` | **Required** The type of amount that will be calculated.  Domains:<br/>- `PERCENTAGE` - The amount is calculated as a percentage of the total payment, the maximum percentage allowed is 5%.<br/>- `FIXED` - The amount is a fixed, absolute value. If the specified amount exceeds 50% of the transaction amount, the split will not be made |
+| ruleAmount | `number` | **Required** The amount to be applied, depending on the selected ruleType |
+| beneficiaryBankAccountNumber | `string` | **Required** The destination account where these rules will be applied |
+
+### Response
+
+On a successful response, here's what you'll receive:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+
+## Update Payment Split configuration to change a beneficiary's rule
+
+### Request
+
+```curl
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}' \
+--header 'x-delbank-api-key: {apiKey}' \
+--header 'x-delfinance-account-id: {accountId}'
+```
+
+#### Headers
+
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| x-delbank-api-key | **Required**. API key                                           |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+#### Path Parameteres
+| Name              | Description                                                     |
+| :---------------- | :-------------------------------------------------------------- |
+| splitPaymentId | **Required**. The Payment Split configuration Id                                           |
+| splitPaymentBeneficiaryId | **Required**. The beneficiary Id                                           |
+
+#### Body
+
+| Name      | Type     | Description                                                                                                                                                                             |
+| :-------- | :------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ruleType | `enum` | **Required** The type of amount that will be calculated.  Domains:<br/>- `PERCENTAGE` - The amount is calculated as a percentage of the total payment, the maximum percentage allowed is 5%.<br/>- `FIXED` - The amount is a fixed, absolute value. If the specified amount exceeds 50% of the transaction amount, the split will not be made |
+| ruleAmount | `number` | **Required** The amount to be applied, depending on the selected ruleType |
+
+### Response
+
+On a successful response, here's what you'll receive:
+```json showLineNumbers
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```

@@ -1,0 +1,72 @@
+---
+title: "Consultar configuração de Split"
+api: "GET /baas/api/v1/split-payments/configurations/{id}"
+description: "Consulte uma configuração de Split de Pagamento específica por ID."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar Split de Pagamentos](/guias/split-pagamentos/consultar).
+</Note>
+
+Retorna os dados completos de uma configuração de Split de Pagamento específica, incluindo todos os seus beneficiários.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="id" type="string" required>
+  ID da configuração de Split de Pagamento a ser consultada.
+</ParamField>
+
+## Response
+
+Objeto de configuração com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split).
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+  "id": 15,
+  "createdAt": "2025-09-19T20:04:38.112Z",
+  "updatedAt": "2025-09-19T20:04:38.112Z",
+  "beneficiaries": [
+    {
+      "id": 18,
+      "splitPaymentConfigurationId": 15,
+      "ruleAmount": 5,
+      "ruleType": "PERCENTAGE",
+      "pixKey": "string",
+      "bankIspb": "string",
+      "bankAccountNumber": "string",
+      "bankAccountBranch": "string",
+      "holderDocument": "string",
+      "holderName": "string",
+      "bankAccountType": "PAYMENT"
+    }
+  ]
+}
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-8a3919c1917bff4f84367110dcf0680a-e156f57e8851b5be-00"
+}
+```
+</ResponseExample>
