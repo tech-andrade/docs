@@ -1,101 +1,266 @@
 ---
 title: "Configurar Split de Pagamentos"
 sidebarTitle: "Configurar"
-description: "Crie uma configuração de Split de Pagamento e cadastre ou atualize beneficiários."
+description: "Crie uma configuração de Split de Pagamento e cadastre ou atualize instruções de repasse, por tipo de transferência."
 icon: "gear"
 ---
 
-Configurar um Split de Pagamento envolve dois passos: criar a configuração associada à conta de recebimento e cadastrar os beneficiários que receberão parte de cada pagamento. Você também pode adicionar novos beneficiários ou alterar a regra de um beneficiário existente a qualquer momento.
+Configurar um Split de Pagamento envolve dois passos: criar a configuração associada à conta de recebimento e cadastrar as instruções que definem quanto e para quem cada pagamento é repassado. Você também pode adicionar novas instruções ou alterar a regra de uma instrução existente a qualquer momento.
 
-## Criar configuração com beneficiários
+## Criar configuração com instruções
 
-Use `POST /baas/api/v1/split-payments/configurations` para criar a configuração já com um ou mais beneficiários.
+Use `POST /baas/api/v1/split-payments/configurations` para criar a configuração já com uma ou mais instruções.
 
-<CodeGroup>
-```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations' \
---header 'Content-Type: application/json' \
---header 'x-delbank-api-key: {{apiKey}}' \
---header 'x-delfinance-account-id: {{accountId}}' \
---data '{
-    "bankAccountNumber": "123456",
-    "beneficiaries": [
-        {
-            "ruleType": "PERCENTAGE",
-            "ruleAmount": 5,
-            "bankAccountNumber": "654321"
-        }
-    ]
-}'
-```
-```json Response
+```json
 {
-  "id": 15,
-  "createdAt": "2025-09-19T20:04:38.112Z",
-  "updatedAt": "2025-09-19T20:04:38.112Z",
-  "beneficiaries": [
+  "bankAccountNumber": "CONTA_PAGADORA",
+  "instructions": [
     {
-      "id": 18,
-      "splitPaymentConfigurationId": 15,
-      "ruleAmount": 5,
-      "ruleType": "PERCENTAGE",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "654321",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 10,
+      "type": "PERCENTAGE",
+      "transferType": "INTERNAL",
+      "beneficiary": {
+        "number": "CONTA_BENEFICIARIA"
+      }
     }
   ]
 }
 ```
-</CodeGroup>
 
 <Note>
-`bankAccountNumber`, no nível raiz do corpo, é a conta que **recebe** os pagamentos originais. Cada item de `beneficiaries` define uma conta de **destino** do repasse.
+`bankAccountNumber`, no nível raiz do corpo, é a conta que **recebe** os pagamentos originais. Cada item de `instructions` define uma regra de repasse e o `beneficiary` que a recebe.
 </Note>
 
-## Adicionar um beneficiário a uma configuração existente
+O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhido. As seções abaixo detalham cada um.
 
-Use `POST /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries` para incluir um novo beneficiário em uma configuração já criada.
+## Formas de repasse (`transferType`)
 
-<CodeGroup>
-```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries' \
---header 'Content-Type: application/json' \
---header 'x-delbank-api-key: {{apiKey}}' \
---header 'x-delfinance-account-id: {{accountId}}' \
---data '{
-    "ruleType": "FIXED",
-    "ruleAmount": 20.00,
-    "beneficiaryBankAccountNumber": "789012"
-}'
+<Tabs>
+  <Tab title="INTERNAL">
+    O beneficiário precisa ser uma conta interna, pertencente à mesma conta proprietária da API key.
+
+    ### Mínimo
+
+    ```json
+    {
+      "bankAccountNumber": "CONTA_PAGADORA",
+      "instructions": [
+        {
+          "amount": 10,
+          "type": "PERCENTAGE",
+          "transferType": "INTERNAL",
+          "beneficiary": {
+            "number": "CONTA_BENEFICIARIA"
+          }
+        }
+      ]
+    }
+    ```
+
+    Basta informar `beneficiary.number`. A API consulta a conta beneficiária e preenche automaticamente:
+
+    - agência;
+    - ISPB;
+    - tipo da conta;
+    - nome do titular;
+    - documento do titular.
+
+    ### Completo
+
+    ```json
+    {
+      "bankAccountNumber": "CONTA_PAGADORA",
+      "instructions": [
+        {
+          "amount": 10,
+          "type": "PERCENTAGE",
+          "transferType": "INTERNAL",
+          "beneficiary": {
+            "number": "CONTA_BENEFICIARIA",
+            "branch": "0001",
+            "participantIspb": "12345678",
+            "type": "PAYMENT",
+            "holder": {
+              "document": "12345678901",
+              "name": "Nome do beneficiário",
+              "email": "beneficiario@email.com",
+              "phoneNumber": "85999999999",
+              "type": "NATURAL"
+            }
+          }
+        }
+      ]
+    }
+    ```
+
+    <Note>
+    Mesmo enviando o payload completo, `branch`, `participantIspb`, `type` da conta, `holder.name` e `holder.document` são sobrescritos pelos dados encontrados na conta beneficiária. Para `INTERNAL`, o único dado que realmente importa é `beneficiary.number`.
+    </Note>
+  </Tab>
+
+  <Tab title="PIX_MANUAL">
+    Nesse tipo, os dados bancários e os dados principais do titular são validados pela API.
+
+    ### Mínimo funcional
+
+    ```json
+    {
+      "bankAccountNumber": "CONTA_PAGADORA",
+      "instructions": [
+        {
+          "amount": 50,
+          "type": "FIXED",
+          "transferType": "PIX_MANUAL",
+          "beneficiary": {
+            "number": "123456",
+            "branch": "0001",
+            "participantIspb": "12345678",
+            "type": "CURRENT",
+            "holder": {
+              "document": "CPF_OU_CNPJ_VALIDO",
+              "name": "Nome do beneficiário"
+            }
+          }
+        }
+      ]
+    }
+    ```
+
+    ### Completo
+
+    ```json
+    {
+      "bankAccountNumber": "CONTA_PAGADORA",
+      "instructions": [
+        {
+          "amount": 50,
+          "type": "FIXED",
+          "transferType": "PIX_MANUAL",
+          "beneficiary": {
+            "number": "123456",
+            "branch": "0001",
+            "participantIspb": "12345678",
+            "type": "CURRENT",
+            "holder": {
+              "document": "12345678901",
+              "name": "Nome do beneficiário",
+              "email": "beneficiario@email.com",
+              "phoneNumber": "85999999999",
+              "type": "NATURAL"
+            }
+          }
+        }
+      ]
+    }
+    ```
+
+    Regras de validação:
+
+    - `beneficiary.number`: entre 2 e 25 caracteres;
+    - `beneficiary.branch`: entre 1 e 10 caracteres;
+    - `beneficiary.participantIspb`: exatamente 8 caracteres;
+    - `beneficiary.type`: precisa ser um valor válido do enum de tipo de conta;
+    - `holder.document`: CPF ou CNPJ válido;
+    - `holder.name`: entre 1 e 100 caracteres;
+    - `holder.email`, `holder.phoneNumber` e `holder.type`: opcionais.
+  </Tab>
+
+  <Tab title="EXTERNAL">
+    <Warning>
+    A API aceita o valor `EXTERNAL` para `transferType`, mas ainda não faz validação específica dos dados bancários informados. Evite usar em produção até que a validação completa esteja disponível.
+    </Warning>
+
+    Se optar por usar mesmo assim, envie sempre o payload completo, no mesmo formato de `PIX_MANUAL`:
+
+    ```json
+    {
+      "bankAccountNumber": "CONTA_PAGADORA",
+      "instructions": [
+        {
+          "amount": 50,
+          "type": "FIXED",
+          "transferType": "EXTERNAL",
+          "beneficiary": {
+            "number": "123456",
+            "branch": "0001",
+            "participantIspb": "12345678",
+            "type": "CURRENT",
+            "holder": {
+              "document": "12345678901",
+              "name": "Nome do beneficiário",
+              "email": "beneficiario@email.com",
+              "phoneNumber": "85999999999",
+              "type": "NATURAL"
+            }
+          }
+        }
+      ]
+    }
+    ```
+
+    Enviar apenas `beneficiary.holder` vazio é tecnicamente aceito pela API, mas resulta em um cadastro incompleto e não deve ser usado.
+  </Tab>
+
+  <Tab title="PIX_KEY">
+    <Warning>
+    `PIX_KEY` ainda não está funcional nesta rota. O valor é aceito no corpo da requisição, mas a chave Pix informada não é processada e o beneficiário não é cadastrado corretamente. Não utilize esse `transferType` até que o suporte seja anunciado.
+    </Warning>
+
+    Para repassar valores via chave Pix hoje, use `PIX_MANUAL` com os dados bancários da conta correspondente à chave.
+  </Tab>
+</Tabs>
+
+## Adicionar uma instrução a uma configuração existente
+
+Use `POST /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries` para incluir uma nova instrução em uma configuração já criada. O corpo segue o mesmo formato de um item de `instructions`, de acordo com o `transferType` escolhido.
+
+```json
+{
+  "amount": 20,
+  "type": "FIXED",
+  "transferType": "PIX_MANUAL",
+  "beneficiary": {
+    "number": "789012",
+    "branch": "0001",
+    "participantIspb": "12345678",
+    "type": "CURRENT",
+    "holder": {
+      "document": "12345678901",
+      "name": "Nome do beneficiário"
+    }
+  }
+}
 ```
-</CodeGroup>
 
-## Atualizar a regra de um beneficiário
+## Atualizar a regra de uma instrução
 
-Use `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para alterar o `ruleType` e/ou `ruleAmount` de um beneficiário já cadastrado. A conta de destino do beneficiário não é alterada por esse endpoint.
+Use `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para alterar `amount` e/ou `type` de uma instrução já cadastrada. Os dados do beneficiário (`transferType` e `beneficiary`) não são alterados por esse endpoint.
 
-<CodeGroup>
-```bash cURL
-curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/configurations/15/beneficiaries/18' \
---header 'Content-Type: application/json' \
---header 'x-delbank-api-key: {{apiKey}}' \
---header 'x-delfinance-account-id: {{accountId}}' \
---data '{
-    "ruleType": "PERCENTAGE",
-    "ruleAmount": 3
-}'
+```json
+{
+  "type": "PERCENTAGE",
+  "amount": 3
+}
 ```
-</CodeGroup>
+
+## Valores aceitos
+
+| Campo | Valores |
+|---|---|
+| `instructions[].type` | `PERCENTAGE`, `FIXED` |
+| `instructions[].transferType` | `INTERNAL`, `PIX_MANUAL`, `EXTERNAL`, `PIX_KEY` |
+| `beneficiary.type` | `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL`, `OWNER` |
+| `holder.type` | `NATURAL`, `LEGAL` |
+
+<Warning>
+Na situação atual, os tipos seguramente utilizáveis em produção são `INTERNAL` e `PIX_MANUAL`. `EXTERNAL` ainda não tem validação dos dados bancários e `PIX_KEY` não está funcional nesta rota.
+</Warning>
 
 ## Regras de negócio
 
 <Warning>
-- Para `ruleType: PERCENTAGE`, o percentual máximo por beneficiário é **5%** do valor do pagamento.
-- Para `ruleType: FIXED`, se o `ruleAmount` exceder **50%** do valor da transação recebida, o split não é realizado para aquele beneficiário naquele pagamento.
+- Para `type: PERCENTAGE`, o percentual máximo por instrução é **5%** do valor do pagamento.
+- Para `type: FIXED`, se o `amount` exceder **50%** do valor da transação recebida, o split não é realizado para aquela instrução naquele pagamento.
 </Warning>
 
 ## Referência da API
@@ -104,10 +269,10 @@ curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/s
   <Card title="Criar configuração" icon="plus" href="/api-reference/split-pagamentos/criar-split">
     `POST /baas/api/v1/split-payments/configurations`
   </Card>
-  <Card title="Adicionar beneficiário" icon="user-plus" href="/api-reference/split-pagamentos/adicionar-beneficiario">
+  <Card title="Adicionar instrução" icon="user-plus" href="/api-reference/split-pagamentos/adicionar-beneficiario">
     `POST /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries`
   </Card>
-  <Card title="Atualizar beneficiário" icon="pen" href="/api-reference/split-pagamentos/atualizar-beneficiario">
+  <Card title="Atualizar instrução" icon="pen" href="/api-reference/split-pagamentos/atualizar-beneficiario">
     `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId`
   </Card>
 </CardGroup>

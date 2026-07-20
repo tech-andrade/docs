@@ -21,41 +21,29 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 [
   {
     "id": 15,
+    "bankAccountNumber": "CONTA_PAGADORA",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
-    "beneficiaries": [
+    "instructions": [
       {
         "id": 18,
         "splitPaymentConfigurationId": 15,
-        "ruleAmount": 5,
-        "ruleType": "PERCENTAGE",
-        "pixKey": "string",
-        "bankIspb": "string",
-        "bankAccountNumber": "string",
-        "bankAccountBranch": "string",
-        "holderDocument": "string",
-        "holderName": "string",
-        "bankAccountType": "PAYMENT"
-      }
-    ]
-  },
-  {
-    "id": 16,
-    "createdAt": "2025-09-19T20:04:38.112Z",
-    "updatedAt": "2025-09-19T20:04:38.112Z",
-    "beneficiaries": [
-      {
-        "id": 19,
-        "splitPaymentConfigurationId": 16,
-        "ruleAmount": 5,
-        "ruleType": "PERCENTAGE",
-        "pixKey": "string",
-        "bankIspb": "string",
-        "bankAccountNumber": "string",
-        "bankAccountBranch": "string",
-        "holderDocument": "string",
-        "holderName": "string",
-        "bankAccountType": "PAYMENT"
+        "amount": 10,
+        "type": "PERCENTAGE",
+        "transferType": "INTERNAL",
+        "beneficiary": {
+          "number": "654321",
+          "branch": "0001",
+          "participantIspb": "12345678",
+          "type": "PAYMENT",
+          "holder": {
+            "document": "12345678901",
+            "name": "Nome do Beneficiário",
+            "email": "beneficiario@email.com",
+            "phoneNumber": "85999999999",
+            "type": "NATURAL"
+          }
+        }
       }
     ]
   }
@@ -65,7 +53,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 
 ## Consultar uma configuração por ID
 
-Use `GET /baas/api/v1/split-payments/configurations/:id` para obter os detalhes de uma configuração específica, incluindo todos os seus beneficiários.
+Use `GET /baas/api/v1/split-payments/configurations/:id` para obter os detalhes de uma configuração específica, incluindo todas as suas instruções.
 
 <CodeGroup>
 ```bash cURL
@@ -76,21 +64,29 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json Response
 {
   "id": 15,
+  "bankAccountNumber": "CONTA_PAGADORA",
   "createdAt": "2025-09-19T20:04:38.112Z",
   "updatedAt": "2025-09-19T20:04:38.112Z",
-  "beneficiaries": [
+  "instructions": [
     {
       "id": 18,
       "splitPaymentConfigurationId": 15,
-      "ruleAmount": 5,
-      "ruleType": "PERCENTAGE",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "string",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 10,
+      "type": "PERCENTAGE",
+      "transferType": "INTERNAL",
+      "beneficiary": {
+        "number": "654321",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "PAYMENT",
+        "holder": {
+          "document": "12345678901",
+          "name": "Nome do Beneficiário",
+          "email": "beneficiario@email.com",
+          "phoneNumber": "85999999999",
+          "type": "NATURAL"
+        }
+      }
     }
   ]
 }

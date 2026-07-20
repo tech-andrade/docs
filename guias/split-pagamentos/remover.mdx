@@ -1,19 +1,19 @@
 ---
 title: "Remover Split de Pagamentos"
 sidebarTitle: "Remover"
-description: "Remova uma configuração de Split de Pagamento por completo ou apenas um beneficiário específico."
+description: "Remova uma configuração de Split de Pagamento por completo ou apenas uma instrução específica."
 icon: "trash"
 ---
 
-Você pode remover uma configuração de Split de Pagamento inteira, encerrando a divisão automática para a conta de recebimento, ou remover apenas um beneficiário específico, mantendo a configuração e os demais beneficiários ativos.
+Você pode remover uma configuração de Split de Pagamento inteira, encerrando a divisão automática para a conta de recebimento, ou remover apenas uma instrução específica, mantendo a configuração e as demais instruções ativas.
 
 <Warning>
-A remoção é irreversível. Após remover uma configuração ou um beneficiário, os pagamentos seguintes recebidos na conta deixam de ser divididos para aquele destino.
+A remoção é irreversível. Após remover uma configuração ou uma instrução, os pagamentos seguintes recebidos na conta deixam de ser divididos para aquele beneficiário.
 </Warning>
 
 ## Remover uma configuração por completo
 
-Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId` para remover a configuração e todos os seus beneficiários.
+Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId` para remover a configuração e todas as suas instruções.
 
 <CodeGroup>
 ```bash cURL
@@ -25,9 +25,9 @@ curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/
 
 A resposta de sucesso retorna `204 No Content`. A partir dessa chamada, os pagamentos recebidos na conta original deixam de ser divididos.
 
-## Remover um beneficiário específico
+## Remover uma instrução específica
 
-Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para remover apenas um beneficiário, mantendo a configuração e os demais beneficiários ativos.
+Use `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId` para remover apenas uma instrução, mantendo a configuração e as demais instruções ativas.
 
 <CodeGroup>
 ```bash cURL
@@ -45,7 +45,7 @@ A resposta de sucesso também retorna `204 No Content`.
   <Card title="Remover configuração" icon="trash" href="/api-reference/split-pagamentos/remover-split">
     `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId`
   </Card>
-  <Card title="Remover beneficiário" icon="user-xmark" href="/api-reference/split-pagamentos/remover-beneficiario">
+  <Card title="Remover instrução" icon="user-xmark" href="/api-reference/split-pagamentos/remover-beneficiario">
     `DELETE /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiaries/:splitPaymentBeneficiaryId`
   </Card>
 </CardGroup>

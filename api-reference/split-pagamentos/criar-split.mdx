@@ -1,14 +1,14 @@
 ---
 title: "Criar configuração de Split"
 api: "POST /baas/api/v1/split-payments/configurations"
-description: "Crie uma configuração de Split de Pagamento com um ou mais beneficiários."
+description: "Crie uma configuração de Split de Pagamento com uma ou mais instruções de repasse."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+Para o passo a passo completo, incluindo exemplos por tipo de repasse, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
 </Note>
 
-Cria uma configuração de Split de Pagamento associada a uma conta de recebimento. Assim que um pagamento for recebido nessa conta, o valor será distribuído automaticamente entre os beneficiários informados, de acordo com as regras configuradas.
+Cria uma configuração de Split de Pagamento associada a uma conta de recebimento. Assim que um pagamento for recebido nessa conta, o valor será distribuído automaticamente conforme as instruções informadas.
 
 ## Headers
 
@@ -26,19 +26,60 @@ Cria uma configuração de Split de Pagamento associada a uma conta de recebimen
   Conta onde os pagamentos serão recebidos e divididos.
 </ParamField>
 
-<ParamField body="beneficiaries" type="array" required>
-  Lista de beneficiários que receberão parte de cada pagamento recebido.
+<ParamField body="instructions" type="array" required>
+  Lista de instruções de repasse.
   <Expandable title="propriedades do item">
-    <ParamField body="ruleType" type="string" required>
-      Tipo de regra aplicada ao valor repassado. Valores aceitos:
-      - `PERCENTAGE`: o valor é calculado como uma porcentagem do pagamento total. O percentual máximo permitido por beneficiário é **5%**.
-      - `FIXED`: o valor é fixo e absoluto. Se o valor especificado exceder **50%** do valor da transação, o split não é realizado para aquele beneficiário naquele pagamento.
+    <ParamField body="amount" type="number" required>
+      Valor a ser aplicado, conforme o `type` selecionado.
     </ParamField>
-    <ParamField body="ruleAmount" type="number" required>
-      Valor a ser aplicado, conforme o `ruleType` selecionado.
+    <ParamField body="type" type="string" required>
+      Como o `amount` é calculado. Valores aceitos:
+      - `PERCENTAGE`: o valor é calculado como uma porcentagem do pagamento total. O percentual máximo permitido por instrução é **5%**.
+      - `FIXED`: o valor é fixo e absoluto. Se o valor especificado exceder **50%** do valor da transação, o split não é realizado para aquela instrução naquele pagamento.
     </ParamField>
-    <ParamField body="bankAccountNumber" type="string" required>
-      Conta de destino para a qual essa regra será aplicada.
+    <ParamField body="transferType" type="string" required>
+      Meio pelo qual o beneficiário recebe o valor. Valores aceitos:
+      - `INTERNAL`: repasse entre contas da mesma titularidade. Recomendado e totalmente suportado. Basta informar `beneficiary.number`; os demais dados do beneficiário são preenchidos automaticamente.
+      - `PIX_MANUAL`: repasse via dados bancários informados manualmente. Recomendado e totalmente suportado, com validação completa dos dados enviados.
+      - `EXTERNAL`: aceito pela API, mas ainda sem validação específica dos dados bancários informados. Não recomendado para produção.
+      - `PIX_KEY`: ainda não funcional nesta rota. Não utilize até que o suporte seja anunciado.
+    </ParamField>
+    <ParamField body="beneficiary" type="object" required>
+      Dados da conta de destino. Os campos exigidos variam conforme o `transferType` (veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar)).
+      <Expandable title="propriedades">
+        <ParamField body="number" type="string" required>
+          Número da conta de destino (2 a 25 caracteres). Único campo obrigatório para `transferType: INTERNAL`.
+        </ParamField>
+        <ParamField body="branch" type="string">
+          Agência da conta de destino (1 a 10 caracteres). Para `INTERNAL`, é preenchida automaticamente e qualquer valor enviado é sobrescrito.
+        </ParamField>
+        <ParamField body="participantIspb" type="string">
+          ISPB da instituição de destino (exatamente 8 caracteres). Para `INTERNAL`, é preenchido automaticamente e qualquer valor enviado é sobrescrito.
+        </ParamField>
+        <ParamField body="type" type="string">
+          Tipo da conta de destino. Valores aceitos: `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL`, `OWNER`. Para `INTERNAL`, é preenchido automaticamente e qualquer valor enviado é sobrescrito.
+        </ParamField>
+        <ParamField body="holder" type="object">
+          Dados do titular da conta de destino. Para `INTERNAL`, `name` e `document` são preenchidos automaticamente e qualquer valor enviado é sobrescrito.
+          <Expandable title="propriedades">
+            <ParamField body="document" type="string">
+              CPF ou CNPJ do titular. Obrigatório e validado para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="name" type="string">
+              Nome do titular (1 a 100 caracteres). Obrigatório e validado para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="email" type="string">
+              E-mail do titular. Opcional.
+            </ParamField>
+            <ParamField body="phoneNumber" type="string">
+              Telefone do titular. Opcional.
+            </ParamField>
+            <ParamField body="type" type="string">
+              Tipo do titular. Valores aceitos: `NATURAL`, `LEGAL`. Opcional.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+      </Expandable>
     </ParamField>
   </Expandable>
 </ParamField>
@@ -46,22 +87,36 @@ Cria uma configuração de Split de Pagamento associada a uma conta de recebimen
 ## Response
 
 <ResponseField name="id" type="number">Identificador único da configuração de split.</ResponseField>
+<ResponseField name="bankAccountNumber" type="string">Conta de recebimento informada na criação.</ResponseField>
 <ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
 <ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
-<ResponseField name="beneficiaries" type="array">
-  Lista de beneficiários cadastrados na configuração.
+<ResponseField name="instructions" type="array">
+  Lista de instruções cadastradas na configuração.
   <Expandable title="propriedades">
-    <ResponseField name="id" type="number">Identificador único do beneficiário.</ResponseField>
-    <ResponseField name="splitPaymentConfigurationId" type="number">Configuração à qual o beneficiário pertence.</ResponseField>
-    <ResponseField name="ruleAmount" type="number">Valor configurado para a regra.</ResponseField>
-    <ResponseField name="ruleType" type="string">`PERCENTAGE` ou `FIXED`.</ResponseField>
-    <ResponseField name="pixKey" type="string">Chave Pix associada à conta de destino, quando aplicável.</ResponseField>
-    <ResponseField name="bankIspb" type="string">ISPB da instituição de destino.</ResponseField>
-    <ResponseField name="bankAccountNumber" type="string">Conta de destino do repasse.</ResponseField>
-    <ResponseField name="bankAccountBranch" type="string">Agência da conta de destino.</ResponseField>
-    <ResponseField name="holderDocument" type="string">CPF/CNPJ do titular da conta de destino.</ResponseField>
-    <ResponseField name="holderName" type="string">Nome do titular da conta de destino.</ResponseField>
-    <ResponseField name="bankAccountType" type="string">Tipo da conta de destino (ex: `PAYMENT`).</ResponseField>
+    <ResponseField name="id" type="number">Identificador único da instrução.</ResponseField>
+    <ResponseField name="splitPaymentConfigurationId" type="number">Configuração à qual a instrução pertence.</ResponseField>
+    <ResponseField name="amount" type="number">Valor configurado para a instrução.</ResponseField>
+    <ResponseField name="type" type="string">`PERCENTAGE` ou `FIXED`.</ResponseField>
+    <ResponseField name="transferType" type="string">`INTERNAL`, `PIX_MANUAL`, `EXTERNAL` ou `PIX_KEY`.</ResponseField>
+    <ResponseField name="beneficiary" type="object">
+      Dados da conta de destino.
+      <Expandable title="propriedades">
+        <ResponseField name="number" type="string">Número da conta de destino.</ResponseField>
+        <ResponseField name="branch" type="string">Agência da conta de destino.</ResponseField>
+        <ResponseField name="participantIspb" type="string">ISPB da instituição de destino.</ResponseField>
+        <ResponseField name="type" type="string">Tipo da conta de destino.</ResponseField>
+        <ResponseField name="holder" type="object">
+          Dados do titular da conta de destino.
+          <Expandable title="propriedades">
+            <ResponseField name="document" type="string">CPF/CNPJ do titular.</ResponseField>
+            <ResponseField name="name" type="string">Nome do titular.</ResponseField>
+            <ResponseField name="email" type="string">E-mail do titular, quando informado.</ResponseField>
+            <ResponseField name="phoneNumber" type="string">Telefone do titular, quando informado.</ResponseField>
+            <ResponseField name="type" type="string">`NATURAL` ou `LEGAL`, quando informado.</ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
   </Expandable>
 </ResponseField>
 
@@ -72,12 +127,15 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}' \
 --data '{
-    "bankAccountNumber": "123456",
-    "beneficiaries": [
+    "bankAccountNumber": "CONTA_PAGADORA",
+    "instructions": [
         {
-            "ruleType": "PERCENTAGE",
-            "ruleAmount": 5,
-            "bankAccountNumber": "654321"
+            "amount": 10,
+            "type": "PERCENTAGE",
+            "transferType": "INTERNAL",
+            "beneficiary": {
+                "number": "CONTA_BENEFICIARIA"
+            }
         }
     ]
 }'
@@ -88,21 +146,29 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json 200
 {
   "id": 15,
+  "bankAccountNumber": "CONTA_PAGADORA",
   "createdAt": "2025-09-19T20:04:38.112Z",
   "updatedAt": "2025-09-19T20:04:38.112Z",
-  "beneficiaries": [
+  "instructions": [
     {
       "id": 18,
       "splitPaymentConfigurationId": 15,
-      "ruleAmount": 5,
-      "ruleType": "PERCENTAGE",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "654321",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 10,
+      "type": "PERCENTAGE",
+      "transferType": "INTERNAL",
+      "beneficiary": {
+        "number": "CONTA_BENEFICIARIA",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "PAYMENT",
+        "holder": {
+          "document": "12345678901",
+          "name": "Nome do Beneficiário",
+          "email": null,
+          "phoneNumber": null,
+          "type": "NATURAL"
+        }
+      }
     }
   ]
 }

@@ -8,7 +8,7 @@ description: "Liste todas as configurações de Split de Pagamento cadastradas p
 Para o passo a passo completo, veja o guia [Consultar Split de Pagamentos](/guias/split-pagamentos/consultar).
 </Note>
 
-Retorna todas as configurações de Split de Pagamento cadastradas para a conta informada em `x-delfinance-account-id`, incluindo seus respectivos beneficiários.
+Retorna todas as configurações de Split de Pagamento cadastradas para a conta informada em `x-delfinance-account-id`, incluindo suas respectivas instruções.
 
 ## Headers
 
@@ -37,41 +37,57 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 [
   {
     "id": 15,
+    "bankAccountNumber": "CONTA_PAGADORA",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
-    "beneficiaries": [
+    "instructions": [
       {
         "id": 18,
         "splitPaymentConfigurationId": 15,
-        "ruleAmount": 5,
-        "ruleType": "PERCENTAGE",
-        "pixKey": "string",
-        "bankIspb": "string",
-        "bankAccountNumber": "string",
-        "bankAccountBranch": "string",
-        "holderDocument": "string",
-        "holderName": "string",
-        "bankAccountType": "PAYMENT"
+        "amount": 10,
+        "type": "PERCENTAGE",
+        "transferType": "INTERNAL",
+        "beneficiary": {
+          "number": "654321",
+          "branch": "0001",
+          "participantIspb": "12345678",
+          "type": "PAYMENT",
+          "holder": {
+            "document": "12345678901",
+            "name": "Nome do Beneficiário",
+            "email": null,
+            "phoneNumber": null,
+            "type": "NATURAL"
+          }
+        }
       }
     ]
   },
   {
     "id": 16,
+    "bankAccountNumber": "OUTRA_CONTA_PAGADORA",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
-    "beneficiaries": [
+    "instructions": [
       {
         "id": 19,
         "splitPaymentConfigurationId": 16,
-        "ruleAmount": 5,
-        "ruleType": "PERCENTAGE",
-        "pixKey": "string",
-        "bankIspb": "string",
-        "bankAccountNumber": "string",
-        "bankAccountBranch": "string",
-        "holderDocument": "string",
-        "holderName": "string",
-        "bankAccountType": "PAYMENT"
+        "amount": 50,
+        "type": "FIXED",
+        "transferType": "PIX_MANUAL",
+        "beneficiary": {
+          "number": "789012",
+          "branch": "0001",
+          "participantIspb": "12345678",
+          "type": "CURRENT",
+          "holder": {
+            "document": "12345678901",
+            "name": "Nome do Beneficiário",
+            "email": null,
+            "phoneNumber": null,
+            "type": null
+          }
+        }
       }
     ]
   }

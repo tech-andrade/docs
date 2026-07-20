@@ -1,14 +1,14 @@
 ---
-title: "Adicionar beneficiário"
+title: "Adicionar instrução"
 api: "POST /baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries"
-description: "Adicione um novo beneficiário a uma configuração de Split de Pagamento existente."
+description: "Adicione uma nova instrução de repasse a uma configuração de Split de Pagamento existente."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+Para o passo a passo completo, incluindo exemplos por tipo de repasse, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
 </Note>
 
-Adiciona um novo beneficiário a uma configuração de Split de Pagamento já existente, sem afetar os beneficiários já cadastrados.
+Adiciona uma nova instrução de repasse a uma configuração de Split de Pagamento já existente, sem afetar as instruções já cadastradas. O formato do corpo é o mesmo de um item de `instructions` no endpoint de criação, e varia conforme o `transferType` escolhido.
 
 ## Headers
 
@@ -28,26 +28,51 @@ Adiciona um novo beneficiário a uma configuração de Split de Pagamento já ex
 
 ## Body
 
-<ParamField body="ruleType" type="string" required>
-  Tipo de regra aplicada ao valor repassado. Valores aceitos:
+<ParamField body="amount" type="number" required>
+  Valor a ser aplicado, conforme o `type` selecionado.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  Como o `amount` é calculado. Valores aceitos:
   - `PERCENTAGE`: o valor é calculado como uma porcentagem do valor total da transação. O percentual máximo permitido é **5%**.
   - `FIXED`: o valor é absoluto e fixo. Se o valor definido exceder **50%** do valor da transação, o split não é realizado.
 </ParamField>
 
-<ParamField body="ruleAmount" type="number" required>
-  Valor a ser aplicado, conforme o `ruleType` selecionado.
+<ParamField body="transferType" type="string" required>
+  Meio pelo qual o beneficiário recebe o valor. Valores aceitos: `INTERNAL`, `PIX_MANUAL`, `EXTERNAL`, `PIX_KEY`. Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja detalhes em [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
 </ParamField>
 
-<ParamField body="beneficiaryBankAccountNumber" type="string" required>
-  Conta de destino onde as regras de split serão aplicadas.
+<ParamField body="beneficiary" type="object" required>
+  Dados da conta de destino. Os campos exigidos variam conforme o `transferType` (veja o guia de configuração).
+  <Expandable title="propriedades">
+    <ParamField body="number" type="string" required>
+      Número da conta de destino.
+    </ParamField>
+    <ParamField body="branch" type="string">
+      Agência da conta de destino.
+    </ParamField>
+    <ParamField body="participantIspb" type="string">
+      ISPB da instituição de destino.
+    </ParamField>
+    <ParamField body="type" type="string">
+      Tipo da conta de destino: `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL` ou `OWNER`.
+    </ParamField>
+    <ParamField body="holder" type="object">
+      Dados do titular da conta de destino.
+      <Expandable title="propriedades">
+        <ParamField body="document" type="string">CPF ou CNPJ do titular.</ParamField>
+        <ParamField body="name" type="string">Nome do titular.</ParamField>
+        <ParamField body="email" type="string">E-mail do titular. Opcional.</ParamField>
+        <ParamField body="phoneNumber" type="string">Telefone do titular. Opcional.</ParamField>
+        <ParamField body="type" type="string">Tipo do titular: `NATURAL` ou `LEGAL`. Opcional.</ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
 </ParamField>
 
 ## Response
 
-<ResponseField name="id" type="number">Identificador único da configuração de split.</ResponseField>
-<ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
-<ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
-<ResponseField name="beneficiaries" type="array">Lista atualizada de beneficiários da configuração, incluindo o beneficiário recém-adicionado.</ResponseField>
+Retorna a configuração completa e atualizada, com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split), incluindo a nova instrução na lista de `instructions`.
 
 <RequestExample>
 ```bash cURL
@@ -56,9 +81,19 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}' \
 --data '{
-    "ruleType": "FIXED",
-    "ruleAmount": 20.00,
-    "beneficiaryBankAccountNumber": "789012"
+    "amount": 50,
+    "type": "FIXED",
+    "transferType": "PIX_MANUAL",
+    "beneficiary": {
+        "number": "789012",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "CURRENT",
+        "holder": {
+            "document": "12345678901",
+            "name": "Nome do beneficiário"
+        }
+    }
 }'
 ```
 </RequestExample>
@@ -67,34 +102,49 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json 200
 {
   "id": 15,
+  "bankAccountNumber": "CONTA_PAGADORA",
   "createdAt": "2025-09-19T20:04:38.112Z",
-  "updatedAt": "2025-09-19T20:04:38.112Z",
-  "beneficiaries": [
+  "updatedAt": "2025-09-19T20:10:00.000Z",
+  "instructions": [
     {
       "id": 18,
       "splitPaymentConfigurationId": 15,
-      "ruleAmount": 5,
-      "ruleType": "PERCENTAGE",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "654321",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 10,
+      "type": "PERCENTAGE",
+      "transferType": "INTERNAL",
+      "beneficiary": {
+        "number": "654321",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "PAYMENT",
+        "holder": {
+          "document": "12345678901",
+          "name": "Nome do Beneficiário",
+          "email": null,
+          "phoneNumber": null,
+          "type": "NATURAL"
+        }
+      }
     },
     {
       "id": 19,
       "splitPaymentConfigurationId": 15,
-      "ruleAmount": 20.00,
-      "ruleType": "FIXED",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "789012",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 50,
+      "type": "FIXED",
+      "transferType": "PIX_MANUAL",
+      "beneficiary": {
+        "number": "789012",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "CURRENT",
+        "holder": {
+          "document": "12345678901",
+          "name": "Nome do beneficiário",
+          "email": null,
+          "phoneNumber": null,
+          "type": null
+        }
+      }
     }
   ]
 }

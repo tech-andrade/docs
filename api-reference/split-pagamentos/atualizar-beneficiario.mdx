@@ -1,14 +1,14 @@
 ---
-title: "Atualizar beneficiário"
+title: "Atualizar instrução"
 api: "PATCH /baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}"
-description: "Altere a regra (ruleType/ruleAmount) de um beneficiário já cadastrado."
+description: "Altere a regra (amount/type) de uma instrução já cadastrada."
 ---
 
 <Note>
 Para o passo a passo completo, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
 </Note>
 
-Atualiza a regra de divisão de um beneficiário já cadastrado em uma configuração de Split de Pagamento. A conta de destino do beneficiário não é alterada por este endpoint.
+Atualiza a regra de uma instrução já cadastrada em uma configuração de Split de Pagamento. Os dados do beneficiário (`transferType` e `beneficiary`) não são alterados por este endpoint.
 
 ## Headers
 
@@ -27,19 +27,19 @@ Atualiza a regra de divisão de um beneficiário já cadastrado em uma configura
 </ParamField>
 
 <ParamField path="splitPaymentBeneficiaryId" type="string" required>
-  ID do beneficiário que terá a regra atualizada.
+  ID da instrução que terá a regra atualizada.
 </ParamField>
 
 ## Body
 
-<ParamField body="ruleType" type="string" required>
-  Tipo de regra aplicada ao valor repassado. Valores aceitos:
+<ParamField body="type" type="string" required>
+  Como o `amount` é calculado. Valores aceitos:
   - `PERCENTAGE`: o valor é calculado como uma porcentagem do valor total da transação. O percentual máximo permitido é **5%**.
   - `FIXED`: o valor é absoluto e fixo. Se o valor definido exceder **50%** do valor da transação, o split não é realizado.
 </ParamField>
 
-<ParamField body="ruleAmount" type="number" required>
-  Valor a ser aplicado, conforme o `ruleType` selecionado.
+<ParamField body="amount" type="number" required>
+  Valor a ser aplicado, conforme o `type` selecionado.
 </ParamField>
 
 ## Response
@@ -47,7 +47,7 @@ Atualiza a regra de divisão de um beneficiário já cadastrado em uma configura
 <ResponseField name="id" type="number">Identificador único da configuração de split.</ResponseField>
 <ResponseField name="createdAt" type="string">Data/hora de criação em ISO 8601.</ResponseField>
 <ResponseField name="updatedAt" type="string">Data/hora da última atualização em ISO 8601.</ResponseField>
-<ResponseField name="beneficiaries" type="array">Lista atualizada de beneficiários da configuração, com a regra alterada.</ResponseField>
+<ResponseField name="instructions" type="array">Lista atualizada de instruções da configuração, com a regra alterada.</ResponseField>
 
 <RequestExample>
 ```bash cURL
@@ -56,8 +56,8 @@ curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/s
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}' \
 --data '{
-    "ruleType": "PERCENTAGE",
-    "ruleAmount": 3
+    "type": "PERCENTAGE",
+    "amount": 3
 }'
 ```
 </RequestExample>
@@ -66,21 +66,29 @@ curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/s
 ```json 200
 {
   "id": 15,
+  "bankAccountNumber": "CONTA_PAGADORA",
   "createdAt": "2025-09-19T20:04:38.112Z",
-  "updatedAt": "2025-09-19T20:10:12.442Z",
-  "beneficiaries": [
+  "updatedAt": "2025-09-19T20:15:00.000Z",
+  "instructions": [
     {
       "id": 18,
       "splitPaymentConfigurationId": 15,
-      "ruleAmount": 3,
-      "ruleType": "PERCENTAGE",
-      "pixKey": "string",
-      "bankIspb": "string",
-      "bankAccountNumber": "654321",
-      "bankAccountBranch": "string",
-      "holderDocument": "string",
-      "holderName": "string",
-      "bankAccountType": "PAYMENT"
+      "amount": 3,
+      "type": "PERCENTAGE",
+      "transferType": "INTERNAL",
+      "beneficiary": {
+        "number": "654321",
+        "branch": "0001",
+        "participantIspb": "12345678",
+        "type": "PAYMENT",
+        "holder": {
+          "document": "12345678901",
+          "name": "Nome do Beneficiário",
+          "email": null,
+          "phoneNumber": null,
+          "type": "NATURAL"
+        }
+      }
     }
   ]
 }
