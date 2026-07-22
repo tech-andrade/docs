@@ -16,7 +16,7 @@
     "default": "light",
     "strict": true
   },
-  "favicon": "https://conta.Delfinance.com.br/icon.png",
+  "favicon": "https://conta.delfinance.com.br/icon.png",
   "fonts": {
     "heading": {
       "family": "Outfit"
@@ -296,6 +296,12 @@
     }
   },
   "api": {
+    "mdx": {
+      "server": [
+        "https://apisandbox.delbank.com.br",
+        "https://api.delbank.com.br"
+      ]
+    },
     "examples": {
       "languages": [
         "bash",
