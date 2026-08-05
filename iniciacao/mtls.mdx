@@ -27,10 +27,10 @@ O mTLS (Mutual TLS) é a camada de segurança que valida o certificado do client
 
 <Steps>
   <Step title="Gere um CSR">
-    Crie uma solicitação de certificado com sua chave privada.
+    Crie uma solicitação de certificado com sua chave privada. Veja o passo a passo em [Gerando o CSR com OpenSSL](#gerando-o-csr-com-openssl).
   </Step>
   <Step title="Envie o CSR ao portal Delfinance">
-    Acesse o portal do desenvolvedor e submeta o arquivo gerado.
+    Acesse o portal do desenvolvedor e submeta o arquivo gerado (`csr.pem`). Nunca envie a chave privada.
   </Step>
   <Step title="Baixe o certificado emitido">
     Você receberá o certificado assinado pela CA da Delfinance.
@@ -40,10 +40,98 @@ O mTLS (Mutual TLS) é a camada de segurança que valida o certificado do client
   </Step>
 </Steps>
 
+## Gerando o CSR com OpenSSL
+
+O CSR (Certificate Signing Request) é o arquivo que contém sua chave pública e os dados de identificação da sua empresa. Ele é enviado para a Delfinance, que devolve o certificado assinado. O processo tem duas etapas: criar a chave privada e, a partir dela, gerar o CSR.
+
+<Warning>
+  A chave privada **nunca** deve ser compartilhada, nem com a Delfinance. Se ela vazar, o certificado correspondente precisa ser revogado imediatamente.
+</Warning>
+
+### 1. Crie a chave privada
+
+Abra o terminal e execute o comando abaixo para gerar uma chave RSA de 2048 bits:
+
+```bash
+openssl genpkey -algorithm RSA -out chave-privada.key -pkeyopt rsa_keygen_bits:2048
+```
+
+- **`chave-privada.key`**: nome do arquivo em que a chave será salva. Você pode alterá-lo conforme sua convenção.
+- **`rsa_keygen_bits:2048`**: tamanho da chave. 2048 bits é o padrão recomendado; 4096 também é aceito, com custo maior de handshake.
+
+Restrinja imediatamente as permissões do arquivo:
+
+```bash
+chmod 400 chave-privada.key
+```
+
+<Tip>
+  Para proteger a chave com senha (recomendado quando ela não fica em um cofre gerenciado), adicione `-aes-256-cbc` ao comando de geração. Lembre-se de que a aplicação precisará informar essa senha ao abrir a conexão.
+</Tip>
+
+### 2. Gere o CSR
+
+Com a chave privada criada, gere a solicitação de certificado:
+
+```bash
+openssl req -new -key chave-privada.key -out csr.pem
+```
+
+- **`chave-privada.key`**: a chave privada gerada no passo anterior.
+- **`csr.pem`**: arquivo em que o CSR será salvo (também é comum usar a extensão `.csr`).
+
+Durante a execução, o OpenSSL solicitará os dados de identificação:
+
+| Campo | Sigla | O que informar |
+| --- | --- | --- |
+| Country Name | `C` | Código do país com 2 letras - `BR` |
+| State or Province Name | `ST` | Estado por extenso - ex.: `Sao Paulo` |
+| Locality Name | `L` | Cidade - ex.: `Sao Paulo` |
+| Organization Name | `O` | Razão social da empresa, igual ao cadastro na Delfinance |
+| Organizational Unit Name | `OU` | Área responsável - ex.: `Tecnologia` |
+| Common Name | `CN` | Identificador do cliente (domínio ou nome da integração) |
+| Email Address | - | Opcional; pode ser deixado em branco |
+
+<Note>
+  O campo `challenge password` pode ser deixado em branco (pressione Enter). Evite caracteres acentuados nos demais campos, pois eles podem gerar falhas na emissão.
+</Note>
+
+### 3. Alternativa: gerar tudo em um comando
+
+Para automatizar (pipelines, scripts de provisionamento), use `-subj` e evite o modo interativo:
+
+```bash
+openssl req -new -newkey rsa:2048 -nodes \
+  -keyout chave-privada.key \
+  -out csr.pem \
+  -subj "/C=BR/ST=Sao Paulo/L=Sao Paulo/O=Minha Empresa LTDA/OU=Tecnologia/CN=integracao.minhaempresa.com.br"
+```
+
+<Warning>
+  O parâmetro `-nodes` gera a chave sem senha. Use apenas quando a chave for armazenada em um cofre com controle de acesso (KMS, Vault, HSM).
+</Warning>
+
+### 4. Confira o conteúdo antes de enviar
+
+Valide os dados e a assinatura do CSR:
+
+```bash
+openssl req -in csr.pem -noout -text -verify
+```
+
+Confirme se `Subject` traz exatamente os dados da sua empresa e se `Public-Key` indica o tamanho esperado (`2048 bit`).
+
+### Resultado
+
+Ao final você terá dois arquivos:
+
+- **`chave-privada.key`**: sua chave privada. Deve ser mantida em segredo e **NUNCA** compartilhada, nem conosco.
+- **`csr.pem`**: o CSR a ser enviado no portal do desenvolvedor da Delfinance.
+
 ## Exemplo de uso
 
 ```bash
-curl https://api.delbank.com.br/v1/accounts \
+curl https://api.delbank.com.br/baas/api/v1/balances \
   --cert ./certificado.pem \
   --key ./chave-privada.key \
   -H "x-delbank-api-key: SUA_API_KEY" \
@@ -53,6 +141,7 @@ curl https://api.delbank.com.br/v1/accounts \
 ## Boas práticas
 
 - nunca versione a chave privada em repositórios;
+- gere um par de chaves distinto para Sandbox e para Produção;
 - rotacione certificados antes do vencimento;
 - teste a cadeia de confiança em ambiente de homologação;
 - monitore falhas de handshake para detectar tentativas suspeitas.
@@ -65,3 +154,4 @@ curl https://api.delbank.com.br/v1/accounts \
 | `alert bad certificate` | Certificado expirado ou revogado |
 | `handshake failure` | Cipher suite ou versão TLS incompatível |
 | `certificate verify failed` | Certificado não corresponde ao cadastrado |
+| `key values mismatch` | O certificado enviado não corresponde à chave privada usada na requisição |
