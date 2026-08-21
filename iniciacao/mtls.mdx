@@ -30,7 +30,7 @@ O mTLS (Mutual TLS) é a camada de segurança que valida o certificado do client
     Crie uma solicitação de certificado com sua chave privada. Veja o passo a passo em [Gerando o CSR com OpenSSL](#gerando-o-csr-com-openssl).
   </Step>
   <Step title="Envie o CSR ao portal Delfinance">
-    Acesse o portal do desenvolvedor e submeta o arquivo gerado (`csr.pem`). Nunca envie a chave privada.
+    Acesse o portal do desenvolvedor e submeta o arquivo gerado (`requisicao.csr`). Nunca envie a chave privada.
   </Step>
   <Step title="Baixe o certificado emitido">
     Você receberá o certificado assinado pela CA da Delfinance.
@@ -74,11 +74,11 @@ chmod 400 chave-privada.key
 Com a chave privada criada, gere a solicitação de certificado:
 
 ```bash
-openssl req -new -key chave-privada.key -out csr.pem
+openssl req -new -key chave-privada.key -out requisicao.csr
 ```
 
 - **`chave-privada.key`**: a chave privada gerada no passo anterior.
-- **`csr.pem`**: arquivo em que o CSR será salvo (também é comum usar a extensão `.csr`).
+- **`requisicao.csr`**: arquivo em que o CSR será salvo. Use a extensão `.csr`, que é o formato esperado no envio ao portal.
 
 Durante a execução, o OpenSSL solicitará os dados de identificação:
 
@@ -103,7 +103,7 @@ Para automatizar (pipelines, scripts de provisionamento), use `-subj` e evite o 
 ```bash
 openssl req -new -newkey rsa:2048 -nodes \
   -keyout chave-privada.key \
-  -out csr.pem \
+  -out requisicao.csr \
   -subj "/C=BR/ST=Sao Paulo/L=Sao Paulo/O=Minha Empresa LTDA/OU=Tecnologia/CN=integracao.minhaempresa.com.br"
 ```
 
@@ -116,7 +116,7 @@ openssl req -new -newkey rsa:2048 -nodes \
 Valide os dados e a assinatura do CSR:
 
 ```bash
-openssl req -in csr.pem -noout -text -verify
+openssl req -in requisicao.csr -noout -text -verify
 ```
 
 Confirme se `Subject` traz exatamente os dados da sua empresa e se `Public-Key` indica o tamanho esperado (`2048 bit`).
@@ -126,7 +126,7 @@ Confirme se `Subject` traz exatamente os dados da sua empresa e se `Public-Key` 
 Ao final você terá dois arquivos:
 
 - **`chave-privada.key`**: sua chave privada. Deve ser mantida em segredo e **NUNCA** compartilhada, nem conosco.
-- **`csr.pem`**: o CSR a ser enviado no portal do desenvolvedor da Delfinance.
+- **`requisicao.csr`**: o CSR a ser enviado no portal do desenvolvedor da Delfinance.
 
 ## Exemplo de uso
 
