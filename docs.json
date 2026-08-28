@@ -42,10 +42,11 @@
           {
             "group": "Autenticação",
             "pages": [
-              "iniciacao/autenticacao",
-              "iniciacao/mtls",
-              "iniciacao/filtros-ip",
-              "iniciacao/chaves-sandbox"
+              "autenticacao/credenciais",
+              "autenticacao/mtls",
+              "autenticacao/exemplos-conexao",
+              "autenticacao/filtros-ip",
+              "autenticacao/chaves-teste"
             ]
           },
           {
@@ -81,7 +82,7 @@
               "guias/boleto/gerenciar-boleto",
               "guias/boleto/simulacao-pagamento"
             ]
-          },          
+          },
           {
             "group": "Split de Pagamentos",
             "pages": [
@@ -310,5 +311,23 @@
         "go"
       ]
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/iniciacao/autenticacao",
+      "destination": "/autenticacao/credenciais"
+    },
+    {
+      "source": "/iniciacao/mtls",
+      "destination": "/autenticacao/mtls"
+    },
+    {
+      "source": "/iniciacao/filtros-ip",
+      "destination": "/autenticacao/filtros-ip"
+    },
+    {
+      "source": "/iniciacao/chaves-sandbox",
+      "destination": "/autenticacao/chaves-teste"
+    }
+  ]
 }

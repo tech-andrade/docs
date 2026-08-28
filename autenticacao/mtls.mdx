@@ -5,7 +5,7 @@ icon: "lock"
 ---
 
 <Note>
-  Esta é a página de detalhes do mTLS. Para a visão geral de autenticação, segurança e quando esse recurso entra em cena, consulte [Autenticação e segurança](/iniciacao/autenticacao).
+  Esta é a página de detalhes do mTLS. Para a visão geral de autenticação, segurança e quando esse recurso entra em cena, consulte [Autenticação e segurança](/autenticacao/credenciais).
 </Note>
 
 O mTLS (Mutual TLS) é a camada de segurança que valida o certificado do cliente durante o handshake TLS. Em Produção, ele é obrigatório e deve ser usado junto com as credenciais da API.
@@ -16,6 +16,10 @@ O mTLS (Mutual TLS) é a camada de segurança que valida o certificado do client
 - **Produção**: obrigatório
 
 ## Como funciona
+
+No TLS comum, apenas o servidor prova sua identidade. No mTLS, os dois lados apresentam certificados e validam um ao outro antes de qualquer dado trafegar.
+
+<img src="/assets/mtls-diagrama.png" alt="Diagrama do mTLS: duas aplicações trocando certificados para validação mútua antes da autenticação" />
 
 1. O cliente valida o certificado do servidor.
 2. O servidor solicita o certificado do cliente.
@@ -137,6 +141,8 @@ curl https://api.delbank.com.br/baas/api/v1/balances \
   -H "x-delbank-api-key: SUA_API_KEY" \
   -H "x-delfinance-account-id: SUA_ACCOUNT_ID"
 ```
+
+Para montar o cliente na sua linguagem (Node.js, Python, C#, Java, PHP, Go) e configurar o Postman, veja [Exemplos de Conexão](/autenticacao/exemplos-conexao).
 
 ## Boas práticas
 

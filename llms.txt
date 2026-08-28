@@ -13,9 +13,10 @@ Headers obrigatórios em todas as requisições:
 ## Introdução
 
 - [Primeiros Passos](https://docs.delfinance.com.br/iniciacao/primeiros-passos)
-- [Autenticação](https://docs.delfinance.com.br/iniciacao/autenticacao)
-- [mTLS](https://docs.delfinance.com.br/iniciacao/mtls)
-- [Filtros de IP](https://docs.delfinance.com.br/iniciacao/filtros-ip)
+- [Autenticação](https://docs.delfinance.com.br/autenticacao/credenciais)
+- [mTLS](https://docs.delfinance.com.br/autenticacao/mtls)
+- [Exemplos de Conexão](https://docs.delfinance.com.br/autenticacao/exemplos-conexao)
+- [Filtros de IP](https://docs.delfinance.com.br/autenticacao/filtros-ip)
 - [Idempotência](https://docs.delfinance.com.br/iniciacao/idempotencia)
 - [Indo para Produção](https://docs.delfinance.com.br/iniciacao/ida-producao)
 

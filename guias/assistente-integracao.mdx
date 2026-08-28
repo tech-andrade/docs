@@ -208,8 +208,8 @@ Tipos de evento disponíveis:
   MED_REJECTED          MED rejeitado`,
       go_live: `Não há endpoint específico para este fluxo.
 Consulte os guias de configuração:
-  /iniciacao/mtls            Configurar mTLS
-  /iniciacao/filtros-ip      Configurar filtros de IP
+  /autenticacao/mtls            Configurar mTLS
+  /autenticacao/filtros-ip      Configurar filtros de IP
   /iniciacao/ida-producao    Checklist completo de produção`,
     };
 
@@ -285,7 +285,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
 
     const linksMap = {
       pix_receber: [
-        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Autenticação', href: '/autenticacao/credenciais' },
         { label: 'Receber via Pix', href: '/guias/pix/receber-pix/visao-geral' },
         { label: 'Cobrança Imediata (QR Dinâmico)', href: '/guias/pix/receber-pix/cobranca-imediata' },
         { label: 'Cobrança com Vencimento', href: '/guias/pix/receber-pix/cobranca-com-vencimento' },
@@ -293,14 +293,14 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         { label: 'Webhooks', href: '/guias/webhooks/visao-geral' },
       ],
       pix_pagar: [
-        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Autenticação', href: '/autenticacao/credenciais' },
         { label: 'Pagar via Pix', href: '/guias/pix/pagar-pix/visao-geral' },
         { label: 'Pagar por Chave Pix', href: '/guias/pix/pagar-pix/por-chave' },
         { label: 'Pagar por QR Code', href: '/guias/pix/pagar-pix/por-qrcode' },
         { label: 'Webhooks', href: '/guias/webhooks/visao-geral' },
       ],
       boleto: [
-        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Autenticação', href: '/autenticacao/credenciais' },
         { label: 'Boleto — Visão Geral', href: '/guias/boleto/visao-geral' },
         { label: 'Emitir Boleto', href: '/guias/boleto/emitir-boleto' },
         { label: 'Consultar Boleto', href: '/guias/boleto/consultar-boleto' },
@@ -310,13 +310,13 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         { label: 'Webhooks — Visão Geral', href: '/guias/webhooks/visao-geral' },
         { label: 'Cadastrar Webhook (API)', href: '/api-reference/webhooks/cadastrar-webhook' },
         { label: 'Listar Webhooks (API)', href: '/api-reference/webhooks/listar-webhooks' },
-        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
+        { label: 'Autenticação', href: '/autenticacao/credenciais' },
       ],
       go_live: [
         { label: 'Primeiros Passos', href: '/iniciacao/primeiros-passos' },
-        { label: 'Autenticação', href: '/iniciacao/autenticacao' },
-        { label: 'mTLS', href: '/iniciacao/mtls' },
-        { label: 'Filtros de IP', href: '/iniciacao/filtros-ip' },
+        { label: 'Autenticação', href: '/autenticacao/credenciais' },
+        { label: 'mTLS', href: '/autenticacao/mtls' },
+        { label: 'Filtros de IP', href: '/autenticacao/filtros-ip' },
         { label: 'Indo para Produção', href: '/iniciacao/ida-producao' },
       ],
     };
