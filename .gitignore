@@ -1,0 +1,6 @@
+# Comprovantes com dados reais de clientes não entram no repositório.
+# NUNCA versione um comprovante sem ofuscar: o texto do PDF continua
+# extraível mesmo com tarja preta por cima.
+# Só versione comprovante dentro de assets/, e apenas se for gerado em Sandbox.
+comprovante-*.pdf
+!assets/comprovante-*.pdf

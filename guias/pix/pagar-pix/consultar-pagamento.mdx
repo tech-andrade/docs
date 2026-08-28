@@ -7,6 +7,10 @@ icon: "magnifying-glass"
 
 Você pode consultar o estado de qualquer pagamento enviado usando o `endToEndId` ou a `IdempotencyKey` da requisição original. Os dados chegam primeiro via webhook — use a consulta apenas para reconciliação ou recuperação de falhas.
 
+<Note>
+  Esta página trata do **status** da transação, em JSON. Para o comprovante oficial em PDF de uma transação já liquidada, veja [Comprovante de Transação](/guias/pix/comprovante).
+</Note>
+
 ## Consultar transferência Pix
 
 <CodeGroup>
@@ -166,14 +170,6 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/refund/
 
 ## Referência da API
 
-<CardGroup cols={3}>
-  <Card title="Consultar transferência Pix" icon="paper-plane" href="/api-reference/pix/consultar-transferencia">
-    `GET /transfers/:id`
-  </Card>
-  <Card title="Consultar TED" icon="building-columns" href="/api-reference/pix/consultar-ted">
-    `GET /transfers/ted/:id`
-  </Card>
-  <Card title="Consultar devolução enviada" icon="rotate-left" href="/api-reference/pix/consultar-devolucao-enviada">
-    `GET /transfers/refund/:id`
-  </Card>
-</CardGroup>
+<Card title="Consultar transferência Pix" icon="paper-plane" href="/api-reference/pix/consultar-transferencia">
+  `GET /transfers/:id`
+</Card>

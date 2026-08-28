@@ -7,6 +7,10 @@ icon: "pix"
 
 Esta página cobre os quatro eventos de webhook relacionados a transações Pix.
 
+<Note>
+  O objeto `proof` nos payloads abaixo traz os **dados** da transação em JSON, para o seu sistema processar. Se o que você precisa é o **comprovante oficial em PDF** para entregar ao usuário final, veja [Comprovante de Transação](/guias/pix/comprovante).
+</Note>
+
 ## PIX_RECEIVED
 
 Disparado quando um Pix é creditado na sua conta. É o principal evento para confirmar o recebimento de pagamentos Pix.

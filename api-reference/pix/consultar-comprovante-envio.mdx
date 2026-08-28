@@ -1,0 +1,60 @@
+---
+title: "Consultar comprovante de envio"
+api: "GET /baas/api/v1/pix/cashout/{endToEndId}/proof"
+description: "Baixe o comprovante oficial em PDF de um Pix enviado (cash-out)."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Comprovante de Transação](/guias/pix/comprovante).
+</Note>
+
+Retorna o comprovante oficial da instituição, em PDF, referente a um Pix que você enviou. Para pagamentos recebidos, use [Consultar comprovante de recebimento](/api-reference/pix/consultar-comprovante-recebimento).
+
+<Warning>
+Este endpoint existe apenas em Produção. O acesso exige [mTLS](/autenticacao/mtls) e [allowlist de IPs](/autenticacao/filtros-ip).
+</Warning>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="endToEndId" type="string" required>
+  Identificador único da transação no SPI do Banco Central. Retornado na criação da transferência e no webhook `PIX_PAYMENT_UPDATED`.
+</ParamField>
+
+## Response
+
+Retorna `200 OK` com `Content-Type: application/pdf` e o conteúdo binário do PDF no corpo da resposta.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://api.delbank.com.br/baas/api/v1/pix/cashout/E3822485720231013020122659082578/proof' \
+--cert ./mtls/certificado.pem \
+--key ./mtls/chave-privada.key \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output comprovante.pdf
+```
+</RequestExample>
+
+<ResponseExample>
+```text 200
+(PDF binário, Content-Type: application/pdf)
+```
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404,
+    "traceId": "00-f94523a9cff07f9f4b94a6f97837f657-e010fb53ce385f31-00"
+}
+```
+</ResponseExample>
