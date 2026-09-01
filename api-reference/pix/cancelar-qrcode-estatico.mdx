@@ -5,14 +5,10 @@ description: "Cancela um QR Code Estático, impedindo novos pagamentos sobre ele
 ---
 
 <Note>
-Para o passo a passo completo de uso, veja o guia [Cobrança Reutilizável (QR Code Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
+  Para o passo a passo completo de uso, veja o guia [Cobrança Reutilizável (QR Code Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
 </Note>
 
 Para cancelar um QR Code Estático, basta informar o `correlationId` ou `transactionId` usado na criação. Pagamentos já realizados antes do cancelamento não são afetados.
-
-<Warning>
-A documentação original menciona que também é possível cancelar usando `txid`, mas não fica claro se isso é sinônimo de `transactionId` ou se refere ao txid do padrão EMV/BR Code do Banco Central. Confirmar antes de publicar.
-</Warning>
 
 ## Headers
 
@@ -35,8 +31,8 @@ A documentação original menciona que também é possível cancelar usando `txi
 Um `status code 202` indica sucesso no cancelamento. **Nenhum corpo de resposta é retornado.**
 
 <RequestExample>
-```bash cURL
-curl -X 'PATCH' \
+  ```bash cURL
+  curl -X 'PATCH' \
   'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/static/:transactionIdentifier/cancel' \
   -H 'accept: */*' \
   -H 'x-delbank-api-key: {{apiKey}}' \

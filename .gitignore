@@ -1,0 +1,5 @@
+# JetBrains IDEs
+/.idea
+/modules.xml
+/docs.iml
+/vcs.xml
