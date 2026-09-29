@@ -81,6 +81,7 @@
               "guias/boleto/visao-geral",
               "guias/boleto/emitir-boleto",
               "guias/boleto/consultar-boleto",
+              "guias/boleto/consultar-pagamento",
               "guias/boleto/gerenciar-boleto",
               "guias/boleto/simulacao-pagamento"
             ]
@@ -180,6 +181,7 @@
             "pages": [
               "api-reference/boleto/criar-boleto",
               "api-reference/boleto/consultar-boleto",
+              "api-reference/boleto/consultar-pagamento",
               "api-reference/boleto/atualizar-boleto",
               "api-reference/boleto/cancelar-boleto",
               "api-reference/boleto/imprimir-boleto",

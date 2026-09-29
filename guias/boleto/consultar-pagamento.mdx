@@ -1,0 +1,146 @@
+---
+title: "Consultar Pagamentos"
+sidebarTitle: "Consultar pagamentos"
+description: "Liste os boletos pagos em um período para conciliação financeira."
+icon: "money-check-dollar"
+---
+
+Use a consulta de boletos com o filtro de situação `Paid` para listar os boletos liquidados em um período. Cada item traz os dados do boleto e, no array `payments`, os dados da liquidação: valor recebido, datas e instituição onde o boleto foi pago.
+
+<Tip>
+Os pagamentos chegam primeiro via [webhook de boleto](/guias/webhooks/boleto). Use esta consulta para conciliação, auditoria ou recuperação de eventos perdidos, e não como polling.
+</Tip>
+
+## Listar boletos pagos por período
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges?searchBy=Situation&search=Paid&dateBy=PaymentDate&startDate=2025-01-01&endDate=2025-01-31&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+[
+    {
+        "type": "BANKSLIP",
+        "amount": 150.00,
+        "walletNumber": "112",
+        "yourNumber": "PED-2024-001",
+        "ourNumber": "00000520637",
+        "dueDate": "2025-01-15T00:00:00",
+        "barCode": "43595103800000000100001112000000600000520637",
+        "digitableLine": "43590001161200000060900005206370510380000000010",
+        "payer": {
+            "name": "JOÃO ALVES",
+            "document": "000007034346593",
+            "email": "joao@email.com",
+            "phone": { "prefix": "79", "number": "988669383" },
+            "address": {
+                "zipCode": "49010030",
+                "publicPlace": "AV. RIO BRANCO",
+                "neighborhood": "CENTRO",
+                "city": "ARACAJU",
+                "state": "SE"
+            }
+        },
+        "status": "Paid",
+        "payments": [
+            {
+                "amount": 150.00,
+                "source": "SILOC",
+                "issuer": {
+                    "ispb": "00000000",
+                    "code": "001",
+                    "agency": "1234"
+                },
+                "date": "2025-01-14T00:00:00.000Z",
+                "paymentDate": "2025-01-13T00:00:00.000Z"
+            }
+        ],
+        "createdAt": "2025-01-14T00:00:00"
+    }
+]
+```
+</CodeGroup>
+
+### Parâmetros de query
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `searchBy` | `string` | Sim | Use `Situation` |
+| `search` | `string` | Sim | Use `Paid`, com **P maiúsculo** |
+| `dateBy` | `string` | Sim | `PaymentDate` filtra pela data da liquidação. `DueDate` filtra pelo vencimento |
+| `startDate` | `string` | Sim | Data inicial no formato `YYYY-MM-DD` |
+| `endDate` | `string` | Sim | Data final no formato `YYYY-MM-DD`, incluindo o próprio dia |
+| `page` | `number` | Não | Página (começa em 1). Padrão: `1` |
+| `limit` | `number` | Não | Itens por página. Padrão: `10` |
+
+<Warning>
+Sempre informe `dateBy`. Sem ele, a busca usa a data de criação, que **não se aplica a boletos pagos**. Nesse caso, `startDate` e `endDate` são ignorados e a resposta traz todos os boletos pagos da conta.
+</Warning>
+
+<Note>
+O valor de `search` diferencia maiúsculas de minúsculas: `Paid` é aceito, `paid` retorna `400`.
+</Note>
+
+## Paginação
+
+A resposta é um array de boletos. Os dados de paginação vêm no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":50,"pageCount":3,"rowCount":127}
+```
+
+| Campo | Descrição |
+|---|---|
+| `currentPage` | Página retornada |
+| `pageSize` | Itens por página (`limit`) |
+| `pageCount` | Total de páginas |
+| `rowCount` | Total de boletos pagos no período |
+
+Para percorrer o período inteiro, incremente `page` até chegar a `pageCount`.
+
+## Dados do pagamento
+
+Cada boleto pago traz um item em `payments` com os dados da liquidação:
+
+| Campo | Descrição |
+|---|---|
+| `amount` | Valor efetivamente recebido, já com juros, multa e descontos aplicados |
+| `paymentDate` | Data em que o pagador pagou o boleto |
+| `date` | Data da baixa (liquidação) do boleto |
+| `source` | Origem da liquidação |
+| `issuer.ispb` | ISPB da instituição onde o boleto foi pago |
+| `issuer.code` | Código da instituição onde o boleto foi pago |
+| `issuer.agency` | Agência onde o boleto foi pago |
+
+<Note>
+O `amount` do boleto é o valor nominal emitido. O `payments[].amount` é o valor que entrou na conta. Use o segundo na conciliação financeira.
+</Note>
+
+## Conciliar com seus registros
+
+A consulta paginada não retorna o `correlationId`. Para conciliar, use o `ourNumber` ou o `yourNumber` do boleto.
+
+Para ver os detalhes completos de um boleto, consulte-o individualmente com `GET /baas/v1/charges/{id}`. O endpoint aceita tanto o `correlationId` quanto o `ourNumber`. Veja [Consultar boleto](/guias/boleto/consultar-boleto).
+
+<Tip>
+No sandbox, use a [simulação de pagamento](/guias/boleto/simulacao-pagamento) para gerar boletos pagos e testar sua rotina de conciliação.
+</Tip>
+
+## Erros comuns
+
+| Status | Resposta | Causa |
+|---|---|---|
+| `400` | `{"errors":["Tipo de situação inválido."]}` | `search` com valor não reconhecido (ex.: `paid` em minúsculas) |
+| `400` | `{"errors":["Número de página inválido."]}` | `page=0` |
+| `400` | `{"errors":["Limite de linhas por página inválido."]}` | `limit=0` |
+| `401` | — | API key ou conta inválida |
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Consultar pagamentos de boleto" icon="money-check-dollar" href="/api-reference/boleto/consultar-pagamento">
+    `GET /baas/v1/charges?searchBy=Situation&search=Paid&dateBy=PaymentDate&startDate=&endDate=`
+  </Card>
+</CardGroup>

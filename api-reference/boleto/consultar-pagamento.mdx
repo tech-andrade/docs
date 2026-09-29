@@ -1,0 +1,149 @@
+---
+title: "Consultar pagamentos de boleto"
+api: "GET /baas/v1/charges"
+description: "Liste os boletos pagos em um período, com os dados de liquidação."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar Pagamentos](/guias/boleto/consultar-pagamento).
+</Note>
+
+## Listar boletos pagos
+
+`GET /baas/v1/charges?searchBy=Situation&search=Paid&dateBy=PaymentDate&startDate=&endDate=&page=&limit=`
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Query params
+
+<ParamField query="searchBy" type="string" required>
+  Tipo de filtro. Use `Situation`.
+</ParamField>
+
+<ParamField query="search" type="string" required>
+  Situação do boleto. Use `Paid`. Diferencia maiúsculas de minúsculas.
+</ParamField>
+
+<ParamField query="dateBy" type="string" required>
+  Data usada no filtro de período: `PaymentDate` (data da liquidação) ou `DueDate` (vencimento). Sem este parâmetro, o período é ignorado para boletos pagos.
+</ParamField>
+
+<ParamField query="startDate" type="string" required>
+  Data inicial no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  Data final no formato `YYYY-MM-DD`, incluindo o próprio dia.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Itens por página.
+</ParamField>
+
+## Response
+
+Array de boletos pagos. A paginação vem no header `Pagination` (`currentPage`, `pageSize`, `pageCount`, `rowCount`).
+
+<ResponseField name="type" type="string">Tipo da cobrança: `BANKSLIP` ou `BANKSLIP_PIX`.</ResponseField>
+<ResponseField name="amount" type="number">Valor nominal do boleto.</ResponseField>
+<ResponseField name="walletNumber" type="string">Carteira: `"112"` ou `"121"`.</ResponseField>
+<ResponseField name="yourNumber" type="string">Número do documento.</ResponseField>
+<ResponseField name="ourNumber" type="string">Nosso número. Use-o para conciliar.</ResponseField>
+<ResponseField name="dueDate" type="string">Data de vencimento.</ResponseField>
+<ResponseField name="barCode" type="string">Código de barras.</ResponseField>
+<ResponseField name="digitableLine" type="string">Linha digitável.</ResponseField>
+<ResponseField name="payer" type="object">Dados do pagador.</ResponseField>
+<ResponseField name="discount" type="object">Configuração de desconto, se aplicável.</ResponseField>
+<ResponseField name="lateFine" type="object">Configuração de multa, se aplicável.</ResponseField>
+<ResponseField name="latePayment" type="object">Configuração de juros, se aplicável.</ResponseField>
+<ResponseField name="status" type="string">Status atual: `Paid`.</ResponseField>
+<ResponseField name="payments" type="array">
+  Dados da liquidação.
+
+  <Expandable title="propriedades">
+    <ResponseField name="amount" type="number">Valor efetivamente recebido, já com juros, multa e descontos.</ResponseField>
+    <ResponseField name="paymentDate" type="string">Data em que o pagador pagou o boleto.</ResponseField>
+    <ResponseField name="date" type="string">Data da baixa (liquidação) do boleto.</ResponseField>
+    <ResponseField name="source" type="string">Origem da liquidação.</ResponseField>
+    <ResponseField name="issuer" type="object">
+      Instituição onde o boleto foi pago.
+
+      <Expandable title="propriedades">
+        <ResponseField name="ispb" type="string">ISPB da instituição.</ResponseField>
+        <ResponseField name="code" type="string">Código da instituição.</ResponseField>
+        <ResponseField name="agency" type="string">Agência.</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="createdAt" type="string">Data de registro do boleto.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges?searchBy=Situation&search=Paid&dateBy=PaymentDate&startDate=2025-01-01&endDate=2025-01-31&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "type": "BANKSLIP",
+        "amount": 150.00,
+        "walletNumber": "112",
+        "yourNumber": "PED-2024-001",
+        "ourNumber": "00000520637",
+        "dueDate": "2025-01-15T00:00:00",
+        "barCode": "43595103800000000100001112000000600000520637",
+        "digitableLine": "43590001161200000060900005206370510380000000010",
+        "payer": {
+            "name": "JOÃO ALVES",
+            "document": "000007034346593",
+            "email": "joao@email.com",
+            "phone": { "prefix": "79", "number": "988669383" },
+            "address": {
+                "zipCode": "49010030",
+                "publicPlace": "AV. RIO BRANCO",
+                "neighborhood": "CENTRO",
+                "city": "ARACAJU",
+                "state": "SE"
+            }
+        },
+        "status": "Paid",
+        "payments": [
+            {
+                "amount": 150.00,
+                "source": "SILOC",
+                "issuer": {
+                    "ispb": "00000000",
+                    "code": "001",
+                    "agency": "1234"
+                },
+                "date": "2025-01-14T00:00:00.000Z",
+                "paymentDate": "2025-01-13T00:00:00.000Z"
+            }
+        ],
+        "createdAt": "2025-01-14T00:00:00"
+    }
+]
+```
+```json 400
+{
+    "errors": ["Tipo de situação inválido."]
+}
+```
+</ResponseExample>
