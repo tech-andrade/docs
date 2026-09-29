@@ -5,7 +5,8 @@ description: "Cria um QR Code Pix reutilizável, capaz de receber múltiplos pag
 ---
 
 <Note>
-Para entender quando usar este endpoint e ver o passo a passo completo, veja o guia [Cobrança Reutilizável (QR Code Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
+  Para entender quando usar este endpoint e ver o passo a passo completo, veja o guia [Cobrança Reutilizável (QR Code
+  Estático)](/guias/pix/receber-pix/cobranca-reutilizavel).
 </Note>
 
 ## Headers
@@ -20,10 +21,6 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
 
 <ParamField header="idempotencyKey" type="string">
   GUID usado para garantir que a mesma requisição não crie cobranças duplicadas caso seja reenviada.
-
-  <Warning>
-  Este header aparece como obrigatório na documentação original, mas nenhum exemplo de requisição o inclui. Confirmar se é de fato obrigatório antes de publicar.
-  </Warning>
 </ParamField>
 
 ## Body
@@ -46,18 +43,10 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
 
 <ParamField body="additionalInformation" type="string">
   Texto exibido ao pagador no momento do pagamento. Máximo de 64 caracteres.
-
-  <Warning>
-  Confirmar nome do campo: a documentação original usa `additionalInformation` na tabela de parâmetros, mas `additionalInfo` nos exemplos e na resposta.
-  </Warning>
 </ParamField>
 
 <ParamField body="formatResponse" type="string">
   Controla o formato da resposta (valor visto em exemplo: `PAYLOAD_AND_QRCODE`).
-
-  <Warning>
-  Campo não documentado na especificação original — confirmar valores aceitos e comportamento padrão.
-  </Warning>
 </ParamField>
 
 ## Response
