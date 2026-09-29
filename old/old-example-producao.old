@@ -1,0 +1,303 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+Production URL: https://api.delbank.com.br
+:---------------
+
+When you're ready to access the production environment, you can use the following as an example on what you need for the production API. The production API requires that the mTLS certificate, the private key and the API key are set up correctly. It also requires your static public outbound (egress) IPs to be allowlisted (required from February/2026 onward). You can use the example and change up as needed, depending on the type of HTTP request methods and the endpoint you're trying to reach
+
+
+
+| Key              |                      Description                      |
+| :--------------- | :---------------------------------------------------: |
+| mTLS certificate |     The mTLS certificate our team sent (.pem file)    |
+| Private Key      | The private key that was generated along with the csr |
+| API key          |               The API key our team sent               |
+| Account id       | The account number linked to the API key              |
+| Static egress IP(s) | Fixed public outbound IP(s) shared in advance for production allowlist |
+
+
+<Tabs>
+<TabItem value="js" label="JavaScript">
+```JavaScript showLineNumbers
+const fs = require('fs');
+const https = require('https');
+const path = require('path');
+
+const certPath = path.resolve(__dirname, 'mtls/my_cretificate.crt');
+const keyPath = path.resolve(__dirname, 'mtls/my_private_key.key');
+let httpsAgent = null;
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+	httpsAgent = new https.Agent({
+    cert: fs.readFileSync(certPath), //Here you put your certificate (.pem)
+		key: fs.readFileSync(keyPath), //Here you put your private key (.key)
+	});
+}
+
+headers = {
+  'x-delbank-api-key': process.env.API_KEY,
+  'x-delfinance-account-id': process.env.ACCOUNT
+};
+
+const apiResponse = await axios({
+	method: // 'GET', 'POST', 'PUT', 'DELETE'
+	url: //api.delbank.com.br/...,
+	headers: headers,
+	httpsAgent: httpsAgent,
+});
+```
+</TabItem>
+<TabItem value="java" label="Java">
+
+```java showLineNumbers
+import okhttp3.*;
+import javax.net.ssl.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Paths;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.Objects;
+
+public class HttpsClient {
+    public static void main(String[] args) throws Exception {
+        String certPath = Paths.get("mtls", "my_certificate.crt").toAbsolutePath().toString();
+        String keyPath = Paths.get("mtls", "my_private_key.key").toAbsolutePath().toString();
+        String apiKey = System.getenv("my_API_KEY");
+        String accountId = System.getenv("my_ACCOUNT_ID");
+
+        OkHttpClient httpsClient = createHttpsClient(certPath, keyPath);
+        Headers headers = new Headers.Builder()
+                .add("x-delbank-api-key", Objects.requireNonNull(apiKey, "my_API_KEY is not set"))
+                .add("x-delfinance-account-id", Objects.requireNonNull(accountId, "my_API_KEY is not set"))
+                .build();
+
+        // Make the request
+        Request request = new Request.Builder()
+                .url("https://api.delbank.com.br/...")
+                .headers(headers)
+                .build();
+
+        try (Response response = httpsClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new RuntimeException("Request failed: " + response);
+            }
+            System.out.println(response.body().string());
+        }
+    }
+
+    private static OkHttpClient createHttpsClient(String certPath, String keyPath) throws Exception {
+        File certFile = new File(certPath);
+        File keyFile = new File(keyPath);
+
+        if (certFile.exists() && keyFile.exists()) {
+            // Load Certificate
+            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+            try (FileInputStream certInputStream = new FileInputStream(certFile)) {
+                X509Certificate certificate = (X509Certificate) certFactory.generateCertificate(certInputStream);
+
+                // Load KeyStore
+                KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                keyStore.load(null, null); // Initialize an empty KeyStore
+                keyStore.setCertificateEntry("certificate", certificate);
+
+                // Create TrustManager
+                TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+                        TrustManagerFactory.getDefaultAlgorithm()
+                );
+                trustManagerFactory.init(keyStore);
+
+                // Create SSLContext
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+
+                return new OkHttpClient.Builder()
+                        .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustManagerFactory.getTrustManagers()[0])
+                        .build();
+            }
+        }
+        return new OkHttpClient();
+    }
+}
+
+```
+</TabItem>
+<TabItem value="csharp" label="C#">
+
+```csharp showLineNumbers
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        string certPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mtls", "my_certificate.crt");
+        string keyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "mtls", "my_private_key.key");
+        string apiKey = Environment.GetEnvironmentVariable("my_API_KEY");
+        string accountId = Environment.GetEnvironmentVariable("my_ACCOUNT_ID");
+
+        if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(accountId))
+        {
+            throw new InvalidOperationException("my_API_KEY environment variable is not set.");
+        }
+
+        HttpClient httpClient = CreateHttpClient(certPath, keyPath);
+
+        // Prepare request
+        HttpRequestMessage request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get, // Use HttpMethod.Post, Put, Delete, etc. as needed
+            RequestUri = new Uri("https://api.delbank.com.br/..."), // Replace with your API URL
+        };
+
+        // Add headers
+        request.Headers.Add("x-delbank-api-key", apiKey);
+        request.Headers.Add("x-delfinance-account-id", accountId);
+
+        // Send request and handle response
+        HttpResponseMessage response = await httpClient.SendAsync(request);
+        response.EnsureSuccessStatusCode();
+        string responseBody = await response.Content.ReadAsStringAsync();
+        Console.WriteLine(responseBody);
+    }
+
+    private static HttpClient CreateHttpClient(string certPath, string keyPath)
+    {
+        // Check if certificate and key files exist
+        if (File.Exists(certPath) && File.Exists(keyPath))
+        {
+            // Load certificate
+            X509Certificate2 clientCertificate = new X509Certificate2(certPath);
+
+            // Configure handler
+            var handler = new HttpClientHandler
+            {
+                ClientCertificates = { clientCertificate },
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+            };
+
+            return new HttpClient(handler);
+        }
+
+        return new HttpClient();
+    }
+}
+
+```
+</TabItem>
+<TabItem value="python" label="Python">
+```python showLineNumbers
+import os
+import requests
+from pathlib import Path
+
+def main():
+    # Resolve certificate and key paths
+    base_dir = Path(__file__).resolve().parent
+    cert_path = base_dir / "mtls/my_certificate.crt"
+    key_path = base_dir / "mtls/my_private_key.key"
+
+    # Check if the certificate and key files exist
+    if cert_path.exists() and key_path.exists():
+        # Create HTTPS session with certificate and key
+        session = requests.Session()
+        session.cert = (str(cert_path), str(key_path))
+    else:
+        session = requests.Session()
+
+    # Set headers
+    headers = {
+        "x-delbankapi-key": os.getenv("my_API_KEY")
+        "x-delfinance-account-id": os.getenv("my_ACCOUNT_ID")
+    }
+
+    # Make the request
+    try:
+        response = session.get("https://api.delbank.com.br/...", headers=headers)  # Change HTTP method and URL as needed
+        response.raise_for_status()  # Raise exception for HTTP errors
+        print(response.text)
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+```
+</TabItem>
+<TabItem value="php" label="php">
+```php showLineNumbers
+<?php
+function main() {
+    // Define paths for certificate and key
+    $certPath = __DIR__ . '/mtls/my_certificate.crt';
+    $keyPath = __DIR__ . '/mtls/my_private_key.key';
+
+    // Check if certificate and key files exist
+    if (file_exists($certPath) && file_exists($keyPath)) {
+        $curl = curl_init();
+
+        // API URL
+        $url = "https://api.delbank.com.br/..."; // Replace with your API endpoint
+
+        // Set cURL options
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                "x-delbank-api-key: " . getenv("API_KEY"),
+                "x-delfinance-account-id" . getenv("ACCOUNT_ID"),
+            ],
+            CURLOPT_SSLCERT => $certPath,
+            CURLOPT_SSLKEY => $keyPath,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            echo "cURL error: " . curl_error($curl);
+        } else {
+            $httpStatus = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            if ($httpStatus >= 200 && $httpStatus < 300) {
+                echo $response;
+            } else {
+                echo "HTTP error: " . $httpStatus . " - " . $response;
+            }
+        }
+
+        curl_close($curl);
+    } else {
+        echo "Certificate or key file not found.";
+    }
+}
+
+main();
+
+```
+</TabItem>
+</Tabs>
+
+## Accessing the production environment via Postman
+
+In Postman it's possible to add and manage certificates to enable authentication when sending requests. To do this, first, go to Settings.
+
+![](img/postman-settings.png)
+
+Then inside, go to Certificates and click Add Certificate.
+
+![](img/postman-certificates.png)
+
+
+
+Now add the host URL, so that every request from this URL will use these certificates. In the CRT file put in the mTLS (.pem file) and in KEY file put in the private key that was generated along the CSR.
+
+![](img/postman-add-certifcates.png)
+
+And finally, in the headers add your API Key to x-delbank-api-key and add your accountId in x-delfinance-account-id.
+
+![](img/postman-headers.png)
+
+That's it, you can now access the production API!

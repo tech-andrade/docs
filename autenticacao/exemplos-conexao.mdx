@@ -1,0 +1,403 @@
+---
+title: "Exemplos de Conexão"
+sidebarTitle: "Exemplos de Conexão"
+description: "Como montar o cliente HTTP com mTLS e os headers de autenticação em cada linguagem"
+icon: "code"
+---
+
+Esta página mostra como juntar as três camadas de segurança ([credenciais](/autenticacao/credenciais), [mTLS](/autenticacao/mtls) e [allowlist de IPs](/autenticacao/filtros-ip)) em um cliente HTTP funcional.
+
+Se você ainda não tem o certificado emitido, comece por [mTLS](/autenticacao/mtls).
+
+## O que você precisa em mãos
+
+| Item | Arquivo / valor | Onde obter |
+| --- | --- | --- |
+| Certificado mTLS | `certificado.pem` | Portal do Desenvolvedor, após o envio do CSR |
+| Chave privada | `chave-privada.key` | Gerada por você junto com o CSR, nunca sai da sua infraestrutura |
+| API key | `x-delbank-api-key` | Portal do Desenvolvedor |
+| Account ID | `x-delfinance-account-id` | Conta vinculada à API key |
+| IPs públicos de saída | Lista de IPs fixos | Sua infraestrutura, informados à Delfinance |
+
+<Warning>
+  A chave privada e a API key nunca devem ser versionadas. Use variáveis de ambiente ou um cofre de segredos (AWS KMS, HashiCorp Vault, Azure Key Vault).
+</Warning>
+
+## Diferenças entre ambientes
+
+| | Sandbox | Produção |
+| --- | --- | --- |
+| URL base | `https://apisandbox.delbank.com.br` | `https://api.delbank.com.br` |
+| Headers de credencial | Obrigatórios | Obrigatórios |
+| Certificado mTLS | Opcional | **Obrigatório** |
+| Allowlist de IPs | Não aplicada | **Obrigatória** |
+
+Os exemplos abaixo usam Produção. Para testar em Sandbox, troque a URL base e remova o certificado da configuração do cliente.
+
+## Exemplos por linguagem
+
+Todos os exemplos chamam `GET /baas/api/v1/balances`. Troque o método e o caminho conforme o endpoint que você precisa consumir.
+
+<CodeGroup>
+
+```bash cURL
+curl --request GET \
+  'https://api.delbank.com.br/baas/api/v1/balances' \
+  --cert ./mtls/certificado.pem \
+  --key ./mtls/chave-privada.key \
+  --header "x-delbank-api-key: $DELFINANCE_API_KEY" \
+  --header "x-delfinance-account-id: $DELFINANCE_ACCOUNT_ID"
+```
+
+```javascript Node.js
+import fs from "node:fs";
+import https from "node:https";
+import axios from "axios";
+
+// Crie o agente uma única vez e reutilize: um agente por requisição
+// refaz o handshake TLS e derruba a performance.
+const httpsAgent = new https.Agent({
+  cert: fs.readFileSync("./mtls/certificado.pem"),
+  key: fs.readFileSync("./mtls/chave-privada.key"),
+  minVersion: "TLSv1.2",
+  keepAlive: true,
+});
+
+export const delfinance = axios.create({
+  baseURL: "https://api.delbank.com.br",
+  httpsAgent,
+  timeout: 30000,
+  headers: {
+    "x-delbank-api-key": process.env.DELFINANCE_API_KEY,
+    "x-delfinance-account-id": process.env.DELFINANCE_ACCOUNT_ID,
+    "Content-Type": "application/json",
+  },
+});
+
+const { data } = await delfinance.get("/baas/api/v1/balances");
+console.log(data);
+```
+
+```python Python
+import os
+import requests
+
+# A Session mantém a conexão TLS aberta entre as chamadas.
+session = requests.Session()
+session.cert = ("mtls/certificado.pem", "mtls/chave-privada.key")
+session.headers.update({
+    "x-delbank-api-key": os.environ["DELFINANCE_API_KEY"],
+    "x-delfinance-account-id": os.environ["DELFINANCE_ACCOUNT_ID"],
+    "Content-Type": "application/json",
+})
+
+response = session.get(
+    "https://api.delbank.com.br/baas/api/v1/balances",
+    timeout=30,
+)
+response.raise_for_status()
+print(response.json())
+```
+
+```csharp C#
+using System.Security.Cryptography.X509Certificates;
+
+var certificate = X509Certificate2.CreateFromPemFile(
+    "mtls/certificado.pem",
+    "mtls/chave-privada.key");
+
+// No Windows, o handler exige uma chave persistida. Reexportar como PFX
+// resolve o erro "No credentials are available in the security package".
+certificate = new X509Certificate2(certificate.Export(X509ContentType.Pfx));
+
+var handler = new HttpClientHandler
+{
+    SslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                 | System.Security.Authentication.SslProtocols.Tls13,
+};
+handler.ClientCertificates.Add(certificate);
+
+// Registre como singleton (IHttpClientFactory) em vez de instanciar por chamada.
+var http = new HttpClient(handler)
+{
+    BaseAddress = new Uri("https://api.delbank.com.br"),
+    Timeout = TimeSpan.FromSeconds(30),
+};
+http.DefaultRequestHeaders.Add(
+    "x-delbank-api-key",
+    Environment.GetEnvironmentVariable("DELFINANCE_API_KEY"));
+http.DefaultRequestHeaders.Add(
+    "x-delfinance-account-id",
+    Environment.GetEnvironmentVariable("DELFINANCE_ACCOUNT_ID"));
+
+var response = await http.GetAsync("/baas/api/v1/balances");
+response.EnsureSuccessStatusCode();
+Console.WriteLine(await response.Content.ReadAsStringAsync());
+```
+
+```java Java
+import okhttp3.*;
+
+import javax.net.ssl.*;
+import java.io.FileInputStream;
+import java.security.KeyStore;
+
+public class DelfinanceClient {
+
+    public static void main(String[] args) throws Exception {
+        char[] password = System.getenv("DELFINANCE_KEYSTORE_PASSWORD").toCharArray();
+
+        // A JVM não lê o par .pem + .key diretamente: converta para PKCS#12 antes.
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        try (FileInputStream in = new FileInputStream("mtls/delfinance.p12")) {
+            keyStore.load(in, password);
+        }
+
+        // KeyManager: apresenta o SEU certificado no handshake (é isso que faz o mTLS).
+        KeyManagerFactory keyManagerFactory =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, password);
+
+        // TrustManager: valida o certificado do servidor com a truststore padrão da JVM.
+        TrustManagerFactory trustManagerFactory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init((KeyStore) null);
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(
+                keyManagerFactory.getKeyManagers(),
+                trustManagerFactory.getTrustManagers(),
+                null);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .sslSocketFactory(
+                        sslContext.getSocketFactory(),
+                        (X509TrustManager) trustManagerFactory.getTrustManagers()[0])
+                .build();
+
+        Request request = new Request.Builder()
+                .url("https://api.delbank.com.br/baas/api/v1/balances")
+                .header("x-delbank-api-key", System.getenv("DELFINANCE_API_KEY"))
+                .header("x-delfinance-account-id", System.getenv("DELFINANCE_ACCOUNT_ID"))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IllegalStateException("Falha na requisição: " + response);
+            }
+            System.out.println(response.body().string());
+        }
+    }
+}
+```
+
+```php PHP
+<?php
+
+$curl = curl_init();
+
+curl_setopt_array($curl, [
+    CURLOPT_URL            => 'https://api.delbank.com.br/baas/api/v1/balances',
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT        => 30,
+    CURLOPT_HTTPHEADER     => [
+        'x-delbank-api-key: ' . getenv('DELFINANCE_API_KEY'),
+        'x-delfinance-account-id: ' . getenv('DELFINANCE_ACCOUNT_ID'),
+        'Content-Type: application/json',
+    ],
+    CURLOPT_SSLCERT        => __DIR__ . '/mtls/certificado.pem',
+    CURLOPT_SSLKEY         => __DIR__ . '/mtls/chave-privada.key',
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_SSL_VERIFYHOST => 2,
+]);
+
+$response = curl_exec($curl);
+
+if ($response === false) {
+    throw new RuntimeException('Erro cURL: ' . curl_error($curl));
+}
+
+$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+curl_close($curl);
+
+if ($status < 200 || $status >= 300) {
+    throw new RuntimeException("HTTP {$status}: {$response}");
+}
+
+echo $response;
+```
+
+```go Go
+package main
+
+import (
+	"crypto/tls"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"time"
+)
+
+func main() {
+	cert, err := tls.LoadX509KeyPair("mtls/certificado.pem", "mtls/chave-privada.key")
+	if err != nil {
+		panic(err)
+	}
+
+	// Reutilize o client: ele mantém o pool de conexões TLS.
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				Certificates: []tls.Certificate{cert},
+				MinVersion:   tls.VersionTLS12,
+			},
+		},
+	}
+
+	req, err := http.NewRequest(
+		http.MethodGet,
+		"https://api.delbank.com.br/baas/api/v1/balances",
+		nil,
+	)
+	if err != nil {
+		panic(err)
+	}
+	req.Header.Set("x-delbank-api-key", os.Getenv("DELFINANCE_API_KEY"))
+	req.Header.Set("x-delfinance-account-id", os.Getenv("DELFINANCE_ACCOUNT_ID"))
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Println(resp.StatusCode, string(body))
+}
+```
+
+</CodeGroup>
+
+<Note>
+  **Java**: converta o par de arquivos para PKCS#12 antes de rodar o exemplo.
+
+  ```bash
+  openssl pkcs12 -export \
+    -in certificado.pem \
+    -inkey chave-privada.key \
+    -out mtls/delfinance.p12 \
+    -name delfinance
+  ```
+
+  **C#**: a partir do .NET 9, o construtor `X509Certificate2(byte[])` está obsoleto. Substitua a linha de reexportação por `X509CertificateLoader.LoadPkcs12(certificate.Export(X509ContentType.Pfx), null)`.
+</Note>
+
+## Validando a conexão
+
+Antes de apontar a aplicação para Produção, confirme cada camada isoladamente.
+
+<Steps>
+
+<Step title="Confirme que o certificado e a chave são um par">
+Os dois comandos abaixo precisam devolver exatamente o mesmo hash. Se divergirem, o certificado recebido não corresponde à chave usada para gerar o CSR.
+
+```bash
+openssl x509 -noout -modulus -in certificado.pem | openssl md5
+openssl rsa  -noout -modulus -in chave-privada.key | openssl md5
+```
+</Step>
+
+<Step title="Teste o handshake TLS isoladamente">
+Este comando valida apenas a camada de certificado, sem envolver credenciais ou endpoint de negócio.
+
+```bash
+openssl s_client -connect api.delbank.com.br:443 \
+  -cert certificado.pem \
+  -key chave-privada.key
+```
+
+Procure por `Verify return code: 0 (ok)` na saída.
+</Step>
+
+<Step title="Valide pelo Portal do Desenvolvedor">
+Na etapa de validação do mTLS, o portal exibe um endpoint `hello-mtls` exclusivo do seu certificado. Chame essa URL a partir do seu ambiente usando o certificado emitido e volte ao portal para confirmar a conclusão da etapa.
+</Step>
+
+<Step title="Faça a primeira chamada autenticada">
+Com o handshake funcionando, adicione os headers de credencial e chame um endpoint real, como no exemplo em cURL acima. Use `-v` para inspecionar o handshake caso algo falhe.
+</Step>
+
+<Step title="Confirme o IP de saída">
+Verifique de qual IP público a sua aplicação sai e confirme que ele está na allowlist.
+
+```bash
+curl https://api.ipify.org
+```
+
+Se a infraestrutura usa NAT, proxy ou balanceador, o IP de saída pode ser diferente do esperado. Veja [Filtros de IPs](/autenticacao/filtros-ip).
+</Step>
+
+</Steps>
+
+## Configurando o Postman
+
+O Postman gerencia certificados por domínio: uma vez cadastrado, ele é aplicado automaticamente a todas as requisições daquele host.
+
+<Steps>
+
+<Step title="Abra as configurações">
+No menu do Postman, vá em **File → Settings**.
+
+<img src="/assets/postman-settings.png" alt="Menu File com a opção Settings destacada no Postman" />
+</Step>
+
+<Step title="Acesse a aba Certificates">
+Na lateral, escolha **Certificates** e clique em **Add Certificate**, na seção *Client certificates*.
+
+<img src="/assets/postman-certificates.png" alt="Aba Certificates das configurações do Postman com o botão Add Certificate" />
+</Step>
+
+<Step title="Informe o host e anexe os arquivos">
+No campo **Host**, informe apenas `api.delbank.com.br`, porque o Postman já preenche o prefixo `https://`. Deixe a porta em branco para usar a 443.
+
+Em **CRT file**, selecione o `certificado.pem`. Em **KEY file**, selecione a `chave-privada.key`, a mesma gerada junto com o CSR. O campo **PFX file** é uma alternativa: use-o apenas se você tiver convertido o par para PKCS#12, e nesse caso deixe CRT e KEY vazios. Preencha **Passphrase** somente se a chave privada tiver senha.
+
+<img src="/assets/postman-add-certificate.png" alt="Formulário Add certificate do Postman com os campos Host, CRT file, KEY file, PFX file e Passphrase" />
+</Step>
+
+<Step title="Adicione os headers de credencial">
+Na aba **Headers** da requisição, informe `x-delbank-api-key` e `x-delfinance-account-id`.
+
+<img src="/assets/postman-headers.png" alt="Aba Headers do Postman com os headers x-delbank-api-key e x-delfinance-account-id" />
+</Step>
+
+</Steps>
+
+<Tip>
+  Guarde a API key e o Account ID como variáveis de ambiente do Postman marcadas como **secret**, e não direto no header da requisição. Assim a coleção pode ser compartilhada com o time sem expor credenciais.
+</Tip>
+
+## Erros comuns
+
+| Sintoma | Camada | Causa provável |
+| --- | --- | --- |
+| `curl: (35) handshake failure` | mTLS | Certificado não enviado, expirado ou revogado |
+| `SSL certificate problem: unable to get local issuer` | mTLS | Cadeia de confiança incompleta no cliente |
+| `key values mismatch` | mTLS | Certificado e chave privada não são um par |
+| `No credentials are available in the security package` | mTLS (.NET) | Chave efêmera no Windows, reexporte como PFX |
+| Handshake conclui, mas retorna `401` | Credenciais | API key ausente, inválida ou de outro ambiente |
+| Handshake conclui, mas retorna `403` | Credenciais / IPs | Account ID não vinculado à API key, ou IP de saída fora da allowlist |
+| Funciona local, falha no servidor | Filtros de IPs | O IP público do servidor não está aprovado |
+
+Para a lista completa de erros do handshake, consulte [mTLS](/autenticacao/mtls).
+
+## Boas práticas
+
+- reutilize o cliente HTTP entre as requisições, para não repetir o handshake TLS a cada chamada;
+- carregue certificado, chave e credenciais de variáveis de ambiente ou de um cofre de segredos;
+- mantenha pares de certificado distintos para Sandbox e Produção;
+- exija TLS 1.2 ou superior e mantenha a verificação do certificado do servidor ativa;
+- monitore o vencimento do certificado e rotacione antes da expiração;
+- registre falhas de handshake separadamente das falhas de autorização, pois elas apontam para camadas diferentes.

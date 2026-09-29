@@ -31,13 +31,13 @@ curl https://apisandbox.delbank.com.br/v1/accounts \
 
 O mTLS adiciona uma camada extra de segurança ao TLS, validando o certificado do cliente na conexão. Ele é obrigatório em Produção e ajuda a garantir que apenas clientes autorizados consigam se comunicar com a API.
 
-Para detalhes sobre emissão, instalação, teste e ciclo de vida do certificado, acesse [mTLS](/iniciacao/mtls).
+Para detalhes sobre emissão, instalação, teste e ciclo de vida do certificado, acesse [mTLS](/autenticacao/mtls).
 
 ## Filtros de IPs
 
 A allowlist de IPs restringe o tráfego de saída da sua infraestrutura a IPs públicos aprovados. Esse controle é importante em Produção para reduzir riscos de acesso não autorizado.
 
-Para ver como funciona a configuração, os pré-requisitos e o checklist de implementação, acesse [Filtros de IPs](/iniciacao/filtros-ip).
+Para ver como funciona a configuração, os pré-requisitos e o checklist de implementação, acesse [Filtros de IPs](/autenticacao/filtros-ip).
 
 ## Resumo por ambiente
 
@@ -45,6 +45,10 @@ Para ver como funciona a configuração, os pré-requisitos e o checklist de imp
 | --- | --- | --- | --- |
 | Sandbox | Sim | Não | Não |
 | Produção | Sim | Sim | Sim |
+
+## Próximo passo
+
+Com as três camadas entendidas, veja como montar o cliente HTTP na sua linguagem em [Exemplos de Conexão](/autenticacao/exemplos-conexao).
 
 ## Boas práticas
 

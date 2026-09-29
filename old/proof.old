@@ -1,0 +1,31 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+> ### Note that this endpoint is only for transactions in the production environment
+> Access to production must follow the authentication security requirements, including mTLS and IP allowlisting (required from February/2026 onward).
+---
+To get a transaction proof you can use the following endpoint
+
+### Headers
+
+| Name              | Description           |
+| :---------------- | :-------------------- |
+| x-delbank-api-key | **Required**. API key |
+| x-delfinance-account-id | **Required**. The Delfinance bank account number |
+
+<Tabs>
+<TabItem value="json" label="CASH OUT">
+```json
+Get "https://api.delbank.com.br/baas/api/v1/pix/cashout/:End2Endid/proof"
+```
+</TabItem>
+<TabItem value="text" label="CASH IN">
+```json
+Get "https://api.delbank.com.br/baas/api/v1/pix/cashin/:End2Endid/proof"
+```
+</TabItem>
+</Tabs>
+## Response
+On a successful request here's what you will receive, only difference is it will be filled out with the relevant information:
+
+![](img/image.png)

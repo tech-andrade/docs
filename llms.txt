@@ -13,9 +13,10 @@ Headers obrigatórios em todas as requisições:
 ## Introdução
 
 - [Primeiros Passos](https://docs.delfinance.com.br/iniciacao/primeiros-passos)
-- [Autenticação](https://docs.delfinance.com.br/iniciacao/autenticacao)
-- [mTLS](https://docs.delfinance.com.br/iniciacao/mtls)
-- [Filtros de IP](https://docs.delfinance.com.br/iniciacao/filtros-ip)
+- [Autenticação](https://docs.delfinance.com.br/autenticacao/credenciais)
+- [mTLS](https://docs.delfinance.com.br/autenticacao/mtls)
+- [Exemplos de Conexão](https://docs.delfinance.com.br/autenticacao/exemplos-conexao)
+- [Filtros de IP](https://docs.delfinance.com.br/autenticacao/filtros-ip)
 - [Idempotência](https://docs.delfinance.com.br/iniciacao/idempotencia)
 - [Indo para Produção](https://docs.delfinance.com.br/iniciacao/ida-producao)
 
@@ -27,6 +28,7 @@ Headers obrigatórios em todas as requisições:
 - [Cobrança Imediata (QR Code Dinâmico)](https://docs.delfinance.com.br/guias/pix/receber-pix/cobranca-imediata)
 - [Cobrança com Vencimento](https://docs.delfinance.com.br/guias/pix/receber-pix/cobranca-com-vencimento)
 - [Devolução](https://docs.delfinance.com.br/guias/pix/receber-pix/devolucao)
+- [Comprovante de Transação](https://docs.delfinance.com.br/guias/pix/comprovante)
 - [Simulação de Pagamento](https://docs.delfinance.com.br/guias/pix/receber-pix/simulacao-pagamento)
 
 ## Pagar via Pix
@@ -36,6 +38,7 @@ Headers obrigatórios em todas as requisições:
 - [Pagar por Dados Bancários](https://docs.delfinance.com.br/guias/pix/pagar-pix/por-dados-bancarios)
 - [Pagar por QR Code](https://docs.delfinance.com.br/guias/pix/pagar-pix/por-qrcode)
 - [Consultar Pagamento](https://docs.delfinance.com.br/guias/pix/pagar-pix/consultar-pagamento)
+- [Comprovante de Transação](https://docs.delfinance.com.br/guias/pix/comprovante)
 
 ## Cobranças via Boleto
 

@@ -1,0 +1,252 @@
+---
+title: "Comprovante de Transação"
+sidebarTitle: "Comprovante"
+description: "Baixe o comprovante oficial em PDF de uma transação Pix liquidada, tanto de recebimentos (cash-in) quanto de pagamentos enviados (cash-out)."
+icon: "receipt"
+---
+
+O comprovante é o **documento oficial da instituição em PDF** referente a uma transação Pix já liquidada. É o arquivo que você entrega ao usuário final, anexa a um pedido ou arquiva para auditoria, com a identidade visual e as informações formais exigidas de um comprovante bancário.
+
+O endpoint é o mesmo para os dois sentidos do fluxo. Muda apenas um segmento da URL: `cashin` ou `cashout`.
+
+<Warning>
+  **Este endpoint existe apenas em Produção.** Não há equivalente em Sandbox. O acesso segue todos os requisitos de segurança de Produção: [credenciais](/autenticacao/credenciais), [mTLS](/autenticacao/mtls) e [allowlist de IPs](/autenticacao/filtros-ip).
+</Warning>
+
+## Qual endpoint usar
+
+Você já sabe o sentido pelo seu próprio fluxo, não é preciso descobrir pela API:
+
+| Sentido | Quando é o seu caso | Endpoint |
+| --- | --- | --- |
+| **Cash-in** (recebimento) | O dinheiro entrou na sua conta. Você recebeu o webhook `PIX_RECEIVED`. | `GET /baas/api/v1/pix/cashin/{endToEndId}/proof` |
+| **Cash-out** (pagamento enviado) | Você originou a transação com `POST /transfers`. Recebeu o webhook `PIX_PAYMENT_UPDATED`. | `GET /baas/api/v1/pix/cashout/{endToEndId}/proof` |
+
+<Note>
+  Se você chamar o endpoint com o sentido errado, a transação não será encontrada, porque a busca acontece dentro do respectivo fluxo. Em caso de dúvida, o webhook que originou o registro indica o sentido.
+</Note>
+
+## A resposta é um PDF, não um JSON
+
+Esta é a principal diferença em relação aos demais endpoints da API. A resposta é o **arquivo binário do comprovante**, com `Content-Type: application/pdf`.
+
+Duas consequências práticas para a sua integração:
+
+- **não faça `JSON.parse` / `response.json()` no retorno**, isso gera um erro de parsing;
+- configure o cliente HTTP para tratar a resposta como binário (`arraybuffer`, `stream`, `bytes`) antes de gravar ou repassar o arquivo.
+
+<Tip>
+  Como o retorno é um PDF servido diretamente, abrir a URL autenticada no navegador já exibe o comprovante no visualizador nativo, o que é útil para conferência rápida durante o desenvolvimento.
+</Tip>
+
+## Como é o comprovante
+
+<Frame caption="Comprovante de um Pix recebido. Os dados são fictícios, gerados em Sandbox.">
+  <img src="/assets/comprovante-pix-exemplo.png" alt="Comprovante oficial de transferência Pix emitido pela Delfinance, com valor, E2E, e os dados de pagador e recebedor" />
+</Frame>
+
+O layout é o mesmo nos dois sentidos. O que muda é de que lado fica a sua conta: no cash-in ela aparece em **Recebedor**, no cash-out em **Pagador**.
+
+Se quiser testar o seu tratamento de PDF antes de chamar a API, [baixe este comprovante de exemplo](/assets/comprovante-pix-exemplo.pdf).
+
+Cada bloco do documento vem de um campo que a sua integração já conhece, do objeto `proof` do [webhook](/guias/webhooks/pix):
+
+| No comprovante | Campo de origem |
+| --- | --- |
+| Valor | `amount` |
+| E2E e Id da transação | `endToEndId` |
+| Pagador (nome) | `payer.holder.name` |
+| Pagador (CPF/CNPJ) | `payer.holder.document` |
+| Pagador (Instituição) | `payer.participant.name` |
+| Pagador (Agência / Conta) | `payer.branch` / `payer.number` |
+| Recebedor (nome) | `beneficiary.holder.name` |
+| Recebedor (CPF/CNPJ) | `beneficiary.holder.document` |
+| Recebedor (Instituição) | `beneficiary.participant.name` |
+| Recebedor (Agência / Conta) | `beneficiary.branch` / `beneficiary.number` |
+
+<Note>
+  O CPF do titular pessoa física aparece mascarado no comprovante (`***.123.456.***`), como exigido pelo Banco Central. O CNPJ de pessoa jurídica aparece completo.
+</Note>
+
+## Requisição
+
+Salvando o comprovante em disco:
+
+<CodeGroup>
+
+```bash cURL
+# -o grava o corpo da resposta em arquivo em vez de imprimir no terminal
+curl --request GET \
+  'https://api.delbank.com.br/baas/api/v1/pix/cashout/E3822485720231013020122659082578/proof' \
+  --cert ./mtls/certificado.pem \
+  --key ./mtls/chave-privada.key \
+  --header "x-delbank-api-key: $DELFINANCE_API_KEY" \
+  --header "x-delfinance-account-id: $DELFINANCE_ACCOUNT_ID" \
+  -o comprovante.pdf
+```
+
+```javascript Node.js
+import fs from "node:fs/promises";
+
+// responseType binário: sem isso o axios tenta interpretar o PDF como texto e corrompe o arquivo.
+const { data } = await delfinance.get(
+  `/baas/api/v1/pix/cashout/${endToEndId}/proof`,
+  { responseType: "arraybuffer" },
+);
+
+await fs.writeFile("comprovante.pdf", Buffer.from(data));
+```
+
+```python Python
+response = session.get(
+    f"https://api.delbank.com.br/baas/api/v1/pix/cashout/{end_to_end_id}/proof",
+    timeout=30,
+)
+response.raise_for_status()
+
+# response.content traz os bytes; response.text corromperia o PDF.
+with open("comprovante.pdf", "wb") as arquivo:
+    arquivo.write(response.content)
+```
+
+```csharp C#
+var response = await http.GetAsync(
+    $"/baas/api/v1/pix/cashout/{endToEndId}/proof");
+response.EnsureSuccessStatusCode();
+
+var pdf = await response.Content.ReadAsByteArrayAsync();
+await File.WriteAllBytesAsync("comprovante.pdf", pdf);
+```
+
+</CodeGroup>
+
+Os exemplos em Node.js, Python e C# reaproveitam o cliente HTTP com mTLS montado em [Exemplos de Conexão](/autenticacao/exemplos-conexao).
+
+### Parâmetro de rota
+
+| Parâmetro | Descrição |
+| --- | --- |
+| `endToEndId` | Identificador único da transação no SPI do Banco Central. Vem do webhook (`endToEndId`) ou da resposta da criação da transferência. |
+
+### Headers
+
+| Header | Obrigatório | Descrição |
+| --- | --- | --- |
+| `x-delbank-api-key` | Sim | Chave de API da integração |
+| `x-delfinance-account-id` | Sim | Número da conta Delfinance |
+
+## Repassando o comprovante para o usuário final
+
+Não exponha as suas credenciais no front-end. O padrão é o seu backend buscar o PDF na Delfinance e repassá-lo ao cliente:
+
+<CodeGroup>
+
+```javascript Node.js (Express)
+app.get("/pedidos/:id/comprovante", async (req, res) => {
+  const pedido = await pedidos.buscar(req.params.id, req.usuario.id);
+
+  const { data } = await delfinance.get(
+    `/baas/api/v1/pix/cashin/${pedido.endToEndId}/proof`,
+    { responseType: "arraybuffer" },
+  );
+
+  res.setHeader("Content-Type", "application/pdf");
+  // "inline" abre no navegador; troque por "attachment" para forçar o download.
+  res.setHeader(
+    "Content-Disposition",
+    `inline; filename="comprovante-${pedido.id}.pdf"`,
+  );
+  res.send(Buffer.from(data));
+});
+```
+
+```python Python (FastAPI)
+@app.get("/pedidos/{pedido_id}/comprovante")
+def comprovante(pedido_id: str, usuario=Depends(usuario_atual)):
+    pedido = pedidos.buscar(pedido_id, usuario.id)
+
+    response = session.get(
+        f"https://api.delbank.com.br/baas/api/v1/pix/cashin/{pedido.end_to_end_id}/proof",
+        timeout=30,
+    )
+    response.raise_for_status()
+
+    return Response(
+        content=response.content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="comprovante-{pedido_id}.pdf"'
+        },
+    )
+```
+
+</CodeGroup>
+
+<Warning>
+  Valide sempre que o `endToEndId` solicitado pertence ao usuário autenticado, como nos exemplos acima. Sem essa checagem, qualquer pessoa com um `endToEndId` válido conseguiria baixar o comprovante de outra transação.
+</Warning>
+
+## Comprovante, webhook ou consulta de status?
+
+São três recursos diferentes e é comum confundi-los:
+
+| | Webhook | Consulta de status | Comprovante |
+| --- | --- | --- | --- |
+| Formato | JSON, via push | JSON, sob demanda | **PDF**, sob demanda |
+| Momento | No instante da liquidação | A qualquer momento | Após a liquidação |
+| Serve para | **Confirmar** o pagamento | Reconciliar, recuperar de falhas | **Documento oficial** para o usuário final |
+| Consumidor | Seu backend | Seu backend | Pessoas (cliente, contabilidade, auditoria) |
+| Ambientes | Sandbox e Produção | Sandbox e Produção | **Apenas Produção** |
+| Onde ver | [Webhooks Pix](/guias/webhooks/pix) | [Consultar pagamento](/guias/pix/pagar-pix/consultar-pagamento) | Esta página |
+
+<Warning>
+  Não use o comprovante como mecanismo de confirmação de pagamento. A confirmação chega pelo webhook. O comprovante só existe depois que a transação já foi liquidada, e o PDF não é feito para ser lido por máquina.
+</Warning>
+
+Se o que você precisa são os **dados** da transação (valor, pagador, beneficiário) para processar no seu sistema, use o objeto `proof` do [webhook](/guias/webhooks/pix) ou a [consulta de status](/guias/pix/pagar-pix/consultar-pagamento). O PDF é para leitura humana.
+
+## Erros comuns
+
+| Sintoma | Causa provável |
+| --- | --- |
+| Erro ao interpretar a resposta como JSON | A resposta é um PDF. Configure o cliente para tratar o retorno como binário. |
+| PDF gravado abre corrompido | O corpo foi lido como texto. Use `response.content` (Python), `arraybuffer` (axios) ou `ReadAsByteArrayAsync` (C#). |
+| `404` em Sandbox | O endpoint não existe em Sandbox. Teste apenas em Produção. |
+| `404` com `endToEndId` válido | Sentido trocado (recebimento consultado em `/cashout`, ou vice-versa). |
+| `404` logo após o pagamento | A transação ainda não foi liquidada. Aguarde o webhook de confirmação. |
+| `401` | API key ausente, inválida ou de outro ambiente. |
+| `403` | Account ID não vinculado à API key, ou IP de saída fora da allowlist. |
+| Falha de handshake TLS | Certificado mTLS ausente ou inválido. Veja [mTLS](/autenticacao/mtls). |
+
+## Boas práticas
+
+- guarde o `endToEndId` de toda transação no seu banco de dados, pois ele é a chave de acesso ao comprovante;
+- gere o comprovante sob demanda em vez de armazenar o PDF, para que o documento sempre reflita o registro oficial;
+- se precisar arquivar por exigência regulatória, guarde o arquivo com o timestamp da emissão;
+- valide a propriedade da transação antes de servir o PDF a qualquer usuário;
+- não dependa do conteúdo do PDF para lógica de negócio, use o webhook ou a consulta de status para isso.
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Consultar comprovante de recebimento" icon="arrow-down-to-line" href="/api-reference/pix/consultar-comprovante-recebimento">
+    `GET /pix/cashin/:endToEndId/proof`
+  </Card>
+  <Card title="Consultar comprovante de envio" icon="paper-plane" href="/api-reference/pix/consultar-comprovante-envio">
+    `GET /pix/cashout/:endToEndId/proof`
+  </Card>
+</CardGroup>
+
+## Páginas relacionadas
+
+<CardGroup cols={3}>
+  <Card title="Webhooks Pix" icon="bell" href="/guias/webhooks/pix">
+    Receba a confirmação da liquidação em tempo real, com os dados da transação em JSON.
+  </Card>
+  <Card title="Consultar pagamento" icon="magnifying-glass" href="/guias/pix/pagar-pix/consultar-pagamento">
+    Consulte o status de transferências, TEDs e devoluções enviadas.
+  </Card>
+  <Card title="Exemplos de Conexão" icon="code" href="/autenticacao/exemplos-conexao">
+    Monte o cliente HTTP com mTLS na sua linguagem.
+  </Card>
+</CardGroup>
