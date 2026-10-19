@@ -76,6 +76,14 @@
             ]
           },
           {
+            "group": "Pagar via TED (TED Cash-out)",
+            "pages": [
+              "guias/ted/pagar-ted/visao-geral",
+              "guias/ted/pagar-ted/enviar-ted",
+              "guias/ted/pagar-ted/consultar-pagamento"
+            ]
+          },
+          {
             "group": "Cobranças via Boleto",
             "pages": [
               "guias/boleto/visao-geral",

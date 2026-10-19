@@ -1,0 +1,130 @@
+---
+title: "Enviar TED"
+sidebarTitle: "Enviar TED"
+description: "Envie uma TED para uma conta em outra instituição informando os dados bancários do recebedor."
+icon: "paper-plane"
+---
+
+Para enviar uma TED, informe a conta, agência, banco (ISPB) e dados do titular da conta destino. Uma única chamada já executa a transferência.
+
+<Info>
+A TED só é processada em dias úteis, até 17h (horário de Brasília).
+</Info>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Execute a transferência">
+Monte o objeto `beneficiary` com os dados completos da conta destino e envie para `POST /transfers/ted`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/ted' \
+--header 'IdempotencyKey: {{$guid}}' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "amount": 150.00,
+    "description": "Pagamento fornecedor",
+    "beneficiary": {
+        "number": "317102",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participantIspb": "00000000",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU"
+        }
+    }
+}'
+```
+```json Response
+{
+    "id": "e36ddde1-f5a3-469c-b56d-a09d4c22e87f",
+    "status": "PROCESSING",
+    "type": "TED",
+    "amount": 150.00,
+    "createdAt": "2025-05-22T13:08:51.877Z",
+    "description": "Pagamento fornecedor",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "317102",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "BANCO DO BRASIL S.A.",
+            "ispb": "00000000"
+        }
+    }
+}
+```
+</CodeGroup>
+
+O status inicial é `PROCESSING`. Após a confirmação do SPB, o status muda para `DONE`. Se a TED for devolvida, o status muda para `CHARGEBACKED`.
+
+<Warning>
+O `IdempotencyKey` no header é obrigatório. Envie um GUID único por requisição para evitar pagamentos duplicados em caso de retry. Veja [Idempotência](/iniciacao/idempotencia).
+</Warning>
+
+<Tip>
+A `IdempotencyKey` vira o `id` da TED. Guarde esse valor: é ele que você usa para consultar a TED.
+</Tip>
+</Step>
+
+<Step title="Aguarde a confirmação via webhook">
+Quando a TED é debitada da sua conta, você recebe o evento `TRANSFER_EXTERNAL_DEBITED`. Veja [Webhooks de transferências](/guias/webhooks/transferencias).
+
+Para reconciliação, consulte a TED a qualquer momento. Veja [Consultar pagamento](/guias/ted/pagar-ted/consultar-pagamento).
+</Step>
+
+</Steps>
+
+## Headers
+
+| Header | Obrigatório | Descrição |
+|---|---|---|
+| `x-delbank-api-key` | Sim | Sua chave de API |
+| `x-delfinance-account-id` | Sim | Número da conta Delfinance |
+| `IdempotencyKey` | Sim | GUID único por requisição |
+
+## Campos do corpo
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `amount` | number | Sim | Valor da TED |
+| `description` | string | Não | Descrição da transferência, para uso interno |
+| `bankAccountPayer` | string | Não | Conta pagadora, quando diferente da conta autenticada |
+| `beneficiary.number` | string | Sim | Número da conta destino |
+| `beneficiary.branch` | string | Sim | Agência da conta destino |
+| `beneficiary.type` | enum | Sim | Tipo da conta: `CURRENT` (corrente), `PAYMENT` (pagamento), `SAVING` (poupança), `SALARY` (salário) |
+| `beneficiary.participantIspb` | string | Sim | Código ISPB do banco destino |
+| `beneficiary.holder.document` | string | Sim | CPF ou CNPJ do titular da conta destino |
+| `beneficiary.holder.name` | string | Sim | Nome completo do titular |
+
+<Note>
+Envie `bankAccountPayer` apenas quando a conta pagadora for diferente da conta autenticada. Nesse caso, a conta autenticada precisa ser a proprietária da agência da conta pagadora e ter as permissões necessárias.
+</Note>
+
+<Tip>
+O código ISPB identifica a instituição financeira destino. Consulte a [lista de participantes do SPB](https://www.bcb.gov.br/estabilidadefinanceira/spb) no Banco Central.
+</Tip>

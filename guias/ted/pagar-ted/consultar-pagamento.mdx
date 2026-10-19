@@ -1,0 +1,83 @@
+---
+title: "Consultar Pagamento"
+sidebarTitle: "Consultar pagamento"
+description: "Consulte o status de uma TED enviada."
+icon: "magnifying-glass"
+---
+
+Você pode consultar o estado de qualquer TED enviada usando a `IdempotencyKey` da requisição original. Os dados chegam primeiro via webhook — use a consulta apenas para reconciliação ou recuperação de falhas.
+
+## Consultar TED
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/ted/{{transferIdentifier}}' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "id": "e36ddde1-f5a3-469c-b56d-a09d4c22e87f",
+    "type": "TED",
+    "status": "DONE",
+    "amount": 150.00,
+    "createdAt": "2025-05-22T13:08:51.877Z",
+    "transferAt": "2025-05-22T13:08:51.877Z",
+    "description": "Pagamento fornecedor",
+    "payer": {
+        "number": "31712",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "32752023000149",
+            "name": "MINHA EMPRESA LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "name": "DELBANK",
+            "ispb": "38224857"
+        }
+    },
+    "beneficiary": {
+        "number": "317102",
+        "branch": "0001",
+        "type": "CURRENT",
+        "holder": {
+            "document": "10613462939",
+            "name": "DOUGLAS ABREU",
+            "type": "NATURAL"
+        },
+        "participant": {
+            "name": "BANCO DO BRASIL S.A.",
+            "ispb": "00000000"
+        }
+    }
+}
+```
+</CodeGroup>
+
+O `transferIdentifier` é a `IdempotencyKey` enviada no header da criação. Ela também é o `id` da TED, retornado na resposta.
+
+## Status da TED
+
+| Status | Significado |
+|---|---|
+| `PROCESSING` | TED recebida e aguardando confirmação do SPB |
+| `DONE` | TED confirmada pelo SPB e liquidada |
+| `CHARGEBACKED` | TED devolvida pela instituição destino |
+
+## Campos da resposta
+
+| Campo | Descrição |
+|---|---|
+| `id` | Identificador único da TED. É a `IdempotencyKey` enviada na criação |
+| `type` | Tipo da transferência: `TED` |
+| `status` | Status atual da TED |
+| `amount` | Valor transferido |
+| `createdAt` | Data de criação da TED |
+| `transferAt` | Data da transferência |
+| `description` | Descrição enviada na criação |
+| `payer` | Dados da conta pagadora |
+| `beneficiary` | Dados da conta destino |
+| `*.holder` | Documento, nome e tipo (`NATURAL` ou `LEGAL`) do titular |
+| `*.participant` | Nome (`name`) e ISPB (`ispb`) do banco |

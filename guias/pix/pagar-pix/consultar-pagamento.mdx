@@ -1,7 +1,7 @@
 ---
 title: "Consultar Pagamento"
 sidebarTitle: "Consultar pagamento"
-description: "Consulte o status de transferências Pix, TEDs e devoluções enviadas."
+description: "Consulte o status de transferências Pix e devoluções enviadas."
 icon: "magnifying-glass"
 ---
 
@@ -64,58 +64,6 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/{{trans
 O `transferIdentifier` pode ser:
 - `endToEndId` — o identificador único E2E retornado na criação da transferência.
 - `IdempotencyKey` — a chave de idempotência enviada no header da requisição original.
-
-## Consultar transferência TED
-
-Para consultar transferências realizadas via TED (quando o destino não suporta Pix ou está fora do SPI):
-
-```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers/ted/{{transferIdentifier}}' \
---header 'x-delbank-api-key: {{apiKey}}' \
---header 'x-delfinance-account-id: {{accountId}}'
-```
-
-```json Response
-{
-    "id": "e36ddde1-f5a3-469c-b56d-a09d4c22e87f",
-    "type": "TED",
-    "status": "DONE",
-    "amount": 150.00,
-    "createdAt": "2025-05-22T13:08:51.877Z",
-    "transferAt": "2025-05-22T13:08:51.877Z",
-    "description": "Pagamento fornecedor",
-    "sender": {
-        "number": "31712",
-        "branch": "0001",
-        "type": "CURRENT",
-        "holder": {
-            "document": "32752023000149",
-            "name": "MINHA EMPRESA LTDA",
-            "type": "LEGAL"
-        },
-        "bank": {
-            "code": "435",
-            "name": "DELCRED SCD S.A.",
-            "ispbCode": "38224857"
-        }
-    },
-    "recipient": {
-        "number": "317102",
-        "branch": "0001",
-        "type": "CURRENT",
-        "holder": {
-            "document": "10613462939",
-            "name": "DOUGLAS ABREU",
-            "type": "NATURAL"
-        },
-        "bank": {
-            "code": "001",
-            "name": "BANCO DO BRASIL S.A.",
-            "ispbCode": "00000000"
-        }
-    }
-}
-```
 
 ## Consultar devolução enviada
 
