@@ -98,6 +98,45 @@ Disparado quando um boleto é pago e o crédito é registrado na sua conta. Func
 }
 ```
 
+## BANKSLIP_PAYMENT_RECEIVED
+
+Disparado em até 30 minutos após o pagamento do boleto ser confirmado no NPC.
+<Info>
+Esse evento não significa que o valor já foi creditado na conta. O crédito continua sendo feito pela compensação diária de boletos.
+</Info>
+<Warning>
+Não é disparado quando um `BOLETO_PIX` é pago via Pix. Também não é disparado se o boleto não estiver atrelado a uma cobrança.
+</Warning>
+
+**Como registrar:**
+```json
+{
+  "eventType": "BANKSLIP_PAYMENT_RECEIVED",
+  "url": "https://seuservidor.com.br/webhooks/xyz",
+  "authorizationScheme": "BEARER",
+  "authorization": "seu-token"
+}
+```
+
+**Payload — recebimento de um pagamento de boleto (BANKSLIP_PAYMENT_RECEIVED):**
+```json
+{
+    "HolderBankAccount": "10138",
+    "EventType": "BANKSLIP_PAYMENT_RECEIVED",
+    "OurNumber": "00000603011",
+    "BarCode": "43594160600000051200001112000000200000603011",
+    "DigitableLine": "43590001161200000020300006030118416060000005120",
+    "ChargeId": 394436,
+    "NpcSettlementProcessedAt": "2026-10-20T21:33:05",
+    "FinalPayerName": "Josivaldo Peixoto",
+    "FinalPayerDocument": "01234567890",
+    "Status": "NPC_PAYMENT_CONFIRMATION",
+    "Amount": 51.2,
+    "SettlementAmount": 51.2
+}
+```
+
+
 <AccordionGroup>
 <Accordion title="Campos do payload CHARGE_PAID">
 
@@ -130,6 +169,22 @@ Disparado quando um boleto é pago e o crédito é registrado na sua conta. Func
 | `payments[]` | Array com dados detalhados de cada pagamento registrado |
 | `payments[].issuer` | Dados do banco que processou o pagamento |
 
+</Accordion>
+<Accordion title="Campos do payload BANKSLIP_PAYMENT_RECEIVED">
+| Campo | Descrição |
+|---|---|
+| `HolderBankAccount` | Conta bancária detentora do boleto |
+| `EventType` | Tipo de evento de notificação webhook |
+| `OurNumber` | Nosso número |
+| `BarCode` | Código de barras |
+| `DigitableLine` | Linha digitável |
+| `ChargeId` | Identificador da cobrança |
+| `NpcSettlementProcessedAt` | Timestamp de processamento da confirmação no NPC |
+| `FinalPayerName` | Nome de quem realizou o pagamento do boleto |
+| `FinalPayerDocument` | CPF ou CNPJ de quem realizou o pagamento do boleto |
+| `Status` | `"NPC_PAYMENT_CONFIRMATION"` |
+| `Amount` | Valor do boleto |
+| `SettlementAmount` | Valor pago |
 </Accordion>
 </AccordionGroup>
 
