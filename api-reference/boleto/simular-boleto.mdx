@@ -46,7 +46,7 @@ Para o passo a passo completo, veja o guia [Simular Pagamento](/guias/boleto/sim
 <ResponseField name="additionalData" type="object">
   Dados adicionais da simulação.
   <Expandable title="propriedades">
-    <ResponseField name="simulator" type="string">Identificador do simulador (`"DelbankSimulator"`).</ResponseField>
+    <ResponseField name="simulator" type="string">Identificador do simulador (`"DelfinanceSimulator"`).</ResponseField>
     <ResponseField name="message" type="string">Mensagem descritiva da simulação.</ResponseField>
     <ResponseField name="bankAccount" type="string">Conta bancária associada.</ResponseField>
     <ResponseField name="correlationId" type="string">GUID do boleto.</ResponseField>
@@ -91,13 +91,13 @@ curl --location 'https://apisandbox.delbank.com.br/baas/v1/charges/69577abe-3867
         "code": "435",
         "branch": "0001",
         "agency": "0001",
-        "name": "DELBANK",
+        "name": "DELFINANCE",
         "type": "PJ",
         "document": "30287697789",
-        "fantasyName": "DELBANK SIMULADOR"
+        "fantasyName": "DELFINANCE SIMULADOR"
     },
     "additionalData": {
-        "simulator": "DelbankSimulator",
+        "simulator": "DelfinanceSimulator",
         "message": "Pagamento de boleto simulado em ambiente de homologação",
         "bankAccount": "29823",
         "correlationId": "68757f64-486c-41dc-b036-4e8cb5e62576",
