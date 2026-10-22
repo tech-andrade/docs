@@ -33,8 +33,15 @@ sequenceDiagram
     Você->>API: POST /transfers/ted (com objeto beneficiary)
     API-->>Você: Transferência criada (PROCESSING)
     API->>SPB: Envia a TED
-    SPB-->>API: Confirma a liquidação
-    API-->>Você: Webhook TRANSFER_EXTERNAL_DEBITED (DONE)
+    API-->>Você: Webhook TRANSFER_EXTERNAL_DEBITED (PROCESSING)
+    SPB-->>API: Confirma a liquidação*
+    note over SPB,API: A confirmação é apenas do SPB,<br>a instituição destino ainda pode<br>rejeitar e devolver a TED
+    API-->>Você: Webhook TED_PAYMENT_UPDATED (CONFIRMED_SPB).<br>O status da TED fica como DONE
+    alt TED rejeitada pela instituição destino
+    SPB-->>API: TED devolvida
+    API-->>Você: Webhook TRANSFER_EXTERNAL_CREDITED (DONE)
+    note over API,Você: O webhook TRANSFER_EXTERNAL_CREDITED refere-se a<br>TED devolvida (crédito), mas possui o campo "TransactionOriginalId"<br>referente ao cashout da TED que, por sua vez,<br>fica com status "CHARGEBACKED".
+    end
 ```
 
 <Warning>
@@ -46,7 +53,7 @@ A resposta do `POST /transfers/ted` indica que a TED foi **enfileirada**, não q
 | Status | Significado |
 |---|---|
 | `PROCESSING` | TED recebida e aguardando confirmação do SPB |
-| `DONE` | TED confirmada pelo SPB e liquidada |
+| `DONE` | TED confirmada e liquidada pelo SPB |
 | `CHARGEBACKED` | TED devolvida pela instituição destino |
 
 <Note>

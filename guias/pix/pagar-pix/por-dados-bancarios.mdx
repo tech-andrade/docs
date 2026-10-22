@@ -30,7 +30,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
         "type": "CURRENT",
         "participantIspb": "38224857",
         "holder": {
-            "document": "10613462939",
+            "document": "01234567890",
             "name": "DOUGLAS ABREU",
             "type": "NATURAL"
         }
@@ -57,7 +57,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
             "type": "LEGAL"
         },
         "participant": {
-            "name": "DELBANK",
+            "name": "DELFINANCE",
             "ispb": "38224857"
         }
     },
@@ -66,12 +66,12 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transfers' \
         "branch": "0001",
         "type": "CURRENT",
         "holder": {
-            "document": "10613462939",
+            "document": "01234567890",
             "name": "DOUGLAS ABREU",
             "type": "NATURAL"
         },
         "participant": {
-            "name": "DELBANK",
+            "name": "DELFINANCE",
             "ispb": "38224857"
         }
     }
@@ -101,7 +101,7 @@ O `IdempotencyKey` no header é obrigatório. Envie um GUID único por requisiç
 | `holder.type` | enum | `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica) |
 
 <Tip>
-O código ISPB identifica a instituição financeira destino. Para o próprio Delbank, use `38224857`. Para outras instituições, consulte a [lista de participantes do SPI](https://www.bcb.gov.br/estabilidadefinanceira/spb) no Banco Central.
+O código ISPB identifica a instituição financeira destino. Para o próprio Delfinance, use `38224857`. Para outras instituições, consulte a [lista de participantes do SPI](https://www.bcb.gov.br/estabilidadefinanceira/spb) no Banco Central.
 </Tip>
 
 ## Referência da API

@@ -350,7 +350,7 @@ Path id:
 - Para BANKSLIP: use a digitableLine ou barCode
 - Para PIX: use o correlationId
 
-Resposta 202: detalhes da simulação com dados do pagador fictício (DELBANK SIMULATOR).
+Resposta 202: detalhes da simulação com dados do pagador fictício (DELFINANCE SIMULATOR).
 
 ---
 
