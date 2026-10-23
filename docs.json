@@ -84,6 +84,15 @@
             ]
           },
           {
+            "group": "Pagar boletos e contas (Cash-out)",
+            "pages": [
+              "guias/pagamento-contas/visao-geral",
+              "guias/pagamento-contas/consultar",
+              "guias/pagamento-contas/pagar",
+              "guias/pagamento-contas/troubleshooting"
+            ]
+          },
+          {
             "group": "Cobranças via Boleto",
             "pages": [
               "guias/boleto/visao-geral",
@@ -194,6 +203,13 @@
               "api-reference/boleto/cancelar-boleto",
               "api-reference/boleto/imprimir-boleto",
               "api-reference/boleto/simular-boleto"
+            ]
+          },
+          {
+            "group": "Pagamento de contas",
+            "pages": [
+              "api-reference/pagamento-contas/consultar-conta",
+              "api-reference/pagamento-contas/pagar-conta"
             ]
           },
           {
