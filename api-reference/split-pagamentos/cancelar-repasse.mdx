@@ -64,6 +64,14 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
 ```json 200
 {
     "id": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
+    "splitPayment": {
+        "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
+        "source": "QR_CODE",
+        "grossAmount": 200.00,
+        "tariffAmount": 2.00,
+        "splitBaseAmount": 198.00,
+        "createdAt": "2026-10-26T14:32:10.000Z"
+    },
     "status": "CANCELED",
     "transferType": "INTERNAL",
     "instructionType": "PERCENTAGE",
@@ -71,12 +79,18 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
     "amount": 19.80,
     "paymentDate": "2026-10-26",
     "beneficiary": {
-        "name": "Loja do João LTDA",
-        "document": "12345678000190",
-        "bankAccountNumber": "10073",
-        "bankAccountBranch": "0001",
-        "participantIspb": "00000000",
-        "bankAccountType": "PAYMENT"
+        "number": "10073",
+        "branch": "0001",
+        "type": "PAYMENT",
+        "holder": {
+            "document": "12345678000190",
+            "name": "LOJA DO JOÃO LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "ispb": "38224857",
+            "name": "DELFINANCE SCD S.A."
+        }
     },
     "executedTransactionId": null,
     "endToEndId": null,

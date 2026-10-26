@@ -15,7 +15,7 @@ Cada pagamento recebido com split gera um ou mais **repasses**, um para cada ins
 Isso vale para os dois tipos de split: o [split padrão da conta](/guias/split-pagamentos/configurar) e o [split por cobrança](/guias/split-pagamentos/split-por-cobranca). Os termos usados aqui seguem os [conceitos do Split de Pagamentos](/guias/split-pagamentos/visao-geral#conceitos).
 
 <Tip>
-Essas APIs são a base para montar um marketplace: a plataforma recebe o pagamento na conta de recebimento e consegue mostrar a cada vendedor (o beneficiário) o que já foi repassado e o que ainda vai receber.
+Essas APIs são a base para montar um marketplace: a plataforma recebe o pagamento na conta de recebimento e consegue mostrar a cada vendedor (o beneficiário) o que já foi repassado e o que ainda vai receber. Veja a jornada completa no [guia para marketplaces](/guias/split-pagamentos/marketplace).
 </Tip>
 
 ## Recebimento e repasses
@@ -75,10 +75,10 @@ A falha de um repasse não afeta os outros repasses do mesmo recebimento. Cada r
 <Steps>
 
 <Step title="Liste os recebimentos com split">
-Use `GET /baas/api/v1/split-payments/orders` para ver os pagamentos da conta de recebimento que geraram repasses, em um período. Cada item traz o valor recebido, a tarifa e a base de cálculo dos repasses.
+Use `GET /baas/api/v1/split-payments` para ver os pagamentos da conta de recebimento que geraram repasses, em um período. Cada item traz o valor recebido, a tarifa e a base de cálculo dos repasses.
 
 ```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders?startDate=2026-10-01&endDate=2026-10-26&page=1&limit=20' \
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments?startDate=2026-10-01&endDate=2026-10-26&page=1&limit=20' \
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}'
 ```
@@ -89,10 +89,10 @@ Veja todos os filtros em [Listar recebimentos com split](/api-reference/split-pa
 </Step>
 
 <Step title="Veja os repasses de um recebimento">
-Use `GET /baas/api/v1/split-payments/orders/{id}` para ver o detalhe de um recebimento: os valores usados no cálculo e a lista completa de repasses, com o status de cada um.
+Use `GET /baas/api/v1/split-payments/{id}` para ver o detalhe de um recebimento: os valores usados no cálculo e a lista completa de repasses, com o status de cada um.
 
 ```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}'
 ```
@@ -165,10 +165,10 @@ O cancelamento e o valor a receber ganham uso real com os **repasses com data fu
 
 <CardGroup cols={2}>
   <Card title="Listar recebimentos com split" icon="list" href="/api-reference/split-pagamentos/listar-recebimentos">
-    `GET /split-payments/orders`
+    `GET /split-payments`
   </Card>
   <Card title="Consultar recebimento com split" icon="magnifying-glass" href="/api-reference/split-pagamentos/consultar-recebimento">
-    `GET /split-payments/orders/{id}`
+    `GET /split-payments/{id}`
   </Card>
   <Card title="Listar repasses" icon="arrow-right-arrow-left" href="/api-reference/split-pagamentos/listar-repasses">
     `GET /split-payments/payouts`

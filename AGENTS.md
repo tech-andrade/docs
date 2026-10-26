@@ -28,6 +28,7 @@ Definição oficial em `guias/split-pagamentos/visao-geral.mdx` (seção "Concei
 - **Repasse**: a transferência efetiva da conta de recebimento para a conta do beneficiário.
 - **Split padrão da conta**: configuração em `/split-payments/configurations`, aplicada a todo Pix recebido na conta. Não use "split por conta".
 - **Split por cobrança**: `splitPayment` informado na criação do QR Code dinâmico; substitui o split padrão para aquela cobrança.
+- Papéis na jornada de marketplace (`guias/split-pagamentos/marketplace.mdx`): **gestor do marketplace** (titular da conta de recebimento), **plataforma** (sistema do marketplace integrado à API), **cliente final** (comprador/pagador) e **vendedor** (o beneficiário). As regras de comissão ficam na plataforma; a Delfinance só executa as instruções de cada cobrança.
 - Tipos de conta do beneficiário aceitos para Pix: apenas `PAYMENT`, `CURRENT` e `SAVING` (`SALARY` não é aceito pelo Pix).
 
 ## Style preferences

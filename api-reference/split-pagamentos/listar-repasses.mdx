@@ -58,6 +58,20 @@ Array de repasses. Os dados de paginação vêm no header `Pagination`, descrito
 <ResponseField name="id" type="string">
   Identificador do repasse. Use-o para [cancelar o repasse](/api-reference/split-pagamentos/cancelar-repasse).
 </ResponseField>
+<ResponseField name="splitPayment" type="object">
+  Recebimento com split que gerou o repasse. Mostra o valor integral do pagamento, a origem das instruções e a base de cálculo, sem precisar de outra consulta. É o mesmo recurso retornado por [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+
+  Não confunda com o objeto `splitPayment` enviado na criação do QR Code: aquele traz as instruções do que deve ser repassado, antes do pagamento. Este traz o recebimento que já aconteceu.
+
+  <Expandable title="splitPayment">
+    <ResponseField name="id" type="string">Identificador do recebimento com split: o id da transação de crédito, o mesmo do extrato e do webhook de recebimento. Use-o em [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).</ResponseField>
+    <ResponseField name="source" type="string">`ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).</ResponseField>
+    <ResponseField name="grossAmount" type="number">Valor integral do pagamento recebido.</ResponseField>
+    <ResponseField name="tariffAmount" type="number">Tarifa de split descontada antes do cálculo. `0` quando não há.</ResponseField>
+    <ResponseField name="splitBaseAmount" type="number">Base de cálculo dos repasses (`grossAmount - tariffAmount`).</ResponseField>
+    <ResponseField name="createdAt" type="string">Data e hora do recebimento, em ISO 8601.</ResponseField>
+  </Expandable>
+</ResponseField>
 <ResponseField name="status" type="string">
   `SCHEDULED`, `PENDING`, `PROCESSING`, `PAID`, `FAILED` ou `CANCELED`. Veja o significado de cada um em [Status do repasse](/guias/split-pagamentos/acompanhar-repasses#status-do-repasse).
 </ResponseField>
@@ -77,15 +91,29 @@ Array de repasses. Os dados de paginação vêm no header `Pagination`, descrito
   Data prevista do repasse, no formato `YYYY-MM-DD`. Nesta fase, é sempre a data do recebimento.
 </ResponseField>
 <ResponseField name="beneficiary" type="object">
-  Beneficiário e conta do beneficiário.
+  Conta do beneficiário, no mesmo formato usado nas transferências.
 
   <Expandable title="beneficiary">
-    <ResponseField name="name" type="string">Nome do beneficiário.</ResponseField>
-    <ResponseField name="document" type="string">CPF ou CNPJ do beneficiário.</ResponseField>
-    <ResponseField name="bankAccountNumber" type="string">Número da conta do beneficiário.</ResponseField>
-    <ResponseField name="bankAccountBranch" type="string">Agência da conta do beneficiário.</ResponseField>
-    <ResponseField name="participantIspb" type="string">ISPB da instituição da conta do beneficiário.</ResponseField>
-    <ResponseField name="bankAccountType" type="string">Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
+    <ResponseField name="number" type="string">Número da conta do beneficiário.</ResponseField>
+    <ResponseField name="branch" type="string">Agência da conta do beneficiário.</ResponseField>
+    <ResponseField name="type" type="string">Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
+    <ResponseField name="holder" type="object">
+      Titular da conta, ou seja, o beneficiário.
+
+      <Expandable title="holder">
+        <ResponseField name="document" type="string">CPF ou CNPJ do beneficiário.</ResponseField>
+        <ResponseField name="name" type="string">Nome do beneficiário.</ResponseField>
+        <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="participant" type="object">
+      Instituição da conta do beneficiário.
+
+      <Expandable title="participant">
+        <ResponseField name="ispb" type="string">ISPB da instituição.</ResponseField>
+        <ResponseField name="name" type="string">Nome da instituição.</ResponseField>
+      </Expandable>
+    </ResponseField>
   </Expandable>
 </ResponseField>
 <ResponseField name="executedTransactionId" type="string">
@@ -142,6 +170,14 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
 [
     {
         "id": "5d2e8f1a-7c3b-4e9d-a6f0-1b2c3d4e5f60",
+        "splitPayment": {
+            "id": "b4c5d6e7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",
+            "source": "QR_CODE",
+            "grossAmount": 50.00,
+            "tariffAmount": 0.00,
+            "splitBaseAmount": 50.00,
+            "createdAt": "2026-10-20T10:15:00.000Z"
+        },
         "status": "FAILED",
         "transferType": "PIX_MANUAL",
         "instructionType": "FIXED",
@@ -149,12 +185,18 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
         "amount": 5.00,
         "paymentDate": "2026-10-20",
         "beneficiary": {
-            "name": "Maria Souza",
-            "document": "12345678909",
-            "bankAccountNumber": "123456",
-            "bankAccountBranch": "0001",
-            "participantIspb": "00000000",
-            "bankAccountType": "CURRENT"
+            "number": "123456",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": {
+                "document": "12345678909",
+                "name": "MARIA SOUZA",
+                "type": "NATURAL"
+            },
+            "participant": {
+                "ispb": "00000000",
+                "name": "BANCO EXEMPLO S.A."
+            }
         },
         "executedTransactionId": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",
         "endToEndId": "E00000000202610201015fedcba654321",

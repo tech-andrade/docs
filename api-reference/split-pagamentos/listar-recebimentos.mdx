@@ -1,6 +1,6 @@
 ---
 title: "Listar recebimentos com split"
-api: "GET /baas/api/v1/split-payments/orders"
+api: "GET /baas/api/v1/split-payments"
 description: "Liste os pagamentos da conta de recebimento que geraram repasses, com os valores usados no cálculo dos repasses."
 tag: "BETA"
 ---
@@ -89,7 +89,7 @@ Pagination: {"currentPage":1,"pageSize":20,"pageCount":1,"rowCount":1,"totalAmou
 
 <RequestExample>
 ```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders?startDate=2026-10-01&endDate=2026-10-26&page=1&limit=20' \
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments?startDate=2026-10-01&endDate=2026-10-26&page=1&limit=20' \
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}'
 ```

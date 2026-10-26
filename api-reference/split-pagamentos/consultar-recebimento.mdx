@@ -1,6 +1,6 @@
 ---
 title: "Consultar recebimento com split"
-api: "GET /baas/api/v1/split-payments/orders/{id}"
+api: "GET /baas/api/v1/split-payments/{id}"
 description: "Consulte um recebimento com split e a lista completa de repasses que ele gerou, com o status de cada um."
 tag: "BETA"
 ---
@@ -54,18 +54,18 @@ Retorna o detalhe de um recebimento com split: os valores usados no cálculo e t
 </ResponseField>
 
 <ResponseField name="payouts" type="array">
-  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response).
+  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response), exceto o objeto `splitPayment`, que não se repete aqui porque os dados do recebimento já estão no nível de cima.
 </ResponseField>
 
 ## Erros
 
 | HTTP | Código | Quando acontece |
 |---|---|---|
-| `404` | `SPLIT_PAYMENT_ORDER_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
+| `404` | `SPLIT_PAYMENT_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
 
 <RequestExample>
 ```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}'
 ```
@@ -90,12 +90,18 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
             "amount": 19.80,
             "paymentDate": "2026-10-26",
             "beneficiary": {
-                "name": "Loja do João LTDA",
-                "document": "12345678000190",
-                "bankAccountNumber": "10073",
-                "bankAccountBranch": "0001",
-                "participantIspb": "00000000",
-                "bankAccountType": "PAYMENT"
+                "number": "10073",
+                "branch": "0001",
+                "type": "PAYMENT",
+                "holder": {
+                    "document": "12345678000190",
+                    "name": "LOJA DO JOÃO LTDA",
+                    "type": "LEGAL"
+                },
+                "participant": {
+                    "ispb": "38224857",
+                    "name": "DELFINANCE SCD S.A."
+                }
             },
             "executedTransactionId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
             "endToEndId": null,
@@ -115,12 +121,18 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
             "amount": 5.00,
             "paymentDate": "2026-10-26",
             "beneficiary": {
-                "name": "Maria Souza",
-                "document": "12345678909",
-                "bankAccountNumber": "123456",
-                "bankAccountBranch": "0001",
-                "participantIspb": "00000000",
-                "bankAccountType": "CURRENT"
+                "number": "123456",
+                "branch": "0001",
+                "type": "CURRENT",
+                "holder": {
+                    "document": "12345678909",
+                    "name": "MARIA SOUZA",
+                    "type": "NATURAL"
+                },
+                "participant": {
+                    "ispb": "00000000",
+                    "name": "BANCO EXEMPLO S.A."
+                }
             },
             "executedTransactionId": "f0e1d2c3-b4a5-4968-8776-655443322110",
             "endToEndId": "E00000000202610261432abcdef123456",

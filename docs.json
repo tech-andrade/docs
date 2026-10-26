@@ -110,6 +110,7 @@
               "guias/split-pagamentos/configurar",
               "guias/split-pagamentos/split-por-cobranca",
               "guias/split-pagamentos/acompanhar-repasses",
+              "guias/split-pagamentos/marketplace",
               "guias/split-pagamentos/consultar",
               "guias/split-pagamentos/remover"
             ]
