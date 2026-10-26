@@ -1,11 +1,11 @@
 ---
-title: "Consultar Split de Pagamentos"
-sidebarTitle: "Consultar"
-description: "Liste todas as configurações de Split de Pagamento ou consulte uma configuração específica por ID."
+title: "Consultar o split padrão da conta"
+sidebarTitle: "Consultar split padrão"
+description: "Liste todas as configurações de split padrão da conta ou consulte uma configuração específica por ID."
 icon: "magnifying-glass"
 ---
 
-Existem duas formas de consultar configurações de Split de Pagamento: listando todas as configurações cadastradas para a conta ou buscando uma configuração específica pelo seu `id`.
+Existem duas formas de consultar configurações de split padrão da conta: listando todas as configurações cadastradas para a conta ou buscando uma configuração específica pelo seu `id`.
 
 ## Listar todas as configurações
 
@@ -21,7 +21,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 [
   {
     "id": 15,
-    "bankAccountNumber": "CONTA_PAGADORA",
+    "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
     "instructions": [
@@ -64,7 +64,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json Response
 {
   "id": 15,
-  "bankAccountNumber": "CONTA_PAGADORA",
+  "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
   "createdAt": "2025-09-19T20:04:38.112Z",
   "updatedAt": "2025-09-19T20:04:38.112Z",
   "instructions": [

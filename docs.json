@@ -84,6 +84,15 @@
             ]
           },
           {
+            "group": "Pagar boletos e contas (Cash-out)",
+            "pages": [
+              "guias/pagamento-contas/visao-geral",
+              "guias/pagamento-contas/consultar",
+              "guias/pagamento-contas/pagar",
+              "guias/pagamento-contas/troubleshooting"
+            ]
+          },
+          {
             "group": "Cobranças via Boleto",
             "pages": [
               "guias/boleto/visao-geral",
@@ -99,6 +108,9 @@
             "pages": [
               "guias/split-pagamentos/visao-geral",
               "guias/split-pagamentos/configurar",
+              "guias/split-pagamentos/split-por-cobranca",
+              "guias/split-pagamentos/acompanhar-repasses",
+              "guias/split-pagamentos/marketplace",
               "guias/split-pagamentos/consultar",
               "guias/split-pagamentos/remover"
             ]
@@ -197,6 +209,13 @@
             ]
           },
           {
+            "group": "Pagamento de contas",
+            "pages": [
+              "api-reference/pagamento-contas/consultar-conta",
+              "api-reference/pagamento-contas/pagar-conta"
+            ]
+          },
+          {
             "group": "Split de Pagamentos",
             "pages": [
               "api-reference/split-pagamentos/criar-split",
@@ -205,7 +224,17 @@
               "api-reference/split-pagamentos/adicionar-beneficiario",
               "api-reference/split-pagamentos/atualizar-beneficiario",
               "api-reference/split-pagamentos/remover-split",
-              "api-reference/split-pagamentos/remover-beneficiario"
+              "api-reference/split-pagamentos/remover-beneficiario",
+              {
+                "group": "Repasses",
+                "pages": [
+                  "api-reference/split-pagamentos/listar-recebimentos",
+                  "api-reference/split-pagamentos/consultar-recebimento",
+                  "api-reference/split-pagamentos/listar-repasses",
+                  "api-reference/split-pagamentos/consultar-valor-a-receber",
+                  "api-reference/split-pagamentos/cancelar-repasse"
+                ]
+              }
             ]
           },
           {

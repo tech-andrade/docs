@@ -1,0 +1,112 @@
+---
+title: "Cancelar repasse"
+api: "POST /baas/api/v1/split-payments/payouts/{payoutId}/cancel"
+description: "Cancele um repasse que ainda não foi executado. O valor permanece na conta de recebimento."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Cancela um repasse em `SCHEDULED` ou `PENDING`. Nesses status, nenhum dinheiro saiu da conta de recebimento, então o valor do repasse apenas permanece nela. O cancelamento é irreversível.
+
+<Note>
+Nesta fase, todo repasse é executado logo após o recebimento, então um repasse fica em `PENDING` por pouquíssimo tempo. O cancelamento ganha uso real com os repasses com data futura (`SCHEDULED`), previstos para uma próxima fase.
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="payoutId" type="string" required>
+  Identificador do repasse (`id`), obtido em [Listar repasses](/api-reference/split-pagamentos/listar-repasses) ou em [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+</ParamField>
+
+## Body
+
+<ParamField body="reason" type="string" required>
+  Motivo do cancelamento. Fica registrado em `cancelReason`. Até 255 caracteres.
+</ParamField>
+
+## Response
+
+Retorna o repasse atualizado, com `status` igual a `CANCELED` e os campos `canceledAt` e `cancelReason` preenchidos. A estrutura é a mesma descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response).
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `404` | `SPLIT_PAYOUT_NOT_FOUND` | Não existe repasse com esse `payoutId` na conta de recebimento |
+| `422` | `SPLIT_PAYOUT_NOT_CANCELABLE` | O repasse não está em `SCHEDULED` nem em `PENDING`. Repasses em `PROCESSING`, `PAID`, `FAILED` ou `CANCELED` não podem ser cancelados |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3/cancel' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "reason": "Pedido devolvido pelo comprador"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
+    "order": {
+        "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
+        "source": "QR_CODE",
+        "grossAmount": 200.00,
+        "tariffAmount": 2.00,
+        "splitBaseAmount": 198.00,
+        "createdAt": "2026-10-26T14:32:10.000Z"
+    },
+    "status": "CANCELED",
+    "transferType": "INTERNAL",
+    "instructionType": "PERCENTAGE",
+    "instructionAmount": 10,
+    "amount": 19.80,
+    "paymentDate": "2026-10-26",
+    "beneficiary": {
+        "number": "10073",
+        "branch": "0001",
+        "type": "PAYMENT",
+        "holder": {
+            "document": "12345678000190",
+            "name": "LOJA DO JOÃO LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "ispb": "38224857",
+            "name": "DELFINANCE SCD S.A."
+        }
+    },
+    "executedTransactionId": null,
+    "endToEndId": null,
+    "failureReason": null,
+    "paidAt": null,
+    "canceledAt": "2026-10-26T14:35:00.000Z",
+    "cancelReason": "Pedido devolvido pelo comprador",
+    "createdAt": "2026-10-26T14:32:10.000Z",
+    "updatedAt": "2026-10-26T14:35:00.000Z"
+}
+```
+
+```json 422
+{
+    "code": "SPLIT_PAYOUT_NOT_CANCELABLE",
+    "message": "O repasse está em PAID e não pode ser cancelado."
+}
+```
+</ResponseExample>

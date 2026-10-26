@@ -1,0 +1,152 @@
+---
+title: "Listar recebimentos com split"
+api: "GET /baas/api/v1/split-payments/orders"
+description: "Liste os pagamentos da conta de recebimento que geraram repasses, com os valores usados no cálculo dos repasses."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Retorna, de forma paginada, os recebimentos com split da conta de recebimento informada em `x-delfinance-account-id`. Cada item traz os valores usados no cálculo dos repasses. Para ver os repasses, use [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Query params
+
+<ParamField query="startDate" type="string" required>
+  Data inicial do recebimento, no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="endDate" type="string" required>
+  Data final do recebimento, no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="source" type="string">
+  Origem das instruções: `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="20">
+  Itens por página. Máximo de 100.
+</ParamField>
+
+## Response
+
+Array de recebimentos com split. Os dados de paginação vêm no header `Pagination`, descrito em [Paginação](#paginação).
+
+<ResponseField name="id" type="string">
+  Identificador do recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+</ResponseField>
+
+<ResponseField name="grossAmount" type="number">
+  Valor integral do pagamento recebido.
+</ResponseField>
+
+<ResponseField name="tariffAmount" type="number">
+  Tarifa de split descontada antes do cálculo. `0` quando não há.
+</ResponseField>
+
+<ResponseField name="splitBaseAmount" type="number">
+  Base de cálculo dos repasses (`grossAmount - tariffAmount`).
+</ResponseField>
+
+<ResponseField name="payer" type="object">
+  Conta de quem pagou o Pix (o pagador), no mesmo formato da conta do beneficiário.
+
+  <Expandable title="payer">
+    <ResponseField name="number" type="string">Número da conta do pagador.</ResponseField>
+    <ResponseField name="branch" type="string">Agência da conta do pagador.</ResponseField>
+    <ResponseField name="type" type="string">Tipo da conta do pagador, como `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
+    <ResponseField name="holder" type="object">
+      Titular da conta, ou seja, o pagador.
+
+      <Expandable title="holder">
+        <ResponseField name="document" type="string">CPF ou CNPJ do pagador.</ResponseField>
+        <ResponseField name="name" type="string">Nome do pagador.</ResponseField>
+        <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="participant" type="object">
+      Instituição da conta do pagador.
+
+      <Expandable title="participant">
+        <ResponseField name="ispb" type="string">ISPB da instituição.</ResponseField>
+        <ResponseField name="name" type="string">Nome da instituição.</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora do recebimento, em ISO 8601.
+</ResponseField>
+
+## Paginação
+
+A resposta é um array. Os dados de paginação vêm no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":20,"pageCount":1,"rowCount":1,"totalAmount":200.00}
+```
+
+| Campo | Descrição |
+|---|---|
+| `currentPage` | Página retornada |
+| `pageSize` | Itens por página (`limit`) |
+| `pageCount` | Total de páginas |
+| `rowCount` | Total de recebimentos encontrados |
+| `totalAmount` | Soma do `grossAmount` de todos os recebimentos encontrados, considerando todas as páginas |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders?startDate=2026-10-01&endDate=2026-10-26&page=1&limit=20' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
+        "source": "QR_CODE",
+        "grossAmount": 200.00,
+        "tariffAmount": 2.00,
+        "splitBaseAmount": 198.00,
+        "payer": {
+            "number": "987654",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": {
+                "document": "98765432100",
+                "name": "JOÃO PEREIRA",
+                "type": "NATURAL"
+            },
+            "participant": {
+                "ispb": "00000000",
+                "name": "BANCO EXEMPLO S.A."
+            }
+        },
+        "createdAt": "2026-10-26T14:32:10.000Z"
+    }
+]
+```
+</ResponseExample>

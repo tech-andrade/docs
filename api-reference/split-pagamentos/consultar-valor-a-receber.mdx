@@ -1,0 +1,99 @@
+---
+title: "Consultar valor a receber"
+api: "GET /baas/api/v1/split-payments/receivables"
+description: "Consulte quanto um beneficiário ainda vai receber de repasses e, opcionalmente, quanto já recebeu em um período."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Retorna o **valor a receber** de um beneficiário na conta de recebimento: a soma dos repasses que ainda não foram concluídos (`SCHEDULED`, `PENDING` e `PROCESSING`). Se você informar um período, a resposta também traz o total já pago nesse período.
+
+<Note>
+Nesta fase, todo repasse é executado logo após o recebimento. Por isso, o valor a receber costuma se resumir aos repasses Pix ainda em `PROCESSING`. Com os repasses com data futura, previstos para uma próxima fase, os repasses agendados (`SCHEDULED`) também entram nessa soma.
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Query params
+
+<ParamField query="beneficiaryDocument" type="string" required>
+  CPF ou CNPJ do beneficiário, somente números.
+</ParamField>
+
+<ParamField query="paidFrom" type="string">
+  Data inicial para o total pago, no formato `YYYY-MM-DD`. Informe junto com `paidTo`.
+</ParamField>
+
+<ParamField query="paidTo" type="string">
+  Data final para o total pago, no formato `YYYY-MM-DD`. Informe junto com `paidFrom`.
+</ParamField>
+
+## Response
+
+<ResponseField name="beneficiaryDocument" type="string">
+  CPF ou CNPJ do beneficiário consultado.
+</ResponseField>
+
+<ResponseField name="receivableAmount" type="number">
+  Valor a receber: soma dos repasses em `SCHEDULED`, `PENDING` e `PROCESSING`.
+</ResponseField>
+
+<ResponseField name="receivableByStatus" type="object">
+  Valor a receber separado por status.
+
+  <Expandable title="receivableByStatus">
+    <ResponseField name="scheduled" type="number">Soma dos repasses agendados.</ResponseField>
+    <ResponseField name="pending" type="number">Soma dos repasses prontos para execução.</ResponseField>
+    <ResponseField name="processing" type="number">Soma dos repasses Pix aguardando confirmação.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="paid" type="object">
+  Total pago no período. Presente apenas quando `paidFrom` e `paidTo` são informados.
+
+  <Expandable title="paid">
+    <ResponseField name="from" type="string">Data inicial do período.</ResponseField>
+    <ResponseField name="to" type="string">Data final do período.</ResponseField>
+    <ResponseField name="amount" type="number">Soma dos repasses `PAID` no período.</ResponseField>
+    <ResponseField name="count" type="number">Quantidade de repasses `PAID` no período.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/receivables?beneficiaryDocument=12345678909&paidFrom=2026-10-01&paidTo=2026-10-26' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "beneficiaryDocument": "12345678909",
+    "receivableAmount": 5.00,
+    "receivableByStatus": {
+        "scheduled": 0.00,
+        "pending": 0.00,
+        "processing": 5.00
+    },
+    "paid": {
+        "from": "2026-10-01",
+        "to": "2026-10-26",
+        "amount": 85.00,
+        "count": 17
+    }
+}
+```
+</ResponseExample>

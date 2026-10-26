@@ -1,0 +1,116 @@
+---
+title: "Pagar boleto ou conta"
+sidebarTitle: "Pagar"
+description: "Pague um boleto, conta de consumo ou tributo informando o valor e o código de barras ou a linha digitável."
+icon: "paper-plane"
+---
+
+Para pagar, informe o valor e o código de barras ou a linha digitável do documento. Antes, [consulte o documento](/guias/pagamento-contas/consultar) para validar o status e definir o valor.
+
+<Info>
+Boletos bancários são processados até 20h. Contas de consumo e tributos, até 16h. Os horários são de Brasília. Veja [Horários de processamento](/guias/pagamento-contas/visao-geral#horários-de-processamento).
+</Info>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Execute o pagamento">
+Envie o `amount` e o `barCode` ou a `digitableLine` para `POST /bill-payments`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/bill-payments' \
+--header 'IdempotencyKey: {{$guid}}' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "amount": 691.71,
+    "barCode": "43596938200000691710001112000000200000309361"
+}'
+```
+```json Response
+{
+    "id": "1694017754",
+    "identifierNumber": "3023061406106689529",
+    "barCode": "43596938200000691710001112000000200000309361",
+    "digitableLine": "43590001161200000020300003093614693820000069171",
+    "status": "PAID",
+    "dueDate": "2023-06-15T19:30:00",
+    "createdAt": "2023-09-06T16:29:14.950Z",
+    "originalAmount": 691.71,
+    "paidAmount": 691.71,
+    "paymentCalculation": {
+        "rebateAmount": 0.0,
+        "interesetAmount": 0.0,
+        "fineAmount": 0.0,
+        "discountAmount": 0.0,
+        "chargedAmount": 691.71,
+        "minimumPaymentAmount": 691.71,
+        "maximumPaymentAmount": 691.71
+    },
+    "beneficiary": {
+        "document": "11468192000181",
+        "name": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "fantasyName": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "type": "LEGAL"
+    },
+    "issuer": {
+        "ispb": "38224857",
+        "name": "DELCRED SCD S.A.",
+        "nameFantasy": "DELBANK"
+    }
+}
+```
+</CodeGroup>
+
+<Warning>
+O `IdempotencyKey` no header é obrigatório. Envie um GUID único por requisição para evitar pagamentos duplicados em caso de retry. Veja [Idempotência](/iniciacao/idempotencia).
+</Warning>
+</Step>
+
+<Step title="Trate o pagamento como em processamento">
+A resposta `200` indica que o pagamento foi **aceito para processamento**. A liquidação acontece depois, de forma assíncrona.
+
+<Warning>
+Hoje, o campo `status` já vem como `PAID` nessa resposta, mesmo antes da liquidação. Não há webhook de confirmação do pagamento.
+</Warning>
+
+Se o pagamento não for liquidado, o valor volta para a sua conta e o time da Delfinance entra em contato. Guarde o `id` retornado: é a referência do pagamento em qualquer contato com o suporte.
+</Step>
+
+</Steps>
+
+## Headers
+
+| Header | Obrigatório | Descrição |
+|---|---|---|
+| `x-delbank-api-key` | Sim | Sua chave de API |
+| `x-delfinance-account-id` | Sim | Número da conta Delfinance |
+| `IdempotencyKey` | Sim | GUID único por requisição |
+
+## Campos do corpo
+
+| Campo | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `amount` | number | Sim | Valor a pagar. Veja como definir em [Consultar boleto ou conta](/guias/pagamento-contas/consultar#passo-a-passo) |
+| `barCode` | string | Condicional | Código de barras. Obrigatório se você não enviar `digitableLine` |
+| `digitableLine` | string | Condicional | Linha digitável. Obrigatória se você não enviar `barCode` |
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | string | Identificador do pagamento |
+| `identifierNumber` | string | Identificador do documento |
+| `barCode` | string | Código de barras |
+| `digitableLine` | string | Linha digitável |
+| `status` | enum | Status do pagamento |
+| `dueDate` | datetime | Data e hora de vencimento do documento |
+| `createdAt` | datetime | Data e hora em que o pagamento foi criado |
+| `originalAmount` | number | Valor original do documento |
+| `paidAmount` | number | Valor enviado no pagamento |
+| `paymentCalculation` | object | Valores calculados do documento. Os campos são os mesmos da [consulta](/guias/pagamento-contas/consultar#campos-da-resposta) |
+| `beneficiary` | object | Dados do beneficiário |
+| `issuer` | object | Dados do banco emissor |

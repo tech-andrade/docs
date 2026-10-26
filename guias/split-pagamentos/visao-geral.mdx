@@ -1,47 +1,60 @@
 ---
 title: "Split de Pagamentos"
 sidebarTitle: "Visão geral"
-description: "Distribua automaticamente os valores recebidos em uma conta entre múltiplos beneficiários, com regras percentuais ou fixas."
+description: "Distribua automaticamente os valores recebidos entre múltiplos beneficiários, com uma regra padrão para a conta ou regras próprias em cada cobrança."
 icon: "arrows-split-up-and-left"
 ---
 
-O Split de Pagamentos permite configurar regras de divisão automática para os valores recebidos em uma conta Delfinance. Assim que um pagamento é creditado na conta de origem, a Delfinance calcula e transfere as partes correspondentes para as contas de destino configuradas, de acordo com as regras definidas. Sua aplicação não precisa fazer nada a cada recebimento.
+O Split de Pagamentos divide automaticamente os valores recebidos em uma conta Delfinance. Assim que um pagamento é creditado na **conta de recebimento**, a Delfinance calcula e transfere a parte de cada **beneficiário** para a conta dele, de acordo com as regras definidas. Sua aplicação não precisa fazer nada a cada recebimento.
 
 <Tip>
 Útil para marketplaces, plataformas de serviços e qualquer negócio que precise repassar parte de um recebimento para fornecedores, parceiros, afiliados ou franqueados sem processar isso manualmente.
 </Tip>
 
-## Como funciona
+## Conceitos
 
-1. Você cria uma **configuração de Split** associada a uma conta de recebimento (`bankAccountNumber`).
-2. Para cada configuração, você cadastra uma ou mais **instruções** (`instructions`), cada uma definindo quanto repassar (`amount` + `type`), como o repasse é feito (`transferType`) e para quem (`beneficiary`).
-3. A partir daí, todo pagamento recebido na conta de origem é dividido automaticamente conforme as instruções vigentes no momento do recebimento.
+Toda a documentação de split usa os termos abaixo.
 
-<Note>
-O Split é aplicado a **todos** os pagamentos recebidos na conta configurada. Não é possível aplicar o split apenas a transações específicas: a configuração vale para a conta como um todo.
-</Note>
+| Termo | O que é |
+|---|---|
+| **Conta de recebimento** | A conta Delfinance que recebe o pagamento original, com o valor integral. É dela que saem os repasses. No split padrão, é o `bankAccountNumber` da configuração. No split por cobrança, é a conta que cria o QR Code (header `x-delfinance-account-id`) |
+| **Beneficiário** | A pessoa ou empresa que recebe uma parte do pagamento. Por exemplo: o vendedor, o parceiro ou o afiliado |
+| **Conta do beneficiário** | A conta para onde a parte do beneficiário é transferida. Pode ser uma conta Delfinance (`INTERNAL`) ou uma conta em outra instituição (`PIX_MANUAL`). Os dados dela vão no objeto `beneficiary` |
+| **Instrução** | A regra de um repasse: quanto sai (`amount`), como o valor é calculado (`type`: `PERCENTAGE` ou `FIXED`), por qual meio é enviado (`transferType`) e para quem (`beneficiary`) |
+| **Repasse** | A transferência efetiva da conta de recebimento para a conta do beneficiário, gerada por uma instrução a cada pagamento recebido |
 
-## O que é uma instrução e o que é um beneficiário?
-
-<Info>
-**Instrução** é a regra de repasse: quanto sai (`amount`), de que forma é calculado (`type`: `PERCENTAGE` ou `FIXED`) e por qual meio o dinheiro é enviado (`transferType`).
-
-**Beneficiário** é o objeto dentro da instrução com os dados da conta de destino: número da conta, agência, ISPB e os dados do titular (`holder`).
-
-Uma configuração pode ter várias instruções. O valor que não foi destinado a nenhuma delas permanece normalmente na conta de recebimento.
-</Info>
-
-Um jeito simples de visualizar: um pagamento de R$ 100 chega na sua conta, e a Delfinance repassa automaticamente a parte de cada instrução para o beneficiário configurado.
+Um jeito simples de visualizar: um pagamento de R$ 100 chega na conta de recebimento, e cada instrução gera um repasse para a conta do beneficiário. O valor que não foi destinado a nenhuma instrução permanece na conta de recebimento.
 
 ```mermaid
 flowchart LR
-    A["Pagamento recebido<br/>R$ 100,00"] --> B["Conta de recebimento<br/>(bankAccountNumber)"]
-    B --> C["Instrução 1<br/>PERCENTAGE 10% = R$ 10,00<br/>beneficiary: conta interna"]
-    B --> D["Instrução 2<br/>FIXED R$ 50,00<br/>beneficiary: Pix manual"]
-    B --> E["Saldo restante<br/>R$ 40,00 fica na conta"]
+    A["Pagamento recebido<br/>R$ 100,00"] --> B["Conta de recebimento"]
+    B -->|"Repasse da instrução 1<br/>PERCENTAGE 10% = R$ 10,00"| C["Conta do beneficiário 1<br/>(INTERNAL)"]
+    B -->|"Repasse da instrução 2<br/>FIXED = R$ 50,00"| D["Conta do beneficiário 2<br/>(PIX_MANUAL)"]
+    B --> E["Saldo restante<br/>R$ 40,00 fica na conta de recebimento"]
 ```
 
-Um caso comum é o de um marketplace: o cliente paga o pedido inteiro na conta da plataforma, e uma fatia menor é repassada automaticamente para o vendedor ou para quem indicou a venda, sem que a plataforma precise fazer essa transferência manualmente.
+Em um marketplace, por exemplo, o cliente paga o pedido inteiro na conta de recebimento da plataforma, e a parte do vendedor (o beneficiário) é repassada automaticamente para a conta dele, sem que a plataforma precise fazer essa transferência manualmente.
+
+## Duas formas de usar o split
+
+<CardGroup cols={2}>
+  <Card title="Split padrão da conta" icon="gear" href="/guias/split-pagamentos/configurar">
+    Uma regra configurada uma vez na conta e aplicada a **todos** os Pix recebidos nela. Ideal quando o repasse é sempre o mesmo, como a parte fixa de um parceiro.
+  </Card>
+  <Card title="Split por cobrança" icon="qrcode" href="/guias/split-pagamentos/split-por-cobranca">
+    Regras definidas na criação de cada QR Code dinâmico, valendo só para aquela cobrança. Ideal quando cada venda tem um destinatário diferente, como em um marketplace.
+  </Card>
+</CardGroup>
+
+As duas formas usam as mesmas instruções: quanto repassar (`amount` + `type`), como o repasse é feito (`transferType`) e para quem (`beneficiary`). Quando uma cobrança traz o próprio split, ele **substitui** o split padrão da conta para os pagamentos daquele QR Code.
+
+O restante desta página descreve o split padrão da conta. Para o split por cobrança, veja [Split por cobrança (QR Code)](/guias/split-pagamentos/split-por-cobranca).
+
+## Como funciona o split padrão da conta
+
+1. Você cria uma **configuração de split padrão** para a conta de recebimento (`bankAccountNumber`).
+2. Na configuração, você cadastra uma ou mais **instruções** (`instructions`), uma para cada beneficiário.
+3. A partir daí, todo pagamento Pix recebido na conta de recebimento gera os repasses automaticamente, conforme as instruções vigentes no momento do recebimento. A exceção são os pagamentos de cobranças com split próprio.
 
 ## Tipos de instrução (`type`)
 
@@ -70,12 +83,12 @@ O campo `transferType` define por qual meio o beneficiário recebe o valor. Cada
 | `PIX_KEY` | Ainda não funcional nesta rota. Não utilize até que o suporte seja anunciado. |
 
 <Warning>
-Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja os detalhes e exemplos de cada tipo no guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja os detalhes e exemplos de cada tipo no guia [Configurar o split padrão da conta](/guias/split-pagamentos/configurar).
 </Warning>
 
 ## Estrutura de dados
 
-### Configuração de Split
+### Configuração do split padrão
 
 | Campo | Tipo | Descrição |
 |---|---|---|
@@ -94,17 +107,17 @@ Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja os detalhes e exe
 | `amount` | `number` | Valor a aplicar, conforme o `type` |
 | `type` | `enum` | `PERCENTAGE` ou `FIXED` |
 | `transferType` | `enum` | `INTERNAL`, `PIX_MANUAL`, `EXTERNAL` ou `PIX_KEY` |
-| `beneficiary` | `object` | Dados da conta de destino, descritos abaixo |
+| `beneficiary` | `object` | Dados da conta do beneficiário, descritos abaixo |
 
 ### Beneficiário (`beneficiary`)
 
 | Campo | Tipo | Descrição |
 |---|---|---|
-| `number` | `string` | Número da conta de destino (2 a 25 caracteres) |
-| `branch` | `string` | Agência da conta de destino (1 a 10 caracteres) |
+| `number` | `string` | Número da conta do beneficiário (2 a 25 caracteres) |
+| `branch` | `string` | Agência da conta do beneficiário (1 a 10 caracteres) |
 | `participantIspb` | `string` | ISPB da instituição de destino (8 caracteres) |
-| `type` | `enum` | Tipo da conta de destino: `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL` ou `OWNER` |
-| `holder` | `object` | Dados do titular da conta de destino |
+| `type` | `enum` | Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING` |
+| `holder` | `object` | Dados do titular da conta do beneficiário |
 
 ### Titular (`holder`)
 
@@ -118,14 +131,21 @@ Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja os detalhes e exe
 
 ## Próximos passos
 
-<CardGroup cols={3}>
-  <Card title="Configurar" icon="gear" href="/guias/split-pagamentos/configurar">
+<Tip>
+Vai montar um marketplace? Veja a jornada completa, do checkout à área do vendedor, no [guia para marketplaces](/guias/split-pagamentos/marketplace).
+</Tip>
+
+<CardGroup cols={2}>
+  <Card title="Configurar split padrão" icon="gear" href="/guias/split-pagamentos/configurar">
     Crie uma configuração de split e cadastre ou atualize instruções, por tipo de repasse.
   </Card>
-  <Card title="Consultar" icon="magnifying-glass" href="/guias/split-pagamentos/consultar">
+  <Card title="Split por cobrança" icon="qrcode" href="/guias/split-pagamentos/split-por-cobranca">
+    Defina o split de cada cobrança na criação do QR Code dinâmico.
+  </Card>
+  <Card title="Consultar split padrão" icon="magnifying-glass" href="/guias/split-pagamentos/consultar">
     Liste todas as configurações ou consulte uma configuração específica por ID.
   </Card>
-  <Card title="Remover" icon="trash" href="/guias/split-pagamentos/remover">
+  <Card title="Remover split padrão" icon="trash" href="/guias/split-pagamentos/remover">
     Remova uma configuração inteira ou apenas uma instrução específica.
   </Card>
 </CardGroup>

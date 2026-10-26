@@ -1,0 +1,147 @@
+---
+title: "Consultar boleto ou conta"
+sidebarTitle: "Consultar boleto ou conta"
+description: "Consulte os dados e os valores de um boleto, conta de consumo ou tributo antes de pagar."
+icon: "magnifying-glass"
+---
+
+Antes de pagar, consulte o documento pelo código de barras ou pela linha digitável. A consulta retorna o status, os dados do beneficiário e os valores já calculados com juros, multa e descontos.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Consulte o documento">
+Envie o código de barras ou a linha digitável no path de `GET /bill-payments/{codigo}`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/bill-payments/43594939800000003250001112000000200000311672' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "identifierNumber": "3023063000107986253",
+    "type": "BANKSLIP",
+    "status": "PENDING_PAYMENT",
+    "amount": 3.25,
+    "dueDate": "2023-07-01T19:30:00",
+    "barCode": "43594939800000003250001112000000200000311672",
+    "digitableLine": "43590001161200000020300003116720493980000000325",
+    "isAllowPartialPayment": false,
+    "paymentCalculation": {
+        "rebateAmount": 0.0,
+        "interesetAmount": 2.23,
+        "fineAmount": 3.25,
+        "discountAmount": 0.0,
+        "chargedAmount": 8.73,
+        "minimumPaymentAmount": 8.73,
+        "maximumPaymentAmount": 8.73
+    },
+    "payer": {
+        "document": "1234567123",
+        "name": "JAMES XPTO",
+        "type": "NATURAL"
+    },
+    "overduePaymentInterest": {
+        "date": "2023-07-02",
+        "amount": 23.53,
+        "type": "PERCENTAGE"
+    },
+    "overduePaymentFine": {
+        "date": "2023-07-02",
+        "amount": 3.25,
+        "type": "FIXED"
+    },
+    "discounts": [],
+    "beneficiary": {
+        "document": "11468192000181",
+        "name": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "fantasyName": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "type": "LEGAL"
+    },
+    "issuer": {
+        "ispb": "38224857",
+        "name": "DELCRED SCD S.A.",
+        "nameFantasy": "DELBANK"
+    }
+}
+```
+</CodeGroup>
+</Step>
+
+<Step title="Valide o status">
+Só siga para o pagamento se o `status` for `PENDING_PAYMENT`. Qualquer outro status indica que o documento não pode ser pago. Veja [Status do documento](/guias/pagamento-contas/visao-geral#status-do-documento).
+</Step>
+
+<Step title="Defina o valor a pagar">
+Use o objeto `paymentCalculation` para definir o `amount` do pagamento:
+
+- Se `isAllowPartialPayment` for `false`, pague exatamente o valor de `paymentCalculation.chargedAmount`.
+- Se `isAllowPartialPayment` for `true`, você pode pagar qualquer valor entre `paymentCalculation.minimumPaymentAmount` e `paymentCalculation.maximumPaymentAmount`.
+
+<Tip>
+O `chargedAmount` já inclui juros, multa, descontos e abatimentos. Não recalcule esses valores no seu sistema.
+</Tip>
+</Step>
+
+<Step title="Pague o documento">
+Com o status validado e o valor definido, siga para [Pagar](/guias/pagamento-contas/pagar).
+</Step>
+
+</Steps>
+
+## Headers
+
+| Header | Obrigatório | Descrição |
+|---|---|---|
+| `x-delbank-api-key` | Sim | Sua chave de API |
+| `x-delfinance-account-id` | Sim | Número da conta Delfinance |
+
+## Parâmetro do path
+
+| Parâmetro | Descrição |
+|---|---|
+| `codigo` | Código de barras ou linha digitável do documento, apenas números |
+
+## Campos da resposta
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `identifierNumber` | string | Identificador do documento |
+| `type` | enum | Tipo do documento: `BANKSLIP` (boleto bancário) ou `TAXES` (conta de consumo ou tributo) |
+| `status` | enum | Status do documento: `PENDING_PAYMENT`, `PAID`, `BLOCKED_PAYMENT` ou `PAYMENT_DEADLINE_EXCEEDED` |
+| `amount` | number | Valor original do documento |
+| `dueDate` | datetime | Data e hora de vencimento |
+| `barCode` | string | Código de barras |
+| `digitableLine` | string | Linha digitável |
+| `isAllowPartialPayment` | boolean | Indica se o documento aceita pagamento com valor diferente do `chargedAmount` |
+| `paymentCalculation.rebateAmount` | number | Valor de abatimento |
+| `paymentCalculation.interesetAmount` | number | Valor total de juros |
+| `paymentCalculation.fineAmount` | number | Valor total de multa |
+| `paymentCalculation.discountAmount` | number | Valor total de descontos |
+| `paymentCalculation.chargedAmount` | number | Valor total a pagar, já com juros, multa, descontos e abatimentos |
+| `paymentCalculation.minimumPaymentAmount` | number | Valor mínimo aceito no pagamento |
+| `paymentCalculation.maximumPaymentAmount` | number | Valor máximo aceito no pagamento |
+| `payer.document` | string | CPF ou CNPJ do pagador |
+| `payer.name` | string | Nome do pagador |
+| `payer.type` | enum | Tipo de pessoa: `NATURAL` (física) ou `LEGAL` (jurídica) |
+| `overduePaymentInterest.date` | date | Data a partir da qual os juros são aplicados |
+| `overduePaymentInterest.amount` | number | Valor ou percentual dos juros |
+| `overduePaymentInterest.type` | enum | Tipo dos juros: `PERCENTAGE` (percentual) ou `FIXED` (valor fixo) |
+| `overduePaymentFine.date` | date | Data a partir da qual a multa é aplicada |
+| `overduePaymentFine.amount` | number | Valor ou percentual da multa |
+| `overduePaymentFine.type` | enum | Tipo da multa: `PERCENTAGE` (percentual) ou `FIXED` (valor fixo) |
+| `discounts` | array | Descontos previstos no documento |
+| `beneficiary.document` | string | CPF ou CNPJ do beneficiário |
+| `beneficiary.name` | string | Nome do beneficiário |
+| `beneficiary.fantasyName` | string | Nome fantasia do beneficiário |
+| `beneficiary.type` | enum | Tipo de pessoa: `NATURAL` (física) ou `LEGAL` (jurídica) |
+| `issuer.ispb` | string | ISPB do banco emissor |
+| `issuer.name` | string | Nome do banco emissor |
+| `issuer.nameFantasy` | string | Nome fantasia do banco emissor |
+
+<Note>
+O campo de juros se chama `interesetAmount`, com essa grafia. Use esse nome ao ler a resposta.
+</Note>

@@ -148,26 +148,31 @@ Você pode vincular o QR Code a um CPF ou CNPJ específico. Com `payer.validate:
 
 ### Split de pagamento
 
-Distribua parte do valor recebido para outra conta automaticamente no momento da criação. Útil para marketplaces e plataformas que precisam repassar comissões sem transferências manuais.
+Defina, na criação da cobrança, quanto do valor recebido será repassado e para quem. Útil para marketplaces e plataformas que precisam repassar a parte de vendedores ou parceiros sem transferências manuais.
 
 ```json
 {
     "correlationId": "{{$guid}}",
     "amount": 200.00,
-    "splitInstructions": [
-        {
-            "accountNumber": "10073",
-            "type": "PERCENTAGE",
-            "amount": 10
-        }
-    ]
+    "splitPayment": {
+        "instructions": [
+            {
+                "amount": 10,
+                "type": "PERCENTAGE",
+                "transferType": "INTERNAL",
+                "beneficiary": {
+                    "bankAccountNumber": "10073"
+                }
+            }
+        ]
+    }
 }
 ```
 
-O `type` aceita `PERCENTAGE` (porcentagem do total) ou `FIXED` (valor fixo em reais).
+O `type` aceita `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais). O `transferType` aceita `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, com os dados bancários completos do beneficiário).
 
 <Note>
-O split só funciona se o `amount` for maior que R$ 1,00, e o total das divisões não pode ultrapassar 50% do valor da cobrança.
+O split exige uma cobrança de pelo menos R$ 1,00. Veja os campos do beneficiário, as regras de validação, o cálculo e o acompanhamento dos repasses em [Split por cobrança (QR Code)](/guias/split-pagamentos/split-por-cobranca).
 </Note>
 
 ### Beneficiário final (para gateways)

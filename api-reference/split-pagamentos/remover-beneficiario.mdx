@@ -1,14 +1,14 @@
 ---
 title: "Remover instrução"
 api: "DELETE /baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries/{splitPaymentBeneficiaryId}"
-description: "Remova uma instrução específica de uma configuração de Split de Pagamento."
+description: "Remova uma instrução específica de uma configuração de split padrão da conta."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Remover Split de Pagamentos](/guias/split-pagamentos/remover).
+Para o passo a passo completo, veja o guia [Remover o split padrão da conta](/guias/split-pagamentos/remover).
 </Note>
 
-Remove uma instrução específica de uma configuração de Split de Pagamento, mantendo a configuração e as demais instruções ativas. A operação é irreversível.
+Remove uma instrução específica de uma configuração de split padrão da conta, mantendo a configuração e as demais instruções ativas. A operação é irreversível.
 
 ## Headers
 
@@ -23,7 +23,7 @@ Remove uma instrução específica de uma configuração de Split de Pagamento, 
 ## Path
 
 <ParamField path="splitPaymentId" type="string" required>
-  ID da configuração de Split de Pagamento.
+  ID da configuração de split padrão da conta.
 </ParamField>
 
 <ParamField path="splitPaymentBeneficiaryId" type="string" required>

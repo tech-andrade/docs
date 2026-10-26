@@ -1,0 +1,104 @@
+---
+title: "Troubleshooting"
+sidebarTitle: "Troubleshooting"
+description: "Problemas comuns ao consultar e pagar boletos, contas de consumo e tributos, e como resolvê-los."
+icon: "circle-exclamation"
+---
+
+Esta página cobre os problemas mais frequentes ao consultar e pagar boletos, contas de consumo e tributos.
+
+---
+
+## Problemas na consulta
+
+<AccordionGroup>
+
+<Accordion title="Documento com status diferente de PENDING_PAYMENT">
+
+**Causa:** O documento não está disponível para pagamento:
+
+- `PAID` — o documento já foi pago.
+- `BLOCKED_PAYMENT` — o emissor bloqueou o pagamento.
+- `PAYMENT_DEADLINE_EXCEEDED` — o prazo limite para pagamento passou.
+
+**Solução:** Não envie o pagamento. Peça ao beneficiário um documento atualizado.
+
+</Accordion>
+
+<Accordion title="Documento não encontrado">
+
+**Causa:** O código de barras ou a linha digitável está incompleto, tem caracteres a mais ou pertence a um convênio não aceito.
+
+**Solução:** Envie apenas os números, sem pontos, espaços ou traços. Confira o tamanho: a linha digitável tem 47 dígitos para boletos e 48 para contas de consumo e tributos. Se o código estiver correto, fale com o suporte para confirmar se o convênio é aceito.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## Problemas no pagamento
+
+<AccordionGroup>
+
+<Accordion title="Valor diferente do esperado">
+
+**Causa:** O `amount` enviado não respeita as regras do documento.
+
+**Solução:** Consulte o documento de novo e use o `paymentCalculation` da resposta:
+
+- Se `isAllowPartialPayment` for `false`, envie exatamente o `chargedAmount`.
+- Se `isAllowPartialPayment` for `true`, envie um valor entre `minimumPaymentAmount` e `maximumPaymentAmount`.
+
+Os juros e a multa mudam com o tempo. Consulte o documento no mesmo dia do pagamento.
+
+</Accordion>
+
+<Accordion title="Pagamento fora do horário ou acima do limite">
+
+**Causa:** O pagamento foi enviado depois do horário limite ou com valor acima do máximo permitido para o momento.
+
+**Solução:** Confira os [horários de processamento](/guias/pagamento-contas/visao-geral#horários-de-processamento) e os [limites de valor](/guias/pagamento-contas/visao-geral#limites-de-valor-para-contas-de-consumo-e-tributos). Confira também o limite de pagamentos configurado na sua conta.
+
+</Accordion>
+
+<Accordion title="IdempotencyKey ausente ou inválido">
+
+**Causa:** O header `IdempotencyKey` não foi enviado ou está vazio.
+
+**Solução:** Inclua um GUID único no header `IdempotencyKey` em toda requisição de pagamento:
+
+```bash
+--header 'IdempotencyKey: {{$guid}}'
+```
+
+</Accordion>
+
+<Accordion title="Saldo insuficiente">
+
+**Causa:** O saldo disponível na conta é menor que o `amount` informado.
+
+**Solução:** Verifique o saldo da conta antes de enviar o pagamento.
+
+</Accordion>
+
+<Accordion title="O valor do pagamento voltou para a conta">
+
+**Causa:** O pagamento foi aceito, mas não foi liquidado. Como o processamento é assíncrono, isso só aparece depois da resposta do `POST /bill-payments`.
+
+**Solução:** O time da Delfinance entra em contato com os detalhes. Se precisar falar com o suporte antes disso, informe o `id` do pagamento.
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## O que informar ao abrir um chamado de suporte
+
+- Endpoint utilizado (método + URL completa)
+- Corpo da requisição enviada (sem dados sensíveis)
+- Timestamp da requisição
+- `id` do pagamento, se disponível na resposta
+- Código de barras ou linha digitável do documento
+- Resposta de erro retornada completa

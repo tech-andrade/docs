@@ -1,0 +1,149 @@
+---
+title: "Consultar boleto ou conta"
+api: "GET /baas/api/v1/bill-payments/{codigo}"
+description: "Consulte os dados e os valores de um boleto, conta de consumo ou tributo antes de pagar."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar boleto ou conta](/guias/pagamento-contas/consultar).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Path
+
+<ParamField path="codigo" type="string" required>
+  Código de barras ou linha digitável do documento, apenas números.
+</ParamField>
+
+## Response
+
+<ResponseField name="identifierNumber" type="string">Identificador do documento.</ResponseField>
+<ResponseField name="type" type="string">Tipo do documento: `BANKSLIP` (boleto bancário) ou `TAXES` (conta de consumo ou tributo).</ResponseField>
+<ResponseField name="status" type="string">Status do documento: `PENDING_PAYMENT`, `PAID`, `BLOCKED_PAYMENT` ou `PAYMENT_DEADLINE_EXCEEDED`. Só pague documentos com `PENDING_PAYMENT`.</ResponseField>
+<ResponseField name="amount" type="number">Valor original do documento.</ResponseField>
+<ResponseField name="dueDate" type="string">Data e hora de vencimento.</ResponseField>
+<ResponseField name="barCode" type="string">Código de barras.</ResponseField>
+<ResponseField name="digitableLine" type="string">Linha digitável.</ResponseField>
+<ResponseField name="isAllowPartialPayment" type="boolean">Indica se o documento aceita pagamento com valor diferente do `chargedAmount`.</ResponseField>
+<ResponseField name="paymentCalculation" type="object">
+  Valores calculados para o pagamento.
+  <Expandable title="propriedades">
+    <ResponseField name="rebateAmount" type="number">Valor de abatimento.</ResponseField>
+    <ResponseField name="interesetAmount" type="number">Valor total de juros. O nome do campo tem essa grafia.</ResponseField>
+    <ResponseField name="fineAmount" type="number">Valor total de multa.</ResponseField>
+    <ResponseField name="discountAmount" type="number">Valor total de descontos.</ResponseField>
+    <ResponseField name="chargedAmount" type="number">Valor total a pagar, já com juros, multa, descontos e abatimentos.</ResponseField>
+    <ResponseField name="minimumPaymentAmount" type="number">Valor mínimo aceito no pagamento.</ResponseField>
+    <ResponseField name="maximumPaymentAmount" type="number">Valor máximo aceito no pagamento.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="payer" type="object">
+  Dados do pagador.
+  <Expandable title="propriedades">
+    <ResponseField name="document" type="string">CPF ou CNPJ.</ResponseField>
+    <ResponseField name="name" type="string">Nome.</ResponseField>
+    <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="overduePaymentInterest" type="object">
+  Juros após o vencimento.
+  <Expandable title="propriedades">
+    <ResponseField name="date" type="string">Data a partir da qual os juros são aplicados.</ResponseField>
+    <ResponseField name="amount" type="number">Valor ou percentual dos juros.</ResponseField>
+    <ResponseField name="type" type="string">`PERCENTAGE` (percentual) ou `FIXED` (valor fixo).</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="overduePaymentFine" type="object">
+  Multa após o vencimento.
+  <Expandable title="propriedades">
+    <ResponseField name="date" type="string">Data a partir da qual a multa é aplicada.</ResponseField>
+    <ResponseField name="amount" type="number">Valor ou percentual da multa.</ResponseField>
+    <ResponseField name="type" type="string">`PERCENTAGE` (percentual) ou `FIXED` (valor fixo).</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="discounts" type="array">Descontos previstos no documento.</ResponseField>
+<ResponseField name="beneficiary" type="object">
+  Dados do beneficiário.
+  <Expandable title="propriedades">
+    <ResponseField name="document" type="string">CPF ou CNPJ.</ResponseField>
+    <ResponseField name="name" type="string">Nome.</ResponseField>
+    <ResponseField name="fantasyName" type="string">Nome fantasia.</ResponseField>
+    <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="issuer" type="object">
+  Dados do banco emissor.
+  <Expandable title="propriedades">
+    <ResponseField name="ispb" type="string">ISPB do banco.</ResponseField>
+    <ResponseField name="name" type="string">Nome do banco.</ResponseField>
+    <ResponseField name="nameFantasy" type="string">Nome fantasia do banco.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/bill-payments/43594939800000003250001112000000200000311672' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "identifierNumber": "3023063000107986253",
+    "type": "BANKSLIP",
+    "status": "PENDING_PAYMENT",
+    "amount": 3.25,
+    "dueDate": "2023-07-01T19:30:00",
+    "barCode": "43594939800000003250001112000000200000311672",
+    "digitableLine": "43590001161200000020300003116720493980000000325",
+    "isAllowPartialPayment": false,
+    "paymentCalculation": {
+        "rebateAmount": 0.0,
+        "interesetAmount": 2.23,
+        "fineAmount": 3.25,
+        "discountAmount": 0.0,
+        "chargedAmount": 8.73,
+        "minimumPaymentAmount": 8.73,
+        "maximumPaymentAmount": 8.73
+    },
+    "payer": {
+        "document": "1234567123",
+        "name": "JAMES XPTO",
+        "type": "NATURAL"
+    },
+    "overduePaymentInterest": {
+        "date": "2023-07-02",
+        "amount": 23.53,
+        "type": "PERCENTAGE"
+    },
+    "overduePaymentFine": {
+        "date": "2023-07-02",
+        "amount": 3.25,
+        "type": "FIXED"
+    },
+    "discounts": [],
+    "beneficiary": {
+        "document": "11468192000181",
+        "name": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "fantasyName": "DEL CRED NP FUNDO DE INVESTIMENTO",
+        "type": "LEGAL"
+    },
+    "issuer": {
+        "ispb": "38224857",
+        "name": "DELCRED SCD S.A.",
+        "nameFantasy": "DELBANK"
+    }
+}
+```
+</ResponseExample>

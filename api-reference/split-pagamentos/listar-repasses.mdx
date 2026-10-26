@@ -1,0 +1,210 @@
+---
+title: "Listar repasses"
+api: "GET /baas/api/v1/split-payments/payouts"
+description: "Liste os repasses da conta de recebimento, com filtros por beneficiário, status e data do repasse."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Retorna, de forma paginada, os repasses de todos os recebimentos com split da conta de recebimento. Use o filtro `beneficiaryDocument` para mostrar a um beneficiário o histórico dos repasses dele.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Query params
+
+<ParamField query="beneficiaryDocument" type="string">
+  CPF ou CNPJ do beneficiário, somente números.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Status do repasse: `SCHEDULED`, `PENDING`, `PROCESSING`, `PAID`, `FAILED` ou `CANCELED`.
+</ParamField>
+
+<ParamField query="transferType" type="string">
+  Forma do repasse: `INTERNAL` ou `PIX_MANUAL`.
+</ParamField>
+
+<ParamField query="paymentDateFrom" type="string">
+  Data inicial do repasse, no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="paymentDateTo" type="string">
+  Data final do repasse, no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="20">
+  Itens por página. Máximo de 100.
+</ParamField>
+
+## Response
+
+Array de repasses. Os dados de paginação vêm no header `Pagination`, descrito em [Paginação](#paginação).
+
+<ResponseField name="id" type="string">
+  Identificador do repasse. Use-o para [cancelar o repasse](/api-reference/split-pagamentos/cancelar-repasse).
+</ResponseField>
+<ResponseField name="order" type="object">
+  Recebimento com split que gerou o repasse. Mostra o valor integral do pagamento, a origem das instruções e a base de cálculo, sem precisar de outra consulta. É o mesmo recurso retornado por [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+
+  <Expandable title="order">
+    <ResponseField name="id" type="string">Identificador do recebimento com split: o id da transação de crédito, o mesmo do extrato e do webhook de recebimento. Use-o em [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).</ResponseField>
+    <ResponseField name="source" type="string">`ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).</ResponseField>
+    <ResponseField name="grossAmount" type="number">Valor integral do pagamento recebido.</ResponseField>
+    <ResponseField name="tariffAmount" type="number">Tarifa de split descontada antes do cálculo. `0` quando não há.</ResponseField>
+    <ResponseField name="splitBaseAmount" type="number">Base de cálculo dos repasses (`grossAmount - tariffAmount`).</ResponseField>
+    <ResponseField name="createdAt" type="string">Data e hora do recebimento, em ISO 8601.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="status" type="string">
+  `SCHEDULED`, `PENDING`, `PROCESSING`, `PAID`, `FAILED` ou `CANCELED`. Veja o significado de cada um em [Status do repasse](/guias/split-pagamentos/acompanhar-repasses#status-do-repasse).
+</ResponseField>
+<ResponseField name="transferType" type="string">
+  `INTERNAL` ou `PIX_MANUAL`.
+</ResponseField>
+<ResponseField name="instructionType" type="string">
+  Tipo da instrução que gerou o repasse: `PERCENTAGE` ou `FIXED`.
+</ResponseField>
+<ResponseField name="instructionAmount" type="number">
+  Percentual ou valor definido na instrução.
+</ResponseField>
+<ResponseField name="amount" type="number">
+  Valor calculado do repasse, em reais.
+</ResponseField>
+<ResponseField name="paymentDate" type="string">
+  Data prevista do repasse, no formato `YYYY-MM-DD`. Nesta fase, é sempre a data do recebimento.
+</ResponseField>
+<ResponseField name="beneficiary" type="object">
+  Conta do beneficiário, no mesmo formato usado nas transferências.
+
+  <Expandable title="beneficiary">
+    <ResponseField name="number" type="string">Número da conta do beneficiário.</ResponseField>
+    <ResponseField name="branch" type="string">Agência da conta do beneficiário.</ResponseField>
+    <ResponseField name="type" type="string">Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
+    <ResponseField name="holder" type="object">
+      Titular da conta, ou seja, o beneficiário.
+
+      <Expandable title="holder">
+        <ResponseField name="document" type="string">CPF ou CNPJ do beneficiário.</ResponseField>
+        <ResponseField name="name" type="string">Nome do beneficiário.</ResponseField>
+        <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="participant" type="object">
+      Instituição da conta do beneficiário.
+
+      <Expandable title="participant">
+        <ResponseField name="ispb" type="string">ISPB da instituição.</ResponseField>
+        <ResponseField name="name" type="string">Nome da instituição.</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="executedTransactionId" type="string">
+  Id da transferência que executou o repasse (transferência interna ou Pix). `null` enquanto o repasse não é executado.
+</ResponseField>
+<ResponseField name="endToEndId" type="string">
+  Identificador do Pix, em repasses `PIX_MANUAL`.
+</ResponseField>
+<ResponseField name="failureReason" type="string">
+  Motivo da falha, quando o status é `FAILED`.
+</ResponseField>
+<ResponseField name="paidAt" type="string">
+  Data e hora em que o repasse foi pago, em ISO 8601.
+</ResponseField>
+<ResponseField name="canceledAt" type="string">
+  Data e hora do cancelamento, em ISO 8601.
+</ResponseField>
+<ResponseField name="cancelReason" type="string">
+  Motivo informado no cancelamento.
+</ResponseField>
+<ResponseField name="createdAt" type="string">
+  Data e hora de criação do repasse, em ISO 8601.
+</ResponseField>
+<ResponseField name="updatedAt" type="string">
+  Data e hora da última mudança de status, em ISO 8601.
+</ResponseField>
+
+## Paginação
+
+A resposta é um array. Os dados de paginação vêm no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":20,"pageCount":1,"rowCount":1,"totalAmount":5.00}
+```
+
+| Campo | Descrição |
+|---|---|
+| `currentPage` | Página retornada |
+| `pageSize` | Itens por página (`limit`) |
+| `pageCount` | Total de páginas |
+| `rowCount` | Total de repasses encontrados |
+| `totalAmount` | Soma do `amount` de todos os repasses encontrados, considerando todas as páginas |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts?beneficiaryDocument=12345678909&status=FAILED&paymentDateFrom=2026-10-01&paymentDateTo=2026-10-26' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "5d2e8f1a-7c3b-4e9d-a6f0-1b2c3d4e5f60",
+        "order": {
+            "id": "b4c5d6e7-1a2b-4c3d-8e9f-0a1b2c3d4e5f",
+            "source": "QR_CODE",
+            "grossAmount": 50.00,
+            "tariffAmount": 0.00,
+            "splitBaseAmount": 50.00,
+            "createdAt": "2026-10-20T10:15:00.000Z"
+        },
+        "status": "FAILED",
+        "transferType": "PIX_MANUAL",
+        "instructionType": "FIXED",
+        "instructionAmount": 5.00,
+        "amount": 5.00,
+        "paymentDate": "2026-10-20",
+        "beneficiary": {
+            "number": "123456",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": {
+                "document": "12345678909",
+                "name": "MARIA SOUZA",
+                "type": "NATURAL"
+            },
+            "participant": {
+                "ispb": "00000000",
+                "name": "BANCO EXEMPLO S.A."
+            }
+        },
+        "executedTransactionId": "c9d8e7f6-a5b4-4c3d-9e2f-1a0b9c8d7e6f",
+        "endToEndId": "E00000000202610201015fedcba654321",
+        "failureReason": "Conta do beneficiário inexistente ou encerrada",
+        "paidAt": null,
+        "canceledAt": null,
+        "cancelReason": null,
+        "createdAt": "2026-10-20T10:15:02.000Z",
+        "updatedAt": "2026-10-20T10:15:09.000Z"
+    }
+]
+```
+</ResponseExample>
