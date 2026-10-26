@@ -1,14 +1,14 @@
 ---
-title: "Remover configuração de Split"
+title: "Remover split padrão da conta"
 api: "DELETE /baas/api/v1/split-payments/configurations/{splitPaymentId}"
-description: "Remova uma configuração de Split de Pagamento e todas as suas instruções."
+description: "Remova uma configuração de split padrão da conta e todas as suas instruções."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Remover Split de Pagamentos](/guias/split-pagamentos/remover).
+Para o passo a passo completo, veja o guia [Remover o split padrão da conta](/guias/split-pagamentos/remover).
 </Note>
 
-Remove uma configuração de Split de Pagamento por completo, incluindo todas as instruções associadas. A operação é irreversível.
+Remove uma configuração de split padrão da conta por completo, incluindo todas as instruções associadas. A operação é irreversível.
 
 <Warning>
 Após a remoção, os pagamentos seguintes recebidos na conta original deixam de ser divididos.
@@ -27,7 +27,7 @@ Após a remoção, os pagamentos seguintes recebidos na conta original deixam de
 ## Path
 
 <ParamField path="splitPaymentId" type="string" required>
-  ID da configuração de Split de Pagamento a ser removida.
+  ID da configuração de split padrão da conta a ser removida.
 </ParamField>
 
 ## Response

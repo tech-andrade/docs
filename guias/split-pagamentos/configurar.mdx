@@ -1,11 +1,11 @@
 ---
-title: "Configurar Split de Pagamentos"
-sidebarTitle: "Configurar"
-description: "Crie uma configuração de Split de Pagamento e cadastre ou atualize instruções de repasse, por tipo de transferência."
+title: "Configurar o split padrão da conta"
+sidebarTitle: "Configurar split padrão"
+description: "Crie uma configuração de split padrão da conta e cadastre ou atualize instruções de repasse, por tipo de transferência."
 icon: "gear"
 ---
 
-Configurar um Split de Pagamento envolve dois passos: criar a configuração associada à conta de recebimento e cadastrar as instruções que definem quanto e para quem cada pagamento é repassado. Você também pode adicionar novas instruções ou alterar a regra de uma instrução existente a qualquer momento.
+Configurar o split padrão da conta envolve dois passos: criar a configuração associada à conta de recebimento e cadastrar as instruções que definem quanto e para quem cada pagamento é repassado. Você também pode adicionar novas instruções ou alterar a regra de uma instrução existente a qualquer momento.
 
 ## Criar configuração com instruções
 
@@ -13,14 +13,14 @@ Use `POST /baas/api/v1/split-payments/configurations` para criar a configuraçã
 
 ```json
 {
-  "bankAccountNumber": "CONTA_PAGADORA",
+  "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
   "instructions": [
     {
       "amount": 10,
       "type": "PERCENTAGE",
       "transferType": "INTERNAL",
       "beneficiary": {
-        "number": "CONTA_BENEFICIARIA"
+        "number": "CONTA_DO_BENEFICIARIO"
       }
     }
   ]
@@ -43,21 +43,21 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
 
     ```json
     {
-      "bankAccountNumber": "CONTA_PAGADORA",
+      "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
       "instructions": [
         {
           "amount": 10,
           "type": "PERCENTAGE",
           "transferType": "INTERNAL",
           "beneficiary": {
-            "number": "CONTA_BENEFICIARIA"
+            "number": "CONTA_DO_BENEFICIARIO"
           }
         }
       ]
     }
     ```
 
-    Basta informar `beneficiary.number`. A API consulta a conta beneficiária e preenche automaticamente:
+    Basta informar `beneficiary.number`. A API consulta a conta do beneficiário e preenche automaticamente:
 
     - agência;
     - ISPB;
@@ -69,14 +69,14 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
 
     ```json
     {
-      "bankAccountNumber": "CONTA_PAGADORA",
+      "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
       "instructions": [
         {
           "amount": 10,
           "type": "PERCENTAGE",
           "transferType": "INTERNAL",
           "beneficiary": {
-            "number": "CONTA_BENEFICIARIA",
+            "number": "CONTA_DO_BENEFICIARIO",
             "branch": "0001",
             "participantIspb": "12345678",
             "type": "PAYMENT",
@@ -94,7 +94,7 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
     ```
 
     <Note>
-    Mesmo enviando o payload completo, `branch`, `participantIspb`, `type` da conta, `holder.name` e `holder.document` são sobrescritos pelos dados encontrados na conta beneficiária. Para `INTERNAL`, o único dado que realmente importa é `beneficiary.number`.
+    Mesmo enviando o payload completo, `branch`, `participantIspb`, `type` da conta, `holder.name` e `holder.document` são sobrescritos pelos dados encontrados na conta do beneficiário. Para `INTERNAL`, o único dado que realmente importa é `beneficiary.number`.
     </Note>
   </Tab>
 
@@ -105,7 +105,7 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
 
     ```json
     {
-      "bankAccountNumber": "CONTA_PAGADORA",
+      "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
       "instructions": [
         {
           "amount": 50,
@@ -130,7 +130,7 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
 
     ```json
     {
-      "bankAccountNumber": "CONTA_PAGADORA",
+      "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
       "instructions": [
         {
           "amount": 50,
@@ -174,7 +174,7 @@ O formato exigido para `beneficiary` muda de acordo com o `transferType` escolhi
 
     ```json
     {
-      "bankAccountNumber": "CONTA_PAGADORA",
+      "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
       "instructions": [
         {
           "amount": 50,
@@ -249,7 +249,7 @@ Use `PATCH /baas/api/v1/split-payments/configurations/:splitPaymentId/beneficiar
 |---|---|
 | `instructions[].type` | `PERCENTAGE`, `FIXED` |
 | `instructions[].transferType` | `INTERNAL`, `PIX_MANUAL`, `EXTERNAL`, `PIX_KEY` |
-| `beneficiary.type` | `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL`, `OWNER` |
+| `beneficiary.type` | `PAYMENT`, `CURRENT`, `SAVING` |
 | `holder.type` | `NATURAL`, `LEGAL` |
 
 <Warning>

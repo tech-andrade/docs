@@ -1,14 +1,14 @@
 ---
-title: "Listar configurações de Split"
+title: "Listar splits padrão da conta"
 api: "GET /baas/api/v1/split-payments/configurations"
-description: "Liste todas as configurações de Split de Pagamento cadastradas para a conta."
+description: "Liste todas as configurações de split padrão cadastradas para a conta."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Consultar Split de Pagamentos](/guias/split-pagamentos/consultar).
+Para o passo a passo completo, veja o guia [Consultar o split padrão da conta](/guias/split-pagamentos/consultar).
 </Note>
 
-Retorna todas as configurações de Split de Pagamento cadastradas para a conta informada em `x-delfinance-account-id`, incluindo suas respectivas instruções.
+Retorna todas as configurações de split padrão cadastradas para a conta informada em `x-delfinance-account-id`, incluindo suas respectivas instruções.
 
 ## Headers
 
@@ -22,7 +22,7 @@ Retorna todas as configurações de Split de Pagamento cadastradas para a conta 
 
 ## Response
 
-Array de objetos de configuração, cada um com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split).
+Array de objetos de configuração, cada um com a mesma estrutura descrita em [Criar split padrão da conta](/api-reference/split-pagamentos/criar-split).
 
 <RequestExample>
 ```bash cURL
@@ -37,7 +37,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 [
   {
     "id": 15,
-    "bankAccountNumber": "CONTA_PAGADORA",
+    "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
     "instructions": [
@@ -65,7 +65,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
   },
   {
     "id": 16,
-    "bankAccountNumber": "OUTRA_CONTA_PAGADORA",
+    "bankAccountNumber": "OUTRA_CONTA_DE_RECEBIMENTO",
     "createdAt": "2025-09-19T20:04:38.112Z",
     "updatedAt": "2025-09-19T20:04:38.112Z",
     "instructions": [

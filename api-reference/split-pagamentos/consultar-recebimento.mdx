@@ -1,0 +1,137 @@
+---
+title: "Consultar recebimento com split"
+api: "GET /baas/api/v1/split-payments/orders/{id}"
+description: "Consulte um recebimento com split e a lista completa de repasses que ele gerou, com o status de cada um."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Retorna o detalhe de um recebimento com split: os valores usados no cálculo e todos os repasses gerados, um por instrução.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="id" type="string" required>
+  Identificador do recebimento com split: o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">
+  Identificador do recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+</ResponseField>
+
+<ResponseField name="source" type="string">
+  `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+</ResponseField>
+
+<ResponseField name="grossAmount" type="number">
+  Valor integral do pagamento recebido.
+</ResponseField>
+
+<ResponseField name="tariffAmount" type="number">
+  Tarifa de split descontada antes do cálculo. `0` quando não há.
+</ResponseField>
+
+<ResponseField name="splitBaseAmount" type="number">
+  Base de cálculo dos repasses (`grossAmount - tariffAmount`).
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data e hora do recebimento, em ISO 8601.
+</ResponseField>
+
+<ResponseField name="payouts" type="array">
+  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response).
+</ResponseField>
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `404` | `SPLIT_PAYMENT_ORDER_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
+    "source": "QR_CODE",
+    "grossAmount": 200.00,
+    "tariffAmount": 2.00,
+    "splitBaseAmount": 198.00,
+    "createdAt": "2026-10-26T14:32:10.000Z",
+    "payouts": [
+        {
+            "id": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
+            "status": "PAID",
+            "transferType": "INTERNAL",
+            "instructionType": "PERCENTAGE",
+            "instructionAmount": 10,
+            "amount": 19.80,
+            "paymentDate": "2026-10-26",
+            "beneficiary": {
+                "name": "Loja do João LTDA",
+                "document": "12345678000190",
+                "bankAccountNumber": "10073",
+                "bankAccountBranch": "0001",
+                "participantIspb": "00000000",
+                "bankAccountType": "PAYMENT"
+            },
+            "executedTransactionId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            "endToEndId": null,
+            "failureReason": null,
+            "paidAt": "2026-10-26T14:32:11.000Z",
+            "canceledAt": null,
+            "cancelReason": null,
+            "createdAt": "2026-10-26T14:32:10.000Z",
+            "updatedAt": "2026-10-26T14:32:11.000Z"
+        },
+        {
+            "id": "8c41d0a9-2e7b-4f3c-b6d8-9a0e1f2b3c4d",
+            "status": "PROCESSING",
+            "transferType": "PIX_MANUAL",
+            "instructionType": "FIXED",
+            "instructionAmount": 5.00,
+            "amount": 5.00,
+            "paymentDate": "2026-10-26",
+            "beneficiary": {
+                "name": "Maria Souza",
+                "document": "12345678909",
+                "bankAccountNumber": "123456",
+                "bankAccountBranch": "0001",
+                "participantIspb": "00000000",
+                "bankAccountType": "CURRENT"
+            },
+            "executedTransactionId": "f0e1d2c3-b4a5-4968-8776-655443322110",
+            "endToEndId": "E00000000202610261432abcdef123456",
+            "failureReason": null,
+            "paidAt": null,
+            "canceledAt": null,
+            "cancelReason": null,
+            "createdAt": "2026-10-26T14:32:10.000Z",
+            "updatedAt": "2026-10-26T14:32:12.000Z"
+        }
+    ]
+}
+```
+</ResponseExample>

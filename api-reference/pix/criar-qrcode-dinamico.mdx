@@ -90,18 +90,51 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
   </Expandable>
 </ParamField>
 
-<ParamField body="splitInstructions" type="array">
-  Instruções de split: distribuição automática de parte do valor para outra conta no momento do recebimento. O `amount` total das divisões não pode ultrapassar 50% do valor da cobrança, e o valor da cobrança deve ser maior que R$ 1,00.
+<ParamField body="splitPayment" type="object">
+  Split da cobrança: repasse automático de parte do valor recebido para um ou mais beneficiários, em contas Delfinance ou em outras instituições. O valor da cobrança deve ser de pelo menos R$ 1,00, e a soma dos repasses não pode ultrapassar o valor da cobrança. Quando informado, substitui o split padrão da conta para os pagamentos deste QR Code. Veja o guia [Split por cobrança (QR Code)](/guias/split-pagamentos/split-por-cobranca).
 
-  <Expandable title="splitInstructions[]">
-    <ParamField body="splitInstructions[].accountNumber" type="string" required>
-      Número da conta que receberá a parcela.
+  <Expandable title="splitPayment">
+    <ParamField body="splitPayment.canChargeTariffBeforeSplit" type="boolean" default="true">
+      Quando `true`, a tarifa de split prevista no seu contrato é descontada do valor recebido antes do cálculo dos repasses.
     </ParamField>
-    <ParamField body="splitInstructions[].type" type="string" required>
-      Tipo do split: `FIXED` (valor fixo em reais) ou `PERCENTAGE` (porcentagem do total).
-    </ParamField>
-    <ParamField body="splitInstructions[].amount" type="number" required>
-      Valor ou percentual a ser transferido, conforme o `type`.
+    <ParamField body="splitPayment.instructions" type="array" required>
+      Lista de repasses. Deve ter pelo menos uma instrução.
+
+      <Expandable title="instructions[]">
+        <ParamField body="instructions[].amount" type="number" required>
+          Valor ou percentual do repasse, conforme o `type`. Deve ser maior que zero. Percentuais aceitam até `100`.
+        </ParamField>
+        <ParamField body="instructions[].type" type="string" required>
+          `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais).
+        </ParamField>
+        <ParamField body="instructions[].transferType" type="string" required>
+          `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, por dados bancários).
+        </ParamField>
+        <ParamField body="instructions[].beneficiary" type="object" required>
+          Dados da conta do beneficiário. Com `INTERNAL`, apenas `bankAccountNumber` é obrigatório. Com `PIX_MANUAL`, todos os campos são obrigatórios.
+
+          <Expandable title="beneficiary">
+            <ParamField body="beneficiary.bankAccountNumber" type="string" required>
+              Número da conta do beneficiário.
+            </ParamField>
+            <ParamField body="beneficiary.bankAccountBranch" type="string">
+              Agência da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="beneficiary.participantIspb" type="string">
+              ISPB da instituição de destino. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="beneficiary.bankAccountType" type="string">
+              Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="beneficiary.holderName" type="string">
+              Nome do titular da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="beneficiary.holderDocument" type="string">
+              CPF ou CNPJ do titular, somente números. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+          </Expandable>
+        </ParamField>
+      </Expandable>
     </ParamField>
   </Expandable>
 </ParamField>
@@ -180,8 +213,8 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
   Informações adicionais enviadas na criação.
 </ResponseField>
 
-<ResponseField name="splitInstructions" type="array">
-  Instruções de split enviadas na criação.
+<ResponseField name="splitPayment" type="object">
+  Split da cobrança, quando informado na criação, com `canChargeTariffBeforeSplit` e a lista de `instructions` registradas.
 </ResponseField>
 
 <ResponseField name="finalBeneficiary" type="object">

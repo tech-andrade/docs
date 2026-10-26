@@ -1,14 +1,14 @@
 ---
-title: "Consultar configuração de Split"
+title: "Consultar split padrão da conta"
 api: "GET /baas/api/v1/split-payments/configurations/{id}"
-description: "Consulte uma configuração de Split de Pagamento específica por ID."
+description: "Consulte uma configuração de split padrão da conta por ID."
 ---
 
 <Note>
-Para o passo a passo completo, veja o guia [Consultar Split de Pagamentos](/guias/split-pagamentos/consultar).
+Para o passo a passo completo, veja o guia [Consultar o split padrão da conta](/guias/split-pagamentos/consultar).
 </Note>
 
-Retorna os dados completos de uma configuração de Split de Pagamento específica, incluindo todas as suas instruções.
+Retorna os dados completos de uma configuração de split padrão da conta, incluindo todas as suas instruções.
 
 ## Headers
 
@@ -23,12 +23,12 @@ Retorna os dados completos de uma configuração de Split de Pagamento específi
 ## Path
 
 <ParamField path="id" type="string" required>
-  ID da configuração de Split de Pagamento a ser consultada.
+  ID da configuração de split padrão da conta a ser consultada.
 </ParamField>
 
 ## Response
 
-Objeto de configuração com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split).
+Objeto de configuração com a mesma estrutura descrita em [Criar split padrão da conta](/api-reference/split-pagamentos/criar-split).
 
 <RequestExample>
 ```bash cURL
@@ -42,7 +42,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json 200
 {
   "id": 15,
-  "bankAccountNumber": "CONTA_PAGADORA",
+  "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
   "createdAt": "2025-09-19T20:04:38.112Z",
   "updatedAt": "2025-09-19T20:04:38.112Z",
   "instructions": [

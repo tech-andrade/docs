@@ -108,6 +108,8 @@
             "pages": [
               "guias/split-pagamentos/visao-geral",
               "guias/split-pagamentos/configurar",
+              "guias/split-pagamentos/split-por-cobranca",
+              "guias/split-pagamentos/acompanhar-repasses",
               "guias/split-pagamentos/consultar",
               "guias/split-pagamentos/remover"
             ]
@@ -221,7 +223,17 @@
               "api-reference/split-pagamentos/adicionar-beneficiario",
               "api-reference/split-pagamentos/atualizar-beneficiario",
               "api-reference/split-pagamentos/remover-split",
-              "api-reference/split-pagamentos/remover-beneficiario"
+              "api-reference/split-pagamentos/remover-beneficiario",
+              {
+                "group": "Repasses",
+                "pages": [
+                  "api-reference/split-pagamentos/listar-recebimentos",
+                  "api-reference/split-pagamentos/consultar-recebimento",
+                  "api-reference/split-pagamentos/listar-repasses",
+                  "api-reference/split-pagamentos/consultar-valor-a-receber",
+                  "api-reference/split-pagamentos/cancelar-repasse"
+                ]
+              }
             ]
           },
           {

@@ -1,14 +1,14 @@
 ---
 title: "Adicionar instrução"
 api: "POST /baas/api/v1/split-payments/configurations/{splitPaymentId}/beneficiaries"
-description: "Adicione uma nova instrução de repasse a uma configuração de Split de Pagamento existente."
+description: "Adicione uma nova instrução de repasse a um split padrão da conta já existente."
 ---
 
 <Note>
-Para o passo a passo completo, incluindo exemplos por tipo de repasse, veja o guia [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+Para o passo a passo completo, incluindo exemplos por tipo de repasse, veja o guia [Configurar o split padrão da conta](/guias/split-pagamentos/configurar).
 </Note>
 
-Adiciona uma nova instrução de repasse a uma configuração de Split de Pagamento já existente, sem afetar as instruções já cadastradas. O formato do corpo é o mesmo de um item de `instructions` no endpoint de criação, e varia conforme o `transferType` escolhido.
+Adiciona uma nova instrução de repasse a um split padrão da conta já existente, sem afetar as instruções já cadastradas. O formato do corpo é o mesmo de um item de `instructions` no endpoint de criação, e varia conforme o `transferType` escolhido.
 
 ## Headers
 
@@ -23,7 +23,7 @@ Adiciona uma nova instrução de repasse a uma configuração de Split de Pagame
 ## Path
 
 <ParamField path="splitPaymentId" type="string" required>
-  ID da configuração de Split de Pagamento.
+  ID da configuração de split padrão da conta.
 </ParamField>
 
 ## Body
@@ -39,26 +39,26 @@ Adiciona uma nova instrução de repasse a uma configuração de Split de Pagame
 </ParamField>
 
 <ParamField body="transferType" type="string" required>
-  Meio pelo qual o beneficiário recebe o valor. Valores aceitos: `INTERNAL`, `PIX_MANUAL`, `EXTERNAL`, `PIX_KEY`. Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja detalhes em [Configurar Split de Pagamentos](/guias/split-pagamentos/configurar).
+  Meio pelo qual o beneficiário recebe o valor. Valores aceitos: `INTERNAL`, `PIX_MANUAL`, `EXTERNAL`, `PIX_KEY`. Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja detalhes em [Configurar o split padrão da conta](/guias/split-pagamentos/configurar).
 </ParamField>
 
 <ParamField body="beneficiary" type="object" required>
-  Dados da conta de destino. Os campos exigidos variam conforme o `transferType` (veja o guia de configuração).
+  Dados da conta do beneficiário. Os campos exigidos variam conforme o `transferType` (veja o guia de configuração).
   <Expandable title="propriedades">
     <ParamField body="number" type="string" required>
-      Número da conta de destino.
+      Número da conta do beneficiário.
     </ParamField>
     <ParamField body="branch" type="string">
-      Agência da conta de destino.
+      Agência da conta do beneficiário.
     </ParamField>
     <ParamField body="participantIspb" type="string">
       ISPB da instituição de destino.
     </ParamField>
     <ParamField body="type" type="string">
-      Tipo da conta de destino: `PAYMENT`, `CURRENT`, `SAVING`, `SALARY`, `ESCROW`, `MINIPI`, `ADMINISTERED`, `TRANSACTIONAL` ou `OWNER`.
+      Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`.
     </ParamField>
     <ParamField body="holder" type="object">
-      Dados do titular da conta de destino.
+      Dados do titular da conta do beneficiário.
       <Expandable title="propriedades">
         <ParamField body="document" type="string">CPF ou CNPJ do titular.</ParamField>
         <ParamField body="name" type="string">Nome do titular.</ParamField>
@@ -72,7 +72,7 @@ Adiciona uma nova instrução de repasse a uma configuração de Split de Pagame
 
 ## Response
 
-Retorna a configuração completa e atualizada, com a mesma estrutura descrita em [Criar configuração de Split](/api-reference/split-pagamentos/criar-split), incluindo a nova instrução na lista de `instructions`.
+Retorna a configuração completa e atualizada, com a mesma estrutura descrita em [Criar split padrão da conta](/api-reference/split-pagamentos/criar-split), incluindo a nova instrução na lista de `instructions`.
 
 <RequestExample>
 ```bash cURL
@@ -102,7 +102,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/co
 ```json 200
 {
   "id": 15,
-  "bankAccountNumber": "CONTA_PAGADORA",
+  "bankAccountNumber": "CONTA_DE_RECEBIMENTO",
   "createdAt": "2025-09-19T20:04:38.112Z",
   "updatedAt": "2025-09-19T20:10:00.000Z",
   "instructions": [
