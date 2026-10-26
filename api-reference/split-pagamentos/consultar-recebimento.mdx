@@ -1,6 +1,6 @@
 ---
 title: "Consultar recebimento com split"
-api: "GET /baas/api/v1/split-payments/{id}"
+api: "GET /baas/api/v1/split-payments/orders/{id}"
 description: "Consulte um recebimento com split e a lista completa de repasses que ele gerou, com o status de cada um."
 tag: "BETA"
 ---
@@ -54,18 +54,18 @@ Retorna o detalhe de um recebimento com split: os valores usados no cálculo e t
 </ResponseField>
 
 <ResponseField name="payouts" type="array">
-  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response), exceto o objeto `splitPayment`, que não se repete aqui porque os dados do recebimento já estão no nível de cima.
+  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response), exceto o objeto `order`, que não se repete aqui porque os dados do recebimento já estão no nível de cima.
 </ResponseField>
 
 ## Erros
 
 | HTTP | Código | Quando acontece |
 |---|---|---|
-| `404` | `SPLIT_PAYMENT_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
+| `404` | `SPLIT_PAYMENT_ORDER_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
 
 <RequestExample>
 ```bash cURL
-curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/orders/e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90' \
 --header 'x-delbank-api-key: {{apiKey}}' \
 --header 'x-delfinance-account-id: {{accountId}}'
 ```

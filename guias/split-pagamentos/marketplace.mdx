@@ -143,7 +143,7 @@ Para monitorar problemas, use [Listar repasses](/api-reference/split-pagamentos/
 <Step title="Mostre a cada vendedor o que ele recebeu e o que tem a receber">
 Para montar a área do vendedor na sua plataforma, filtre as consultas pelo documento do vendedor (`beneficiaryDocument`):
 
-- [Listar repasses](/api-reference/split-pagamentos/listar-repasses): o extrato de repasses do vendedor, com o status de cada um. Cada repasse traz o objeto `splitPayment`, com o valor integral da venda, a data e a base de cálculo, para o vendedor ver quanto vendeu e quanto recebeu.
+- [Listar repasses](/api-reference/split-pagamentos/listar-repasses): o extrato de repasses do vendedor, com o status de cada um. Cada repasse traz o objeto `order`, com o valor integral da venda, a data e a base de cálculo, para o vendedor ver quanto vendeu e quanto recebeu.
 - [Consultar valor a receber](/api-reference/split-pagamentos/consultar-valor-a-receber): quanto o vendedor ainda tem a receber e, informando um período, quanto já recebeu.
 
 ```bash cURL
