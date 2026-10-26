@@ -67,6 +67,33 @@ Array de recebimentos com split. Os dados de paginação vêm no header `Paginat
   Base de cálculo dos repasses (`grossAmount - tariffAmount`).
 </ResponseField>
 
+<ResponseField name="payer" type="object">
+  Conta de quem pagou o Pix (o pagador), no mesmo formato da conta do beneficiário.
+
+  <Expandable title="payer">
+    <ResponseField name="number" type="string">Número da conta do pagador.</ResponseField>
+    <ResponseField name="branch" type="string">Agência da conta do pagador.</ResponseField>
+    <ResponseField name="type" type="string">Tipo da conta do pagador, como `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
+    <ResponseField name="holder" type="object">
+      Titular da conta, ou seja, o pagador.
+
+      <Expandable title="holder">
+        <ResponseField name="document" type="string">CPF ou CNPJ do pagador.</ResponseField>
+        <ResponseField name="name" type="string">Nome do pagador.</ResponseField>
+        <ResponseField name="type" type="string">`NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).</ResponseField>
+      </Expandable>
+    </ResponseField>
+    <ResponseField name="participant" type="object">
+      Instituição da conta do pagador.
+
+      <Expandable title="participant">
+        <ResponseField name="ispb" type="string">ISPB da instituição.</ResponseField>
+        <ResponseField name="name" type="string">Nome da instituição.</ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
 <ResponseField name="createdAt" type="string">
   Data e hora do recebimento, em ISO 8601.
 </ResponseField>
@@ -104,6 +131,20 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
         "grossAmount": 200.00,
         "tariffAmount": 2.00,
         "splitBaseAmount": 198.00,
+        "payer": {
+            "number": "987654",
+            "branch": "0001",
+            "type": "CURRENT",
+            "holder": {
+                "document": "98765432100",
+                "name": "JOÃO PEREIRA",
+                "type": "NATURAL"
+            },
+            "participant": {
+                "ispb": "00000000",
+                "name": "BANCO EXEMPLO S.A."
+            }
+        },
         "createdAt": "2026-10-26T14:32:10.000Z"
     }
 ]
