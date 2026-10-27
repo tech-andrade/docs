@@ -116,6 +116,15 @@
             ]
           },
           {
+            "group": "Saldo e extrato",
+            "pages": [
+              "guias/conta/saldo",
+              "guias/conta/extrato",
+              "guias/conta/extrato-periodico",
+              "guias/pix/comprovante"
+            ]
+          },
+          {
             "group": "Webhooks",
             "pages": [
               "guias/webhooks/visao-geral",
@@ -235,6 +244,17 @@
                   "api-reference/split-pagamentos/cancelar-repasse"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Conta",
+            "pages": [
+              "api-reference/conta/consultar-saldo",
+              "api-reference/conta/consultar-extrato",
+              "api-reference/conta/listar-relatorios",
+              "api-reference/conta/consultar-relatorio",
+              "api-reference/conta/consultar-relatorio-periodo",
+              "api-reference/conta/baixar-relatorio"
             ]
           },
           {

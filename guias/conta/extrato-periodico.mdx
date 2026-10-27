@@ -1,0 +1,182 @@
+---
+title: "Extrato Periódico"
+sidebarTitle: "Extrato periódico"
+description: "Baixe os relatórios de extrato em CSV gerados automaticamente todos os dias e consolidados todo mês."
+icon: "file-csv"
+---
+
+A Delfinance gera automaticamente um relatório de extrato da conta **todos os dias**. No fim de cada mês, gera também um **arquivo consolidado** com todas as transações do mês.
+
+Use o extrato periódico para conciliação contábil, arquivamento e períodos com muitas transações. Para consultas pontuais ou filtros por tipo, use o [extrato](/guias/conta/extrato).
+
+Você pode baixar um relatório de duas formas:
+
+- **Pelo período**, direto, com um único request. É o caminho mais simples.
+- **Pela listagem**: liste os relatórios, consulte o relatório e baixe o arquivo pelo link.
+
+## Baixar pelo período
+
+Informe a data do relatório diário (`yyyyMMdd`) ou o mês do consolidado (`yyyyMM`). A API responde com um redirect `302` para o link do arquivo CSV.
+
+<CodeGroup>
+```bash Relatório diário
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/20261027/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output extrato-20261027.csv
+```
+```bash Consolidado do mês
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/202609/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output extrato-202609.csv
+```
+</CodeGroup>
+
+| Formato | Exemplo | Retorna |
+|---|---|---|
+| `yyyyMMdd` | `20261027` | Relatório do dia 27/10/2026 |
+| `yyyyMM` | `202609` | Consolidado de setembro de 2026 |
+
+Para que o download funcione:
+
+- **siga o redirect.** No cURL, use `--location`. A maioria dos clientes HTTP segue redirects por padrão;
+- **não envie seus headers de autenticação para o link do arquivo.** Se o seu cliente repassa headers no redirect, desative isso ou baixe o arquivo em um segundo request;
+- **trate a resposta como binário** (`stream`, `arraybuffer`, `bytes`), não como JSON.
+
+<Warning>
+O redirect leva só para o **primeiro arquivo** do relatório. Um relatório grande, como o consolidado do mês, pode ter mais de um arquivo. Para pegar todos, consulte o relatório pelo período e baixe cada item de `files`, como explicado a seguir.
+</Warning>
+
+## Consultar o relatório pelo período
+
+Para ver os arquivos de um relatório sem baixá-los, use o mesmo `pattern` sem o `/stream`. A resposta é o JSON do relatório, com todos os links em `files`:
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/202609' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+A resposta tem o mesmo formato da consulta pelo `id`, mostrada no passo 2 a seguir.
+
+## Baixar pela listagem
+
+### 1. Listar os relatórios
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports?page=1&limit=10' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+[
+    {
+        "id": 1058,
+        "description": "Extrato com 35837 transações",
+        "progress": 100,
+        "period": {
+            "startDate": "2026-10-27T03:00:00Z",
+            "endDate": "2026-10-28T03:00:00Z"
+        },
+        "status": {
+            "name": "FINISHED",
+            "description": "Concluído"
+        },
+        "reportType": {
+            "name": "BANKSTATEMENT",
+            "description": "Extrato bancário"
+        }
+    }
+]
+```
+</CodeGroup>
+
+Um relatório com `status.name` igual a `FINISHED` está pronto para download. O `progress` vai de `0` a `100` enquanto o relatório é gerado.
+
+A listagem é paginada com os query params `page` (padrão `1`) e `limit` (padrão `10`). A paginação vem no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":10,"pageCount":12,"rowCount":118}
+```
+
+Para percorrer todos os relatórios, incremente `page` até chegar a `pageCount`.
+
+### 2. Consultar o relatório
+
+Consulte o relatório pelo `id` para obter os arquivos:
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/1058' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "id": 1058,
+    "description": "Extrato com 35837 transações",
+    "progress": 100,
+    "period": {
+        "startDate": "2026-10-27T03:00:00Z",
+        "endDate": "2026-10-28T03:00:00Z"
+    },
+    "status": {
+        "name": "FINISHED",
+        "description": "Concluído"
+    },
+    "reportType": {
+        "name": "BANKSTATEMENT",
+        "description": "Extrato bancário"
+    },
+    "files": [
+        {
+            "name": "27102026-00h00m00s_27102026-23h59m59s_00001",
+            "link": "https://bucket.s3.amazonaws.com/Reports/27102026-00h00m00s_27102026-23h59m59s_00001.csv?...",
+            "size": 7472779
+        }
+    ]
+}
+```
+</CodeGroup>
+
+<Warning>
+Se o array `files` vier vazio, o relatório ainda está sendo gerado ou não tem arquivos. Consulte de novo mais tarde.
+</Warning>
+
+### 3. Baixar o arquivo
+
+Baixe o CSV pela URL em `files[].link`:
+
+```bash
+curl --location 'https://bucket.s3.amazonaws.com/Reports/27102026-00h00m00s_27102026-23h59m59s_00001.csv?...' \
+--output extrato-20261027.csv
+```
+
+<Warning>
+O `link` **expira** depois de um tempo. Baixe o arquivo logo após consultar o relatório. Se o link expirar, consulte o relatório de novo para gerar um link novo.
+</Warning>
+
+Um relatório grande pode ser dividido em mais de um arquivo. Baixe todos os itens de `files`.
+
+## Período dos relatórios
+
+O `period` usa UTC. Um relatório diário vai de 00:00 a 23:59:59 no horário de Brasília, por isso aparece como `03:00Z` até `03:00Z` do dia seguinte.
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Baixar relatório por período" icon="download" href="/api-reference/conta/baixar-relatorio">
+    `GET /baas/api/v1/customer-reports/bankstatement/{pattern}/stream`
+  </Card>
+  <Card title="Consultar relatório por período" icon="calendar" href="/api-reference/conta/consultar-relatorio-periodo">
+    `GET /baas/api/v1/customer-reports/bankstatement/{pattern}`
+  </Card>
+  <Card title="Listar relatórios" icon="list" href="/api-reference/conta/listar-relatorios">
+    `GET /baas/api/v1/customer-reports`
+  </Card>
+  <Card title="Consultar relatório" icon="file-csv" href="/api-reference/conta/consultar-relatorio">
+    `GET /baas/api/v1/customer-reports/{id}`
+  </Card>
+</CardGroup>

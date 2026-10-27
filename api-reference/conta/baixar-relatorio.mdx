@@ -1,0 +1,46 @@
+---
+title: "Baixar relatório por período"
+api: "GET /baas/api/v1/customer-reports/bankstatement/{pattern}/stream"
+description: "Baixe direto o CSV do extrato de um dia ou o consolidado de um mês."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Extrato periódico](/guias/conta/extrato-periodico).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path params
+
+<ParamField path="pattern" type="string" required>
+  Período do relatório: `yyyyMMdd` para o relatório de um dia (ex.: `20261027`) ou `yyyyMM` para o consolidado de um mês (ex.: `202609`).
+</ParamField>
+
+## Response
+
+`302 Found`, com o header `Location` apontando para o link do **primeiro arquivo** do relatório. Siga o redirect para baixar o CSV.
+
+Para relatórios com mais de um arquivo, use [Consultar relatório por período](/api-reference/conta/consultar-relatorio-periodo) e baixe cada item de `files`.
+
+<RequestExample>
+```bash Relatório diário
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/20261027/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output extrato-20261027.csv
+```
+```bash Consolidado do mês
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/202609/stream' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--output extrato-202609.csv
+```
+</RequestExample>

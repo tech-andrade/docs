@@ -1,0 +1,76 @@
+---
+title: "Consultar relatório"
+api: "GET /baas/api/v1/customer-reports/{id}"
+description: "Consulte um relatório de extrato periódico e obtenha os links dos arquivos."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Extrato periódico](/guias/conta/extrato-periodico).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path params
+
+<ParamField path="id" type="number" required>
+  Identificador do relatório, retornado em [Listar relatórios](/api-reference/conta/listar-relatorios).
+</ParamField>
+
+## Response
+
+Os mesmos campos de [Listar relatórios](/api-reference/conta/listar-relatorios), mais o array `files`.
+
+<ResponseField name="files" type="array">
+  Arquivos do relatório. Vem vazio enquanto o relatório é gerado.
+
+  <Expandable title="propriedades">
+    <ResponseField name="name" type="string">Nome do arquivo.</ResponseField>
+    <ResponseField name="link" type="string">URL para download do CSV. Expira depois de um tempo.</ResponseField>
+    <ResponseField name="size" type="number">Tamanho do arquivo, em bytes.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/1058' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": 1058,
+    "description": "Extrato com 35837 transações",
+    "progress": 100,
+    "period": {
+        "startDate": "2026-10-27T03:00:00Z",
+        "endDate": "2026-10-28T03:00:00Z"
+    },
+    "status": {
+        "name": "FINISHED",
+        "description": "Concluído"
+    },
+    "reportType": {
+        "name": "BANKSTATEMENT",
+        "description": "Extrato bancário"
+    },
+    "files": [
+        {
+            "name": "27102026-00h00m00s_27102026-23h59m59s_00001",
+            "link": "https://bucket.s3.amazonaws.com/Reports/27102026-00h00m00s_27102026-23h59m59s_00001.csv?...",
+            "size": 7472779
+        }
+    ]
+}
+```
+</ResponseExample>

@@ -1,0 +1,175 @@
+---
+title: "Consultar extrato"
+api: "GET /baas/api/v2/transactions"
+description: "Liste as transações da conta por período, tipo ou identificador."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Extrato](/guias/conta/extrato).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Query params
+
+<ParamField query="startDate" type="string">
+  Data inicial no formato `YYYY-MM-DD`, incluindo o próprio dia. Aceita até 6 meses atrás, contados a partir do primeiro dia do mês.
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  Data final no formato `YYYY-MM-DD`, sem incluir o próprio dia.
+</ParamField>
+
+<ParamField query="type" type="string">
+  Tipo de transação, como `CREDIT_PIX`. Repita o parâmetro para filtrar por mais de um tipo.
+</ParamField>
+
+<ParamField query="isCredit" type="boolean">
+  `true` retorna só créditos. `false` retorna só débitos.
+</ParamField>
+
+<ParamField query="endToEndId" type="string">
+  `endToEndId` de um Pix. Retorna só essa transação. Considera os últimos 3 meses.
+</ParamField>
+
+<ParamField query="id" type="string">
+  Identificador da transação na Delfinance. Retorna só essa transação. Considera os últimos 3 meses.
+</ParamField>
+
+<ParamField query="nsu" type="number">
+  NSU da transação.
+</ParamField>
+
+<ParamField query="orderByAscOrDesc" type="string" default="desc">
+  Ordem por data: `desc` ou `asc`.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Itens por página. Máximo: `50`. Valores acima são reduzidos para `50`.
+</ParamField>
+
+## Response
+
+Array de transações. A paginação vem no header `Pagination` (`currentPage`, `pageSize`, `pageCount`, `rowCount`, `totalAmount`).
+
+<ResponseField name="id" type="string">Identificador da transação na Delfinance.</ResponseField>
+<ResponseField name="correlationId" type="string">Identificador enviado por você ao criar a operação, quando houver.</ResponseField>
+<ResponseField name="nsu" type="number">Número sequencial único da transação na conta.</ResponseField>
+<ResponseField name="amount" type="number">Valor da transação, sempre positivo.</ResponseField>
+<ResponseField name="notes" type="string">Descrição da transação.</ResponseField>
+<ResponseField name="createdAt" type="string">Data e hora do lançamento, em UTC.</ResponseField>
+<ResponseField name="type" type="object">
+  Tipo da transação.
+
+  <Expandable title="propriedades">
+    <ResponseField name="name" type="string">Código do tipo, como `CREDIT_PIX` ou `DEBIT_TRANSFER_EXTERNAL`.</ResponseField>
+    <ResponseField name="description" type="string">Descrição do tipo em português.</ResponseField>
+    <ResponseField name="isCredit" type="boolean">`true` para entrada na conta, `false` para saída.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="balance" type="object">
+  Saldo da conta no momento do lançamento.
+
+  <Expandable title="propriedades">
+    <ResponseField name="balancePrevious" type="number">Saldo antes do lançamento.</ResponseField>
+    <ResponseField name="currentBalance" type="number">Saldo depois do lançamento.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="proof" type="object">Detalhes da operação. O formato muda conforme o tipo da transação.</ResponseField>
+
+<RequestExample>
+```bash Por período
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transactions?startDate=2026-10-01&endDate=2026-11-01&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```bash Por endToEndId
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transactions?endToEndId=E3822485720261027144231555972751' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "21E3822485720261027144231555972751",
+        "correlationId": "1f9d63e8-81f6-4636-b862-e2edf4c72d67",
+        "nsu": 727646,
+        "amount": 5.00,
+        "notes": "Pedido 1234",
+        "createdAt": "2026-10-27T14:42:34.763Z",
+        "type": {
+            "name": "CREDIT_PIX",
+            "description": "PIX recebido",
+            "isCredit": true
+        },
+        "balance": {
+            "balancePrevious": 15225.40,
+            "currentBalance": 15230.40
+        },
+        "proof": {
+            "endToEndId": "E3822485720261027144231555972751",
+            "status": "PIX_EFFECTIVE",
+            "type": "PIX_QR_CODE_DYNAMIC",
+            "amount": 5.00,
+            "description": "Pedido 1234",
+            "payer": {
+                "number": "31712",
+                "branch": "0001",
+                "type": "CURRENT",
+                "holder": {
+                    "document": "32752023000149",
+                    "name": "EMPRESA PAGADORA LTDA",
+                    "type": "LEGAL"
+                },
+                "participant": {
+                    "name": "DELCRED SCD S.A.",
+                    "ispb": "38224857"
+                }
+            },
+            "beneficiary": {
+                "number": "41820",
+                "branch": "0001",
+                "type": "CURRENT",
+                "holder": {
+                    "document": "11222333000181",
+                    "name": "SUA EMPRESA LTDA",
+                    "type": "LEGAL"
+                },
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                }
+            }
+        }
+    }
+]
+```
+```json 400
+{
+    "errors": ["Não é possível consultar transações anteriores à 01/04/2026."]
+}
+```
+```json 404
+{
+    "status": 404,
+    "title": "Please refer to the errors property for additional details.",
+    "code": "NOT_FOUND",
+    "errors": ["Transação não encontrada. Essa consulta só considera transações a partir dos últimos 3 meses."]
+}
+```
+</ResponseExample>

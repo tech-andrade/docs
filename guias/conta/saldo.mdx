@@ -1,0 +1,61 @@
+---
+title: "Consultar Saldo"
+sidebarTitle: "Saldo"
+description: "Consulte o saldo disponível da conta e os valores bloqueados."
+icon: "wallet"
+---
+
+A consulta de saldo retorna quanto a conta tem disponível para movimentar e quanto está bloqueado, separado por motivo do bloqueio.
+
+Use o saldo disponível para validar se uma transferência ou um pagamento cabe na conta antes de enviá-lo. Isso evita o erro de saldo insuficiente em [Pix](/guias/pix/pagar-pix/troubleshooting), TED e [pagamento de contas](/guias/pagamento-contas/troubleshooting).
+
+## Consultar o saldo
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/balances' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+{
+    "amountAvailable": 15230.40,
+    "amountJudicialyBlocked": 0.00,
+    "amountTempBlocked": 0.00,
+    "amountPixBlocked": 200.99,
+    "amountTempBlockedOperationInternal": 250.00,
+    "amountBlockedForDebit": 0.00
+}
+```
+</CodeGroup>
+
+## Campos da resposta
+
+| Campo | Descrição |
+|---|---|
+| `amountAvailable` | Saldo disponível para movimentar. É o valor que você pode transferir ou usar em pagamentos |
+| `amountJudicialyBlocked` | Valor bloqueado por ordem judicial |
+| `amountTempBlocked` | Valor com bloqueio temporário |
+| `amountPixBlocked` | Valor bloqueado em transações Pix, por exemplo por uma [notificação de infração (MED)](/guias/webhooks/meds) |
+| `amountTempBlockedOperationInternal` | Valor com bloqueio temporário por operação interna |
+| `amountBlockedForDebit` | Valor reservado para um débito já programado |
+
+<Note>
+Os valores bloqueados **não** fazem parte do `amountAvailable`. Para mostrar o saldo bloqueado total, some os cinco campos de bloqueio.
+</Note>
+
+## Saldo e extrato
+
+O saldo mostra a posição atual da conta. Para ver como a conta chegou nesse valor, use o [extrato](/guias/conta/extrato). Cada transação do extrato traz o saldo antes e depois do lançamento, no objeto `balance`.
+
+<Tip>
+Não consulte o saldo em loop para detectar recebimentos. Os créditos chegam via [webhooks](/guias/webhooks/visao-geral).
+</Tip>
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Consultar saldo" icon="wallet" href="/api-reference/conta/consultar-saldo">
+    `GET /baas/api/v1/balances`
+  </Card>
+</CardGroup>
