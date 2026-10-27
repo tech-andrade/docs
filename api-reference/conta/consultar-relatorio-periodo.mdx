@@ -1,0 +1,71 @@
+---
+title: "Consultar relatório por período"
+api: "GET /baas/api/v1/customer-reports/bankstatement/{pattern}"
+description: "Consulte o relatório de extrato de um dia ou de um mês e obtenha os links de todos os arquivos."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Extrato periódico](/guias/conta/extrato-periodico).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Path params
+
+<ParamField path="pattern" type="string" required>
+  Período do relatório: `yyyyMMdd` para o relatório de um dia (ex.: `20261027`) ou `yyyyMM` para o consolidado de um mês (ex.: `202609`).
+</ParamField>
+
+## Response
+
+Os mesmos campos de [Consultar relatório](/api-reference/conta/consultar-relatorio), incluindo o array `files` com o link de cada arquivo.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports/bankstatement/202609' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": 1102,
+    "description": "Extrato com 412906 transações",
+    "progress": 100,
+    "period": {
+        "startDate": "2026-09-01T03:00:00Z",
+        "endDate": "2026-10-01T03:00:00Z"
+    },
+    "status": {
+        "name": "FINISHED",
+        "description": "Concluído"
+    },
+    "reportType": {
+        "name": "BANKSTATEMENT",
+        "description": "Extrato bancário"
+    },
+    "files": [
+        {
+            "name": "01092026-00h00m00s_30092026-23h59m59s_00001",
+            "link": "https://bucket.s3.amazonaws.com/Reports/01092026-00h00m00s_30092026-23h59m59s_00001.csv?...",
+            "size": 52428800
+        },
+        {
+            "name": "01092026-00h00m00s_30092026-23h59m59s_00002",
+            "link": "https://bucket.s3.amazonaws.com/Reports/01092026-00h00m00s_30092026-23h59m59s_00002.csv?...",
+            "size": 31877120
+        }
+    ]
+}
+```
+</ResponseExample>

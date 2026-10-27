@@ -1,0 +1,49 @@
+---
+title: "Consultar saldo"
+api: "GET /baas/api/v1/balances"
+description: "Retorne o saldo disponível da conta e os valores bloqueados."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Saldo](/guias/conta/saldo).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+## Response
+
+<ResponseField name="amountAvailable" type="number">Saldo disponível para movimentar. Não inclui os valores bloqueados.</ResponseField>
+<ResponseField name="amountJudicialyBlocked" type="number">Valor bloqueado por ordem judicial.</ResponseField>
+<ResponseField name="amountTempBlocked" type="number">Valor com bloqueio temporário.</ResponseField>
+<ResponseField name="amountPixBlocked" type="number">Valor bloqueado em transações Pix, por exemplo por notificação de infração (MED).</ResponseField>
+<ResponseField name="amountTempBlockedOperationInternal" type="number">Valor com bloqueio temporário por operação interna.</ResponseField>
+<ResponseField name="amountBlockedForDebit" type="number">Valor reservado para um débito já programado.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/balances' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "amountAvailable": 15230.40,
+    "amountJudicialyBlocked": 0.00,
+    "amountTempBlocked": 0.00,
+    "amountPixBlocked": 200.99,
+    "amountTempBlockedOperationInternal": 250.00,
+    "amountBlockedForDebit": 0.00
+}
+```
+</ResponseExample>

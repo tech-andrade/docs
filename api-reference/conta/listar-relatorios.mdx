@@ -1,0 +1,93 @@
+---
+title: "Listar relatórios"
+api: "GET /baas/api/v1/customer-reports"
+description: "Liste os relatórios de extrato periódico gerados para a conta."
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Extrato periódico](/guias/conta/extrato-periodico).
+</Note>
+
+### Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance.
+</ParamField>
+
+### Query params
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Itens por página.
+</ParamField>
+
+## Response
+
+Array de relatórios. A paginação vem no header `Pagination` (`currentPage`, `pageSize`, `pageCount`, `rowCount`).
+
+<ResponseField name="id" type="number">Identificador do relatório. Use-o em [Consultar relatório](/api-reference/conta/consultar-relatorio).</ResponseField>
+<ResponseField name="description" type="string">Descrição do relatório, com a quantidade de transações.</ResponseField>
+<ResponseField name="progress" type="number">Progresso da geração, de `0` a `100`.</ResponseField>
+<ResponseField name="period" type="object">
+  Período coberto pelo relatório, em UTC.
+
+  <Expandable title="propriedades">
+    <ResponseField name="startDate" type="string">Início do período.</ResponseField>
+    <ResponseField name="endDate" type="string">Fim do período.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="status" type="object">
+  Situação do relatório.
+
+  <Expandable title="propriedades">
+    <ResponseField name="name" type="string">`FINISHED` quando o relatório está pronto para download.</ResponseField>
+    <ResponseField name="description" type="string">Descrição da situação.</ResponseField>
+  </Expandable>
+</ResponseField>
+<ResponseField name="reportType" type="object">
+  Tipo do relatório.
+
+  <Expandable title="propriedades">
+    <ResponseField name="name" type="string">`BANKSTATEMENT`.</ResponseField>
+    <ResponseField name="description" type="string">Descrição do tipo.</ResponseField>
+  </Expandable>
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/customer-reports?page=1&limit=10' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": 1058,
+        "description": "Extrato com 35837 transações",
+        "progress": 100,
+        "period": {
+            "startDate": "2026-10-27T03:00:00Z",
+            "endDate": "2026-10-28T03:00:00Z"
+        },
+        "status": {
+            "name": "FINISHED",
+            "description": "Concluído"
+        },
+        "reportType": {
+            "name": "BANKSTATEMENT",
+            "description": "Extrato bancário"
+        }
+    }
+]
+```
+</ResponseExample>

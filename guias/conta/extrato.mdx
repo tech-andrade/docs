@@ -1,0 +1,225 @@
+---
+title: "Consultar Extrato"
+sidebarTitle: "Extrato"
+description: "Liste as transações da conta por período, tipo ou identificador, com o saldo antes e depois de cada lançamento."
+icon: "list"
+---
+
+O extrato lista as transações efetivadas na conta: Pix, TED, transferências entre contas Delfinance, boletos, repasses de split e tarifas. Cada transação traz o valor, o tipo, o saldo antes e depois do lançamento e o objeto `proof` com os detalhes da operação.
+
+Use o extrato para conciliação, auditoria e para localizar uma transação específica, como o Pix original de uma [devolução](/guias/pix/receber-pix/devolucao).
+
+<Tip>
+Os eventos chegam primeiro via [webhooks](/guias/webhooks/visao-geral). Use o extrato para conciliar e recuperar eventos perdidos, e não como polling.
+</Tip>
+
+## Listar transações por período
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transactions?startDate=2026-10-01&endDate=2026-11-01&page=1&limit=50' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+```json Response
+[
+    {
+        "id": "21E3822485720261027144231555972751",
+        "correlationId": "1f9d63e8-81f6-4636-b862-e2edf4c72d67",
+        "nsu": 727646,
+        "amount": 5.00,
+        "notes": "Pedido 1234",
+        "createdAt": "2026-10-27T14:42:34.763Z",
+        "type": {
+            "name": "CREDIT_PIX",
+            "description": "PIX recebido",
+            "isCredit": true
+        },
+        "balance": {
+            "balancePrevious": 15225.40,
+            "currentBalance": 15230.40
+        },
+        "proof": {
+            "endToEndId": "E3822485720261027144231555972751",
+            "status": "PIX_EFFECTIVE",
+            "type": "PIX_QR_CODE_DYNAMIC",
+            "amount": 5.00,
+            "description": "Pedido 1234",
+            "payer": {
+                "number": "31712",
+                "branch": "0001",
+                "type": "CURRENT",
+                "holder": {
+                    "document": "32752023000149",
+                    "name": "EMPRESA PAGADORA LTDA",
+                    "type": "LEGAL"
+                },
+                "participant": {
+                    "name": "DELCRED SCD S.A.",
+                    "ispb": "38224857"
+                }
+            },
+            "beneficiary": {
+                "number": "41820",
+                "branch": "0001",
+                "type": "CURRENT",
+                "holder": {
+                    "document": "11222333000181",
+                    "name": "SUA EMPRESA LTDA",
+                    "type": "LEGAL"
+                },
+                "participant": {
+                    "name": "DELBANK",
+                    "ispb": "38224857"
+                }
+            }
+        }
+    }
+]
+```
+</CodeGroup>
+
+### Parâmetros de query
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|---|---|---|---|
+| `startDate` | `string` | Não | Data inicial no formato `YYYY-MM-DD`, incluindo o próprio dia |
+| `endDate` | `string` | Não | Data final no formato `YYYY-MM-DD`, **sem incluir** o próprio dia |
+| `type` | `string` | Não | Tipo de transação. Repita o parâmetro para filtrar por mais de um tipo: `type=CREDIT_PIX&type=DEBIT_PIX` |
+| `isCredit` | `boolean` | Não | `true` retorna só créditos. `false` retorna só débitos. Sem o parâmetro, retorna os dois |
+| `orderByAscOrDesc` | `string` | Não | Ordem por data: `desc` (mais recentes primeiro) ou `asc`. Padrão: `desc` |
+| `page` | `number` | Não | Página (começa em 1). Padrão: `1` |
+| `limit` | `number` | Não | Itens por página. Padrão: `10`. Máximo: `50` |
+
+<Warning>
+O `endDate` não inclui o próprio dia. Para trazer as transações de outubro inteiro, use `startDate=2026-10-01&endDate=2026-11-01`.
+</Warning>
+
+### Período disponível
+
+O extrato da API cobre os **últimos 6 meses**, contados a partir do primeiro dia do mês. Um `startDate` anterior a esse limite retorna `400` com a data mínima aceita:
+
+```json
+{
+    "errors": ["Não é possível consultar transações anteriores à 01/04/2026."]
+}
+```
+
+Para períodos mais antigos ou para grandes volumes, use o [extrato periódico](/guias/conta/extrato-periodico).
+
+## Buscar uma transação específica
+
+Informe um destes parâmetros para buscar uma única transação. Nesse caso, o filtro de período não é necessário.
+
+| Parâmetro | Quando usar |
+|---|---|
+| `endToEndId` | Você tem o `endToEndId` de um Pix, recebido no webhook. Funciona para Pix recebido e enviado |
+| `id` | Você tem o `id` da transação no extrato ou no webhook |
+| `nsu` | Você tem o NSU da transação |
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/transactions?endToEndId=E3822485720261027144231555972751' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+
+A resposta é um array com uma única transação.
+
+<Note>
+O `id` da transação é diferente do `endToEndId` do Pix. Para buscar pelo identificador do Pix, use o parâmetro `endToEndId`.
+</Note>
+
+<Warning>
+A busca por `endToEndId` e por `id` considera só os **últimos 3 meses**. Se a transação não for encontrada, a resposta é `404`.
+</Warning>
+
+## Paginação
+
+A resposta é um array de transações. Os dados de paginação vêm no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":50,"pageCount":3,"rowCount":127,"totalAmount":48210.75}
+```
+
+| Campo | Descrição |
+|---|---|
+| `currentPage` | Página retornada |
+| `pageSize` | Itens por página (`limit`) |
+| `pageCount` | Total de páginas |
+| `rowCount` | Total de transações no filtro |
+| `totalAmount` | Soma dos valores das transações no filtro |
+
+Para percorrer o período inteiro, incremente `page` até chegar a `pageCount`.
+
+<Note>
+Um `limit` acima de `50` é reduzido para `50` sem erro. Confira o `pageSize` do header antes de calcular as páginas.
+</Note>
+
+## Campos da transação
+
+| Campo | Descrição |
+|---|---|
+| `id` | Identificador da transação na Delfinance |
+| `correlationId` | Identificador que você enviou ao criar a operação, quando houver |
+| `nsu` | Número sequencial único da transação na conta |
+| `amount` | Valor da transação, sempre positivo. Use `type.isCredit` para saber se é entrada ou saída |
+| `notes` | Descrição da transação |
+| `createdAt` | Data e hora do lançamento, em UTC |
+| `type.name` | Tipo da transação. Veja [tipos de transação](#tipos-de-transação) |
+| `type.description` | Descrição do tipo em português |
+| `type.isCredit` | `true` para entrada na conta, `false` para saída |
+| `balance.balancePrevious` | Saldo da conta antes do lançamento |
+| `balance.currentBalance` | Saldo da conta depois do lançamento |
+| `proof` | Detalhes da operação. O formato muda conforme o tipo da transação |
+
+### O objeto `proof`
+
+O `proof` traz os dados da operação que gerou o lançamento. Em um Pix, ele tem o `endToEndId`, o status e os dados de pagador e recebedor, como no exemplo acima. Em um pagamento de boleto, traz os dados do boleto pago.
+
+Trate o `proof` como um objeto que varia por tipo: leia os campos de acordo com o `type.name` da transação.
+
+<Note>
+O `proof` do extrato é um JSON com os dados da operação. Para o **comprovante oficial em PDF** de um Pix, use o endpoint de [comprovante](/guias/pix/comprovante).
+</Note>
+
+## Tipos de transação
+
+Os tipos mais comuns em uma integração via API:
+
+| Tipo | Descrição | Sentido |
+|---|---|---|
+| `CREDIT_PIX` | Pix recebido | Crédito |
+| `DEBIT_PIX` | Pix enviado | Débito |
+| `CREDIT_PIX_REFUND` | Devolução de um Pix que você enviou | Crédito |
+| `DEBIT_PIX_REFUND` | Devolução de um Pix que você recebeu | Débito |
+| `CREDIT_TRANSFER_INTERNAL` | Transferência recebida de outra conta Delfinance | Crédito |
+| `DEBIT_TRANSFER_INTERNAL` | Transferência enviada para outra conta Delfinance | Débito |
+| `CREDIT_TRANSFER_EXTERNAL` | TED recebida | Crédito |
+| `DEBIT_TRANSFER_EXTERNAL` | TED enviada | Débito |
+| `CREDIT_TRANSFER_EXTERNAL_RETURNED` | TED devolvida | Crédito |
+| `CREDIT_BANKSLIP` | Boleto emitido por você e pago | Crédito |
+| `PAYMENT_BANKSLIP` | Pagamento de boleto | Débito |
+| `PAYMENT_TAXES` | Pagamento de tributo ou conta de consumo | Débito |
+| `CREDIT_SPLITED_TRANSFER_INTERNAL` | Repasse de [split](/guias/split-pagamentos/visao-geral) recebido | Crédito |
+| `DEBIT_SPLITED_TRANSFER_INTERNAL` | Repasse de [split](/guias/split-pagamentos/visao-geral) enviado | Débito |
+| `PIX_FEE` | Tarifa de Pix | Débito |
+
+O extrato também pode trazer lançamentos operacionais, como bloqueios judiciais, tarifas e ajustes. Use `type.isCredit` para classificar qualquer tipo como entrada ou saída, mesmo os que não estão na tabela.
+
+## Erros comuns
+
+| Status | Resposta | Causa |
+|---|---|---|
+| `400` | `{"errors":["Não é possível consultar transações anteriores à 01/04/2026."]}` | `startDate` fora do período disponível |
+| `400` | `{"errors":["Tipo de transação 'CREDITO_PIX' não encontrado."]}` | `type` com valor que não existe |
+| `400` | `É permitido somente busca de no máximo 50 transações.` | `limit` acima de `1000`. A resposta é texto, não JSON |
+| `401` | — | API key ou conta inválida |
+| `404` | `{"errors":["Transação não encontrada. Essa consulta só considera transações a partir dos últimos 3 meses."]}` | `endToEndId` ou `id` sem transação nos últimos 3 meses |
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Consultar extrato" icon="list" href="/api-reference/conta/consultar-extrato">
+    `GET /baas/api/v2/transactions`
+  </Card>
+</CardGroup>
