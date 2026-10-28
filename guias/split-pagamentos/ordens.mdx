@@ -22,7 +22,7 @@ Payouts com data de pagamento futura ficam agendados. Payouts elegíveis para a 
 
 ## Endpoints
 
-Prefixo comum: `/api/v1/external/split-payments`
+Prefixo comum: `/baas/api/v1/split-payments`
 
 ### Consultar ordens
 
@@ -39,13 +39,13 @@ Use `GET /orders` para buscar uma ordem específica ou listar as ordens da conta
 
 <CodeGroup>
 ```bash cURL
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?id=12345' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?id=12345' \
 --header 'x-delbank-api-key: {{apiKey}}'
 
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?transactionId=ID-DO-CASHIN' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?transactionId=ID-DO-CASHIN' \
 --header 'x-delbank-api-key: {{apiKey}}'
 
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?page=1&limit=20' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?page=1&limit=20' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 ```json Response (curl 1, 2)
@@ -160,7 +160,7 @@ Use `GET /payouts` para consultar payouts da conta vinculada à credencial, com 
 
 <CodeGroup>
 ```bash cURL
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/payouts?beneficiaryDocument=12345678901&status=ERROR&page=1&limit=10' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/payouts?beneficiaryDocument=12345678901&status=ERROR&page=1&limit=10' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 ```json Response
@@ -246,7 +246,7 @@ Use o campo `status.name` ou `status.description` quando precisar identificar o 
 Use `POST /payouts/process` para reenviar um ou mais payouts para processamento quando eles estiverem elegíveis.
 
 ```http
-POST /api/v1/external/split-payments/payouts/process
+POST /baas/api/v1/split-payments/payouts/process
 Content-Type: application/json
 ```
 
@@ -267,7 +267,7 @@ Envie apenas IDs pertencentes à conta autenticada. IDs inexistentes, de outra c
 Use `PATCH /payouts/cancel` para solicitar o cancelamento de um payout em `SCHEDULED` ou `ERROR`.
 
 ```http
-PATCH /api/v1/external/split-payments/payouts/cancel
+PATCH /baas/api/v1/split-payments/payouts/cancel
 Content-Type: application/json
 ```
 

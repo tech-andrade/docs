@@ -1,6 +1,6 @@
 ---
 title: "Consultar payouts de split"
-api: "GET /api/v1/external/split-payments/payouts"
+api: "GET /baas/api/v1/split-payments/payouts"
 description: "Liste payouts por beneficiário, data, status e paginação."
 ---
 
@@ -118,12 +118,12 @@ Retorna os payouts da conta vinculada à credencial autenticada, com filtros opc
 
 <RequestExample>
 ```bash cURL
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/payouts?beneficiaryDocument=12345678901&status=ERROR&page=1&limit=10' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/payouts?beneficiaryDocument=12345678901&status=ERROR&page=1&limit=10' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 
 ```bash cURL (com metadata)
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/payouts?startDate=2025-01-01&endDate=2025-01-31&include=metadata&page=1&limit=20' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/payouts?startDate=2025-01-01&endDate=2025-01-31&include=metadata&page=1&limit=20' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 </RequestExample>

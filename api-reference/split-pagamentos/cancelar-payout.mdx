@@ -1,6 +1,6 @@
 ---
 title: "Cancelar payout"
-api: "PATCH /api/v1/external/split-payments/payouts/cancel"
+api: "PATCH /baas/api/v1/split-payments/payouts/cancel"
 description: "Solicite o cancelamento de um payout agendado ou em erro."
 ---
 
@@ -37,7 +37,7 @@ Em caso de sucesso, a API retorna `202 Accepted` e o payout passa a ser tratado 
 <RequestExample>
 ```bash cURL
 curl --request PATCH \
-  --url 'https://api.delbank.com.br/api/v1/external/split-payments/payouts/cancel' \
+  --url 'https://api.delbank.com.br/baas/api/v1/split-payments/payouts/cancel' \
   --header 'Content-Type: application/json' \
   --header 'x-delbank-api-key: {{apiKey}}' \
   --data '{

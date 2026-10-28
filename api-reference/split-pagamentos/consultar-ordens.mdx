@@ -1,6 +1,6 @@
 ---
 title: "Consultar ordens de split"
-api: "GET /api/v1/external/split-payments/orders"
+api: "GET /baas/api/v1/split-payments/orders"
 description: "Busque uma ordem específica ou liste ordens por transação, página e limite."
 ---
 
@@ -74,22 +74,22 @@ Retorna uma ordem específica ou uma listagem paginada de ordens associadas à c
 
 <RequestExample>
 ```bash cURL (ordem por id)
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?id=12345' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?id=12345' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 
 ```bash cURL (ordem por transação)
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?transactionId=ID-DO-CASHIN' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?transactionId=ID-DO-CASHIN' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 
 ```bash cURL (listagem paginada)
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?page=1&limit=20' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?page=1&limit=20' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 
 ```bash cURL (listagem paginada com metadata)
-curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?page=1&limit=10&include=metadata' \
+curl --location 'https://api.delbank.com.br/baas/api/v1/split-payments/orders?page=1&limit=10&include=metadata' \
 --header 'x-delbank-api-key: {{apiKey}}'
 ```
 </RequestExample>
