@@ -1,0 +1,111 @@
+---
+title: "Registrar autorização"
+api: "POST /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/approve"
+description: "Registra a autorização do pagador para uma recorrência lida em QR Code (jornadas 2 e 4)."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Lado do pagador](/guias/pix/pix-automatico/pagador#registrar-a-autorização-jornadas-2-e-4).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada chamada.
+</ParamField>
+
+## Path params
+
+<ParamField path="recurrenceId" type="string" required>
+  Identificador da recorrência, o `recurrence.id` da leitura do QR Code.
+</ParamField>
+
+## Body
+
+Copie os dados do objeto `recurrence` retornado na [leitura do QR Code](/api-reference/pix/inicializar-pagamento-qrcode).
+
+<ParamField body="journey" type="number" required>
+  Jornada: `2` ou `4`.
+</ParamField>
+
+<ParamField body="frequencyType" type="string" required>
+  `WEEKLY`, `MONTHLY`, `QUARTERLY`, `SEMIANNUAL` ou `ANNUAL`.
+</ParamField>
+
+<ParamField body="recurrenceStartDate" type="string">
+  Data inicial, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="recurrenceEndDate" type="string">
+  Data final, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Valor fixo da recorrência.
+</ParamField>
+
+<ParamField body="minPayerMaxAmount" type="number">
+  Piso do valor máximo definido pelo recebedor.
+</ParamField>
+
+<ParamField body="payerMaxAmount" type="number">
+  Valor máximo escolhido pelo pagador.
+</ParamField>
+
+<ParamField body="beneficiary" type="object" required>
+  Recebedor: `ispb`, `document` e `name`.
+</ParamField>
+
+<ParamField body="debtor" type="object">
+  Devedor: `type`, `document` e `name`. Ignorado se o documento for igual ao do pagador.
+</ParamField>
+
+<ParamField body="contractNumber" type="string" required>
+  Identificador do contrato.
+</ParamField>
+
+<ParamField body="contractDescription" type="string">
+  Descrição do contrato.
+</ParamField>
+
+<ParamField body="settlementConfirmedAt" type="string">
+  Data e hora da liquidação do pagamento, quando a autorização vem depois de um pagamento (jornada 4).
+</ParamField>
+
+## Response
+
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data e hora do pedido, em UTC, sem `Z`.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027AB12CD34EF5/approve' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "journey": 4,
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-10",
+    "amount": 189.90,
+    "beneficiary": { "ispb": "38224857", "document": "11222333000181", "name": "ESCOLA EXEMPLO LTDA" },
+    "debtor": { "type": "NATURAL", "document": "12345678901", "name": "Joao da Silva" },
+    "contractNumber": "MAT-00012345",
+    "contractDescription": "Mensalidade escolar"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "recurrenceId": "RR3822485720261027AB12CD34EF5",
+    "requestedAt": "2026-10-27T16:10:03.881"
+}
+```
+</ResponseExample>

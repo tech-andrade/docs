@@ -1,0 +1,79 @@
+---
+title: "Cancelar agendamento"
+api: "POST /baas/api/v1/pix/automatic/scheduling/{endToEndId}/cancel"
+description: "Cancela o débito de um ciclo do Pix Automático. A autorização continua ativa."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Cancelar](/guias/pix/pix-automatico/cancelar#cancelar-um-agendamento).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada chamada.
+</ParamField>
+
+## Path params
+
+<ParamField path="endToEndId" type="string" required>
+  `endToEndId` do agendamento, retornado em [Listar agendamentos](/api-reference/pix-automatico/listar-agendamentos).
+</ParamField>
+
+## Body
+
+<ParamField body="cancellationRequesterType" type="string" required>
+  Quem cancela: `RECEIVER` ou `PAYER`.
+</ParamField>
+
+<ParamField body="receiverIspb" type="string" required>
+  ISPB da instituição do recebedor. Use `38224857` quando o recebedor tem conta na Delfinance.
+</ParamField>
+
+<ParamField body="cancellationReason" type="string" required>
+  Motivo: `REQUESTED_BY_PAYEE`, `REQUESTED_BY_PAYER`, `AUTHORIZATION_CANCELLED`, `ACCOUNT_CLOSED`, `ACCOUNT_BLOCKED`, `SETTLEMENT_ERROR` ou `OTHER_PARTICIPANT_REQUEST`.
+</ParamField>
+
+<ParamField body="beneficiaryConciliationId" type="string">
+  Referência de conciliação do recebedor.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="string">Identificador interno do agendamento.</ResponseField>
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="endToEndId" type="string">Identificador do débito cancelado.</ResponseField>
+<ResponseField name="beneficiaryReconciliationId" type="string">Referência de conciliação do recebedor.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data de criação do agendamento, não do cancelamento.</ResponseField>
+
+Se o `endToEndId` não existir, a resposta é `204 No Content`.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/scheduling/E38224857202612010300a1b2c3d4e5f/cancel' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "cancellationRequesterType": "RECEIVER",
+    "receiverIspb": "38224857",
+    "cancellationReason": "REQUESTED_BY_PAYEE"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "endToEndId": "E38224857202612010300a1b2c3d4e5f",
+    "requestedAt": "2026-12-01T03:00:12.000Z"
+}
+```
+</ResponseExample>

@@ -1,0 +1,183 @@
+---
+title: "Consultar Autorizações e Agendamentos"
+sidebarTitle: "Consultar autorizações e agendamentos"
+description: "Liste as autorizações de Pix Automático e os débitos agendados, do lado do recebedor ou do pagador."
+icon: "magnifying-glass"
+tag: "BETA"
+---
+
+Use estas consultas para acompanhar as recorrências: quais foram autorizadas, quais estão pendentes ou canceladas e quais cobranças estão agendadas.
+
+<Note>
+Hoje, o Pix Automático não tem webhooks próprios de autorização nem de agendamento. Consulte periodicamente para acompanhar as mudanças de status. O pagamento de cada cobrança chega pelo webhook `PIX_RECEIVED`, como qualquer Pix recebido.
+</Note>
+
+## Listar autorizações
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations?flow=1&page=1&pageSize=50' \
+--header 'Authorization: {{apiKey}}'
+```
+```json Response
+[
+    {
+        "id": "8f3c2a1e-5b7d-4e9f-a0c1-2d3e4f5a6b7c",
+        "flow": "BENEFICIARY",
+        "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+        "journey": 1,
+        "frequencyType": "MONTHLY",
+        "authorizationResult": "ACCEPTED",
+        "beneficiary": {
+            "ispb": "38224857",
+            "document": "11222333000181",
+            "name": "SUA EMPRESA LTDA"
+        },
+        "payer": {
+            "ispb": "60701190",
+            "type": "NATURAL",
+            "document": "12345678901",
+            "agencyNumber": "1234",
+            "accountNumber": "567890",
+            "municipalityIbgeCode": 0
+        },
+        "contractNumber": "CTR-555001",
+        "contractDescription": "Plano Familia",
+        "recurrenceStartDate": "2026-12-05",
+        "recurrenceCreatedAt": "2026-10-27T14:32:10",
+        "recurrenceAuthorizedAt": "2026-10-27T18:05:44",
+        "amount": 99.90,
+        "status": "SUCCESS"
+    }
+]
+```
+</CodeGroup>
+
+O parâmetro `flow` é obrigatório e define de que lado você está:
+
+| `flow` | Lado | Retorna |
+|---|---|---|
+| `0` | Pagador | Autorizações que a sua conta deu como pagadora |
+| `1` | Recebedor | Recorrências que a sua conta criou como recebedora |
+
+Filtros opcionais: `status`, `authorizationResult`, `beneficiaryDocument`, `payerDocument`, `payerPersonType`, `payerAgencyNumber`, `payerAccountNumber` e intervalos de data (`recurrenceStartDateFrom`/`To`, `recurrenceCreatedDateTimeFrom`/`To`, `recurrenceUpdatedDateTimeFrom`/`To`). A lista vem ordenada pela última atualização, da mais recente para a mais antiga.
+
+### Consultar uma autorização
+
+Use o `id` da listagem, que é um GUID interno. **Não** é o `recurrenceId`.
+
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/8f3c2a1e-5b7d-4e9f-a0c1-2d3e4f5a6b7c' \
+--header 'Authorization: {{apiKey}}'
+```
+
+Se o `id` não existir, a resposta é `204 No Content`, sem corpo.
+
+### Status da autorização
+
+A autorização tem dois campos de status. O `authorizationResult` diz o que o pagador decidiu. O `status` diz se o processamento terminou.
+
+| `authorizationResult` | Significado |
+|---|---|
+| `PROCESSING` | Solicitação em processamento |
+| `AWAITING_VALIDATION` | Em validação pela instituição do pagador |
+| `PENDING_USER` | Aguardando o pagador responder no app |
+| `ACCEPTED` | Autorizada |
+| `REJECTED` | Recusada pelo pagador |
+| `CANCELLED` | Cancelada pelo pagador ou pelo recebedor |
+
+| `status` | Significado |
+|---|---|
+| `PROCESSING` | Em processamento |
+| `SUCCESS` | Processamento concluído |
+| `CANCELLED` | Cancelada |
+| `PROCESSING_ERROR` | Erro no processamento |
+
+Uma recorrência ativa tem `authorizationResult` igual a `ACCEPTED` e `status` igual a `SUCCESS`.
+
+## Listar agendamentos
+
+Os agendamentos são as cobranças de cada ciclo, à espera da data de débito.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/scheduling?flow=0&dueDateStart=2026-12-01&dueDateEnd=2026-12-31&page=1&pageSize=50' \
+--header 'Authorization: {{apiKey}}'
+```
+```json Response
+[
+    {
+        "endToEndId": "E38224857202612010300a1b2c3d4e5f",
+        "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+        "dueDate": "2026-12-05",
+        "amount": 99.90,
+        "status": "PROCESSING",
+        "processingStatus": "PROCESSING",
+        "schedulePurpose": "FIRST_ATTEMPT",
+        "beneficiary": {
+            "ispb": "38224857",
+            "document": "11222333000181",
+            "name": "SUA EMPRESA LTDA",
+            "branchNumber": "0001",
+            "accountType": "PAYMENT",
+            "accountNumber": "41820"
+        },
+        "payer": {
+            "ispb": "60701190",
+            "type": "NATURAL",
+            "document": "12345678901"
+        }
+    }
+]
+```
+</CodeGroup>
+
+<Warning>
+Nos agendamentos, o `flow` é **invertido** em relação às autorizações: `0` é o lado **recebedor** e `1` é o lado **pagador**.
+</Warning>
+
+| Parâmetro | Obrigatório | Descrição |
+|---|---|---|
+| `flow` | Sim | `0` recebedor, `1` pagador |
+| `dueDateStart` | Sim | Início do período de vencimento, `YYYY-MM-DD` |
+| `dueDateEnd` | Sim | Fim do período de vencimento, `YYYY-MM-DD` |
+| `status` | Não | Filtra pelo status do agendamento |
+| `beneficiaryDocument`, `payerDocument`, `payerPersonType` | Não | Filtros por recebedor e pagador |
+
+### Status do agendamento
+
+| `status` | Significado |
+|---|---|
+| `PROCESSING` | Agendado, aguardando o vencimento |
+| `SUCCESS` | Débito realizado |
+| `CANCELLED` | Cancelado pelo pagador ou pelo recebedor |
+| `PROCESSING_ERROR` | Falha no débito |
+
+O `schedulePurpose` indica o tipo da cobrança: `FIRST_ATTEMPT` (cobrança original do ciclo), `RETRY_AFTER_EXPIRATION` (retentativa após o vencimento) ou `RESEND_DUE_TO_SETTLEMENT_ERROR` (reenvio por erro na liquidação).
+
+## Paginação
+
+As duas listagens retornam o array no corpo. A paginação vem no header `Pagination`, com chaves em **PascalCase**:
+
+```text Header
+Pagination: {"CurrentPage":1,"PageCount":3,"PageSize":50,"RowCount":127}
+```
+
+| Parâmetro | Padrão | Limite |
+|---|---|---|
+| `page` | `1` | A partir de `1` |
+| `pageSize` | `50` | De `1` a `100`. Valores fora do intervalo retornam `400` |
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Listar autorizações" icon="list" href="/api-reference/pix-automatico/listar-autorizacoes">
+    `GET /baas/api/v1/pix/automatic/authorizations`
+  </Card>
+  <Card title="Consultar autorização" icon="magnifying-glass" href="/api-reference/pix-automatico/consultar-autorizacao">
+    `GET /baas/api/v1/pix/automatic/authorizations/{id}`
+  </Card>
+  <Card title="Listar agendamentos" icon="calendar-days" href="/api-reference/pix-automatico/listar-agendamentos">
+    `GET /baas/api/v1/pix/automatic/scheduling`
+  </Card>
+</CardGroup>

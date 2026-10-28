@@ -1,0 +1,147 @@
+---
+title: "Criar QR Code de autorização"
+api: "POST /baas/api/v1/pix/qrcode/recurrences"
+description: "Cria um QR Code só com os dados da recorrência (jornada 2). O pagador lê e autoriza o Pix Automático."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Jornada 2: QR Code de autorização](/guias/pix/pix-automatico/jornada-2-qrcode).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance do recebedor.
+</ParamField>
+
+## Body
+
+<ParamField body="responseFormat" type="string" required>
+  `ONLY_PAYLOAD` ou `PAYLOAD_AND_QRCODE`. Com `PAYLOAD_AND_QRCODE`, a resposta traz também a imagem em `qrCodeImageBase64`.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  Cidade do recebedor, até 15 caracteres. Os acentos são removidos.
+</ParamField>
+
+<ParamField body="recurrenceId" type="string">
+  Identificador da recorrência, com 29 caracteres. Se omitido, a API gera um, mas não o devolve na resposta. Veja o [formato](/guias/pix/pix-automatico/visao-geral#identificador-da-recorrência).
+</ParamField>
+
+<ParamField body="frequencyType" type="string" required>
+  Periodicidade: `WEEKLY`, `MONTHLY`, `QUARTERLY`, `SEMIANNUAL` ou `ANNUAL`.
+</ParamField>
+
+<ParamField body="recurrenceStartDate" type="string" required>
+  Data prevista da primeira cobrança, no formato `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="recurrenceEndDate" type="string">
+  Data final da recorrência, no formato `YYYY-MM-DD`. Sem ela, a recorrência não tem prazo para acabar.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Valor fixo de cada cobrança. Não envie junto com `minPayerMaxAmount`.
+</ParamField>
+
+<ParamField body="minPayerMaxAmount" type="number">
+  Para valor variável: o menor valor máximo que o pagador pode definir. Não envie junto com `amount`.
+</ParamField>
+
+<ParamField body="debtor" type="object" required>
+  Pessoa ou empresa a quem o contrato se refere. Pode ser diferente do pagador.
+
+  <Expandable title="debtor">
+    <ParamField body="debtor.type" type="string" required>
+      `NATURAL` (CPF) ou `LEGAL` (CNPJ).
+    </ParamField>
+    <ParamField body="debtor.document" type="string" required>
+      CPF ou CNPJ, só números.
+    </ParamField>
+    <ParamField body="debtor.name" type="string" required>
+      Nome completo.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="contractNumber" type="string" required>
+  Identificador do contrato no seu sistema, até 35 caracteres. Aparece para o pagador.
+</ParamField>
+
+<ParamField body="contractDescription" type="string">
+  Descrição curta exibida ao pagador, até 35 caracteres.
+</ParamField>
+
+<ParamField body="retry" type="string" required>
+  Política de retentativa: `NOT_ALLOWED` ou `ALLOWED` (até 3 retentativas em 7 dias). Precisa bater com o 2º caractere do `recurrenceId`.
+</ParamField>
+
+<ParamField body="beneficiaryConciliationId" type="string" required>
+  Referência de conciliação. Hoje o valor não é devolvido em consultas nem webhooks.
+</ParamField>
+
+## Response
+
+`201 Created`
+
+<ResponseField name="documentId" type="string">Identificador do QR Code.</ResponseField>
+<ResponseField name="revision" type="string">Revisão do QR Code. Começa em `0`.</ResponseField>
+<ResponseField name="qrCodeImageBase64" type="string">Imagem PNG do QR Code em Base64. `null` com `ONLY_PAYLOAD`.</ResponseField>
+<ResponseField name="payloadBase64" type="string">Payload Pix (EMV) em Base64.</ResponseField>
+<ResponseField name="payloadPix" type="string">Payload Pix em texto: o código Pix Copia e Cola.</ResponseField>
+<ResponseField name="payloadJws" type="string">Payload assinado da cobrança. `null` nesta jornada, porque não há cobrança.</ResponseField>
+<ResponseField name="compositePayloadJws" type="string">Payload composto assinado, quando houver.</ResponseField>
+<ResponseField name="recurrencePayloadJws" type="string">Payload assinado (JWS) da recorrência. O claim `idRec` traz o `recurrenceId`.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "city": "Sao Paulo",
+    "recurrenceId": "RN3822485720261027A1B2C3D4E5F",
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-01",
+    "amount": 150.75,
+    "debtor": {
+        "type": "NATURAL",
+        "document": "12345678901",
+        "name": "Joao da Silva"
+    },
+    "contractNumber": "CTR-987654321",
+    "contractDescription": "Plano Premium",
+    "retry": "NOT_ALLOWED",
+    "beneficiaryConciliationId": "ADESAO-0001"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179024",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020126180014br.gov.bcb.pix5204000053039865802BR5913SUA EMPRESA6009SAO PAULO...6304B85A",
+    "payloadJws": null,
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+```json 400
+{
+    "title": "Please refer to the errors property for additional details.",
+    "code": "INVALID_ARGUMENT",
+    "errors": ["contractNumber: must not be blank"]
+}
+```
+</ResponseExample>

@@ -1,0 +1,200 @@
+---
+title: "Pix Automático na Conta Pagadora"
+sidebarTitle: "Lado do pagador"
+description: "Para quem oferece contas Delfinance aos clientes: leia QR Codes de recorrência, responda solicitações, registre autorizações e controle o valor máximo."
+icon: "user-check"
+tag: "BETA"
+---
+
+Esta página é para quem oferece **contas Delfinance aos próprios clientes** (BaaS) e precisa que esses clientes paguem via Pix Automático. Nesse caso, o seu app faz o papel do app do banco do pagador: mostra a recorrência, coleta a autorização e permite gerenciá-la.
+
+Se você só cobra os seus clientes, este conteúdo não se aplica. Veja a [visão geral](/guias/pix/pix-automatico/visao-geral).
+
+<Note>
+Todas as rotas de escrita desta página exigem o header `IdempotencyKey`, com um valor novo a cada chamada.
+</Note>
+
+## O que o seu app precisa oferecer
+
+O Banco Central exige que o app do pagador:
+
+- mostre os dados da recorrência antes da autorização: recebedor, contrato, periodicidade, valor e datas;
+- permita definir e alterar um valor máximo em recorrências de valor variável;
+- liste as autorizações pendentes, ativas e o histórico;
+- permita cancelar a autorização a qualquer momento e um débito agendado até 23h59 da véspera.
+
+Veja as regras completas em [Regras e prazos](/guias/pix/pix-automatico/regras-e-prazos#direitos-do-pagador).
+
+## Jornadas 2, 3 e 4: ler o QR Code
+
+Leia o QR Code pelo mesmo endpoint de [pagamento por QR Code](/guias/pix/pagar-pix/por-qrcode). Quando o código traz uma recorrência, a resposta tem `type` igual a `COMPOSITE`, um `decodeType` de recorrência e o objeto `recurrence`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/payment-initialization' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "payload": "00020101021226...80...6304A1B2"
+}'
+```
+```json Response
+{
+    "endToEndId": "E3822485720261027135161U0X5D1POK",
+    "type": "COMPOSITE",
+    "decodeType": "RECURRENCE_DUE_DATE",
+    "amount": 189.90,
+    "recurrence": {
+        "id": "RR3822485720261027AB12CD34EF5",
+        "journey": 4,
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-12-10",
+        "amount": 189.90,
+        "beneficiary": {
+            "ispb": "38224857",
+            "document": "11222333000181",
+            "name": "ESCOLA EXEMPLO LTDA"
+        },
+        "debtor": {
+            "type": "NATURAL",
+            "document": "12345678901",
+            "name": "Joao da Silva"
+        },
+        "contractNumber": "MAT-00012345",
+        "contractDescription": "Mensalidade escolar",
+        "retryCount": 1,
+        "receiverPspUrl": "pix-h.delbank.com.br/v1/rec/vcharge63c589259ef54f"
+    }
+}
+```
+</CodeGroup>
+
+| `decodeType` | Jornada | O que fazer |
+|---|---|---|
+| `RECURRENCE` | 2 | Mostrar a recorrência e pedir a autorização. Não há pagamento |
+| `RECURRENCE_IMMEDIATE` | 3 | Pagar e autorizar no mesmo passo, com a ciência explícita do pagador |
+| `RECURRENCE_DUE_DATE` | 4 | Pagar a cobrança. Depois, oferecer a adesão, que é opcional |
+| `RECURRENCE_STATIC` | 4 | Pagar o QR estático. Depois, oferecer a adesão |
+
+Os valores `QR_CODE_STATIC`, `QR_CODE_IMMEDIATE` e `QR_CODE_DUE_DATE` indicam um QR Code comum, sem recorrência.
+
+### Registrar a autorização (jornadas 2 e 4)
+
+Quando o pagador aceitar, registre a autorização com os dados de `recurrence`:
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027AB12CD34EF5/approve' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "journey": 4,
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-10",
+    "amount": 189.90,
+    "beneficiary": {
+        "ispb": "38224857",
+        "document": "11222333000181",
+        "name": "ESCOLA EXEMPLO LTDA"
+    },
+    "debtor": {
+        "type": "NATURAL",
+        "document": "12345678901",
+        "name": "Joao da Silva"
+    },
+    "contractNumber": "MAT-00012345",
+    "contractDescription": "Mensalidade escolar"
+}'
+```
+```json Response
+{
+    "recurrenceId": "RR3822485720261027AB12CD34EF5",
+    "requestedAt": "2026-10-27T16:10:03.881"
+}
+```
+</CodeGroup>
+
+- Copie `journey`, `frequencyType`, as datas, `amount` ou `minPayerMaxAmount`, `beneficiary`, `debtor`, `contractNumber` e `contractDescription` da leitura do QR Code.
+- `beneficiary` é obrigatório.
+- Em recorrências de valor variável, informe em `payerMaxAmount` o valor máximo escolhido pelo pagador.
+- Os dados do pagador vêm da conta autenticada. Não é preciso enviá-los.
+
+## Jornada 1: responder uma solicitação
+
+As solicitações da jornada 1 chegam como autorizações pendentes. Liste-as com `flow=0` e `authorizationResult=PENDING_USER` em [Listar autorizações](/guias/pix/pix-automatico/consultar#listar-autorizações) e mostre ao pagador.
+
+<CodeGroup>
+```bash Aceitar
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "authorizationResult": true,
+    "payerMaxAmount": 150.00
+}'
+```
+```bash Recusar
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "authorizationResult": false,
+    "rejectionReason": "Nao reconheco o recebedor"
+}'
+```
+</CodeGroup>
+
+A resposta tem o mesmo formato: `recurrenceId` e `requestedAt`. Ao recusar, informe o motivo em `rejectionReason`. O Banco Central prevê dois motivos: o pagador não reconhece o recebedor ou não tem interesse.
+
+## Alterar o valor máximo
+
+O pagador pode alterar o valor máximo a qualquer momento. A mudança vale para os próximos agendamentos, não para os já feitos.
+
+<CodeGroup>
+```bash cURL
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A/max-amount' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "newPayerMaxAmount": 200.00
+}'
+```
+```json Response
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T16:22:51.003Z"
+}
+```
+</CodeGroup>
+
+<Warning>
+A API não compara o novo valor com o `minPayerMaxAmount` da recorrência. Valide no seu app que o valor máximo não fica abaixo desse piso.
+</Warning>
+
+## Débitos agendados
+
+Para listar os débitos agendados do pagador, use [Listar agendamentos](/guias/pix/pix-automatico/consultar#listar-agendamentos) com `flow=1`. No dia do vencimento, o débito é feito automaticamente, entre 0h e 8h, e gera o webhook `PIX_PAYMENT_UPDATED` como um Pix enviado.
+
+Para cancelar uma autorização ou um débito agendado, veja [Cancelar](/guias/pix/pix-automatico/cancelar). Use `cancellationRequesterType` igual a `PAYER` e `cancellationReason` igual a `REQUESTED_BY_PAYER`.
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Registrar autorização" icon="circle-check" href="/api-reference/pix-automatico/confirmar-autorizacao">
+    `POST /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/approve`
+  </Card>
+  <Card title="Responder solicitação" icon="reply" href="/api-reference/pix-automatico/responder-solicitacao">
+    `PUT /baas/api/v1/pix/automatic/authorizations/{recurrenceId}`
+  </Card>
+  <Card title="Alterar valor máximo" icon="sliders" href="/api-reference/pix-automatico/alterar-valor-maximo">
+    `PUT /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/max-amount`
+  </Card>
+  <Card title="Ler QR Code" icon="qrcode" href="/api-reference/pix/inicializar-pagamento-qrcode">
+    `POST /baas/api/v2/pix/qrcode/payment-initialization`
+  </Card>
+</CardGroup>

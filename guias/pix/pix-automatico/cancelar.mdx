@@ -1,0 +1,112 @@
+---
+title: "Cancelar Autorização ou Agendamento"
+sidebarTitle: "Cancelar"
+description: "Cancele uma recorrência inteira ou só o débito de um ciclo, do lado do recebedor ou do pagador."
+icon: "ban"
+tag: "BETA"
+---
+
+Existem dois tipos de cancelamento no Pix Automático:
+
+| Cancelamento | O que acontece | Quem pode |
+|---|---|---|
+| **Da autorização** | Encerra a recorrência. Nenhuma nova cobrança é enviada, e os débitos agendados a partir do dia seguinte são cancelados | Recebedor ou pagador, a qualquer momento |
+| **De um agendamento** | Cancela só o débito de um ciclo. A autorização continua ativa | Pagador até 23h59 da véspera. Recebedor até 22h00 da véspera |
+
+## Cancelar a autorização
+
+Use o `recurrenceId` da recorrência.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A/cancellations' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "cancellationReason": "REQUESTED_BY_PAYEE"
+}'
+```
+```json Response
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T15:02:44.120"
+}
+```
+</CodeGroup>
+
+| `cancellationReason` | Quando usar |
+|---|---|
+| `REQUESTED_BY_PAYEE` | O recebedor decidiu cancelar |
+| `REQUESTED_BY_PAYER` | O pagador pediu o cancelamento |
+| `ACCOUNT_CLOSED` | A conta do pagador foi encerrada |
+| `COMPANY_CLOSED` | A empresa recebedora encerrou as atividades |
+| `PAYER_DECEASED` | Falecimento do pagador |
+| `REQUEST_ERROR_BY_RECEIVER` | Erro na solicitação feita pelo recebedor |
+| `FRAUD_SUSPECTED` | Suspeita de fraude |
+| `DUPLICATE_CONFIRMATION` | Autorização confirmada em duplicidade |
+| `NO_RESPONSE_TO_PAIN009` | O pagador não respondeu à solicitação da jornada 1 |
+
+Depois do cancelamento, a autorização aparece com `status` e `authorizationResult` iguais a `CANCELLED`. Os agendamentos ainda pendentes também passam a `CANCELLED`.
+
+## Cancelar um agendamento
+
+Use o `endToEndId` do agendamento, retornado em [Listar agendamentos](/guias/pix/pix-automatico/consultar#listar-agendamentos).
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/scheduling/E38224857202612010300a1b2c3d4e5f/cancel' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "cancellationRequesterType": "RECEIVER",
+    "receiverIspb": "38224857",
+    "cancellationReason": "REQUESTED_BY_PAYEE"
+}'
+```
+```json Response
+{
+    "id": "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f",
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "endToEndId": "E38224857202612010300a1b2c3d4e5f",
+    "requestedAt": "2026-12-01T03:00:12.000Z"
+}
+```
+</CodeGroup>
+
+| Campo | Obrigatório | Descrição |
+|---|---|---|
+| `cancellationRequesterType` | Sim | Quem está cancelando: `RECEIVER` (recebedor) ou `PAYER` (pagador) |
+| `receiverIspb` | Sim | ISPB da instituição do recebedor. Use `38224857` quando o recebedor tem conta na Delfinance |
+| `cancellationReason` | Sim | Motivo, conforme a tabela abaixo |
+| `beneficiaryConciliationId` | Não | Referência de conciliação do recebedor |
+
+| `cancellationReason` | Quando usar |
+|---|---|
+| `REQUESTED_BY_PAYEE` | O recebedor decidiu cancelar esta cobrança |
+| `REQUESTED_BY_PAYER` | O pagador pediu o cancelamento |
+| `AUTHORIZATION_CANCELLED` | A autorização foi cancelada |
+| `ACCOUNT_CLOSED` | A conta foi encerrada |
+| `ACCOUNT_BLOCKED` | A conta está bloqueada |
+| `SETTLEMENT_ERROR` | Erro na liquidação |
+| `OTHER_PARTICIPANT_REQUEST` | Pedido da outra instituição |
+
+<Note>
+O `requestedAt` desta resposta é a data de **criação do agendamento**, não a do pedido de cancelamento.
+</Note>
+
+<Warning>
+Respeite os horários limite: o recebedor só pode cancelar até **22h00** e o pagador até **23h59** do dia anterior ao vencimento. Veja [Regras e prazos](/guias/pix/pix-automatico/regras-e-prazos#cancelamentos).
+</Warning>
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Cancelar autorização" icon="ban" href="/api-reference/pix-automatico/cancelar-autorizacao">
+    `POST /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/cancellations`
+  </Card>
+  <Card title="Cancelar agendamento" icon="calendar-xmark" href="/api-reference/pix-automatico/cancelar-agendamento">
+    `POST /baas/api/v1/pix/automatic/scheduling/{endToEndId}/cancel`
+  </Card>
+</CardGroup>

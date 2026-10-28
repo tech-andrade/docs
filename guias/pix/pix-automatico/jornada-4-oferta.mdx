@@ -1,0 +1,170 @@
+---
+title: "Jornada 4: Pagamento com Oferta de Adesão"
+sidebarTitle: "Jornada 4: pagamento + oferta"
+description: "Gere um QR Code composto com cobrança com vencimento ou QR estático e a recorrência. O pagador paga e, depois, recebe a oferta de aderir ao Pix Automático."
+icon: "file-invoice"
+tag: "BETA"
+---
+
+Na jornada 4, o QR Code junta um **pagamento** e uma **oferta de recorrência**. O pagador paga ou agenda o pagamento normalmente. **Só depois** o app oferece a adesão ao Pix Automático, que é opcional.
+
+A diferença para a [jornada 3](/guias/pix/pix-automatico/jornada-3-pagamento-imediato) é que aqui o pagamento não depende da adesão. Quem não quiser o débito automático paga a cobrança e segue a vida.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Fatura com vencimento" icon="calendar">
+    Conta de consumo, mensalidade ou fatura com data de vencimento, juros e multa. O cliente paga a fatura do mês e pode ativar o débito automático para as próximas.
+  </Card>
+  <Card title="QR Code estático" icon="qrcode">
+    QR Code impresso ou fixo, com ou sem valor, que também convida o cliente a aderir à recorrência.
+  </Card>
+</CardGroup>
+
+| Variação | Endpoint | Cobrança |
+|---|---|---|
+| **Com vencimento** | `POST /baas/api/v1/pix/qrcode/recurrences/due-date` | Cobrança com data de vencimento, abatimento, desconto, juros e multa |
+| **Estático** | `POST /baas/api/v1/pix/qrcode/recurrences/static` | QR Code estático, com valor opcional |
+
+Se a leitura da recorrência falhar no app do pagador, o pagamento segue normalmente, só sem a oferta.
+
+## Cobrança com vencimento
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences/due-date' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "key": "e7c3d5f2-4a1b-4c3d-9d15-1b2c3d4e5f60",
+    "beneficiaryAddress": "Av. Paulista, 1000",
+    "city": "Sao Paulo",
+    "state": "SP",
+    "zipCode": "01310100",
+    "payerName": "Joao da Silva",
+    "payerDocument": "12345678901",
+    "dueDate": "2026-11-10",
+    "daysAfterDue": 30,
+    "originalAmount": 189.90,
+    "fine": 3.80,
+    "interest": 1.90,
+    "recurrenceData": {
+        "recurrenceId": "RR3822485720261027AB12CD34EF5",
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-12-10",
+        "debtor": {
+            "type": "NATURAL",
+            "document": "12345678901",
+            "name": "Joao da Silva"
+        },
+        "amount": 189.90,
+        "contractNumber": "MAT-00012345",
+        "contractDescription": "Mensalidade escolar",
+        "retry": "ALLOWED"
+    }
+}'
+```
+```json Response
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179025",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020101021226...80...6304C3D4",
+    "payloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6...",
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</CodeGroup>
+
+| Campo | Obrigatório | Descrição |
+|---|---|---|
+| `key` | Sim | Chave Pix da sua conta, até 77 caracteres |
+| `beneficiaryAddress`, `city`, `state`, `zipCode` | Sim | Endereço do recebedor. `city` até 15 caracteres, `state` com 2 letras |
+| `payerName` | Sim | Nome do pagador, até 200 caracteres |
+| `payerDocument` | Não | CPF ou CNPJ do pagador |
+| `dueDate` | Sim | Vencimento, no formato `YYYY-MM-DD` |
+| `daysAfterDue` | Sim | Quantos dias depois do vencimento a cobrança ainda pode ser paga |
+| `originalAmount` | **Sim** | Valor original da cobrança |
+| `rebate`, `discount`, `interest`, `fine` | Não | Abatimento, desconto, juros e multa, em reais |
+| `payerRequest` | Não | Mensagem ao pagador, até 140 caracteres |
+
+<Warning>
+Sempre envie `originalAmount`. Hoje, a falta desse campo retorna `500` em vez de um erro de validação.
+</Warning>
+
+<Note>
+O valor final é calculado na criação: `originalAmount` − `rebate` − `discount` + `interest` + `fine`.
+</Note>
+
+## QR Code estático
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences/static' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "key": "e7c3d5f2-4a1b-4c3d-9d15-1b2c3d4e5f60",
+    "city": "Sao Paulo",
+    "amount": 79.90,
+    "additionalData": "Mensalidade academia",
+    "recurrenceData": {
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-12-05",
+        "debtor": {
+            "type": "NATURAL",
+            "document": "12345678901",
+            "name": "Joao da Silva"
+        },
+        "amount": 79.90,
+        "contractNumber": "ALUNO-7788",
+        "contractDescription": "Plano mensal",
+        "retry": "NOT_ALLOWED"
+    }
+}'
+```
+```json Response
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179026",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020126...80...6304E5F6",
+    "payloadJws": null,
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</CodeGroup>
+
+| Campo | Obrigatório | Descrição |
+|---|---|---|
+| `responseFormat` | **Sim** | `ONLY_PAYLOAD` ou `PAYLOAD_AND_QRCODE`. Neste endpoint não há valor padrão |
+| `key` | Sim | Chave Pix da sua conta |
+| `city` | Sim | Cidade do recebedor |
+| `amount` | Não | Valor do pagamento. Sem ele, o pagador digita o valor |
+| `additionalData` | Não | Texto exibido ao pagador. Aqui é uma **string**, não uma lista |
+| `categoryCode` | Não | Código de categoria (MCC). Padrão: `0000` |
+
+## Dados da recorrência
+
+Nas duas variações, `recurrenceData` tem os mesmos campos da [jornada 2](/guias/pix/pix-automatico/jornada-2-qrcode#valor-fixo-ou-variável). O pagamento deste QR Code **não** conta como parcela da recorrência: a primeira cobrança recorrente é a de `recurrenceStartDate`.
+
+Depois que o pagador aderir, a Delfinance envia automaticamente as [cobranças recorrentes](/guias/pix/pix-automatico/visao-geral#cobranças-recorrentes) a cada ciclo.
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Criar QR Code com vencimento" icon="calendar" href="/api-reference/pix-automatico/criar-qrcode-vencimento">
+    `POST /baas/api/v1/pix/qrcode/recurrences/due-date`
+  </Card>
+  <Card title="Criar QR Code estático" icon="qrcode" href="/api-reference/pix-automatico/criar-qrcode-estatico">
+    `POST /baas/api/v1/pix/qrcode/recurrences/static`
+  </Card>
+</CardGroup>

@@ -1,0 +1,127 @@
+---
+title: "Jornada 2: QR Code de Autorização"
+sidebarTitle: "Jornada 2: QR Code de autorização"
+description: "Gere um QR Code que leva só os dados da recorrência. O pagador lê o código e autoriza o Pix Automático, sem pagar nada na hora."
+icon: "qrcode"
+tag: "BETA"
+---
+
+Na jornada 2, você gera um QR Code que contém **apenas a recorrência**. O pagador lê o código no app do banco, confere os dados e autoriza. Nenhum pagamento acontece na leitura: o primeiro débito ocorre só na primeira cobrança que você enviar.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Adesão sem cobrança inicial" icon="file-signature">
+    Assinaturas com período de teste, matrículas ou contas de consumo, em que a primeira cobrança vem depois.
+  </Card>
+  <Card title="Adesão em tela ou papel" icon="print">
+    Exiba o QR Code no checkout, em um e-mail, na fatura impressa ou no balcão. O Pix Copia e Cola funciona do mesmo jeito.
+  </Card>
+</CardGroup>
+
+Se o cliente vai pagar algo na adesão, use a [jornada 3](/guias/pix/pix-automatico/jornada-3-pagamento-imediato). Ela junta o primeiro pagamento e a autorização em um único passo.
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Defina o identificador da recorrência">
+Cada recorrência tem um `recurrenceId` de 29 caracteres. Se você não enviar, a API gera um, mas **não o devolve** na resposta. Por isso, recomendamos gerar o seu e guardá-lo antes de criar o QR Code. Veja o [formato do `recurrenceId`](/guias/pix/pix-automatico/visao-geral#identificador-da-recorrência).
+</Step>
+
+<Step title="Crie o QR Code">
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "city": "Sao Paulo",
+    "recurrenceId": "RN3822485720261027A1B2C3D4E5F",
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-01",
+    "recurrenceEndDate": "2027-12-10",
+    "amount": 150.75,
+    "debtor": {
+        "type": "NATURAL",
+        "document": "12345678901",
+        "name": "Joao da Silva"
+    },
+    "contractNumber": "CTR-987654321",
+    "contractDescription": "Plano Premium",
+    "retry": "NOT_ALLOWED",
+    "beneficiaryConciliationId": "ADESAO-0001"
+}'
+```
+```json Response
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179024",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020126180014br.gov.bcb.pix5204000053039865802BR5913SUA EMPRESA6009SAO PAULO...6304B85A",
+    "payloadJws": null,
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</CodeGroup>
+
+A API responde com `201 Created`. Os dados do recebedor (nome, CNPJ e instituição) vêm da sua conta. Não é preciso enviá-los.
+</Step>
+
+<Step title="Exiba o QR Code para o pagador">
+Mostre a imagem de `qrCodeImageBase64` e ofereça o `payloadPix` como Pix Copia e Cola. O pagador lê o código, vê o contrato, a periodicidade e o valor, e autoriza no app do banco dele.
+</Step>
+
+<Step title="Acompanhe as cobranças">
+Com a autorização aprovada, a Delfinance envia automaticamente a cobrança de cada ciclo, entre 10 e 2 dias antes do vencimento. Veja [Cobranças recorrentes](/guias/pix/pix-automatico/visao-geral#cobranças-recorrentes).
+</Step>
+
+</Steps>
+
+## Valor fixo ou variável
+
+Escolha **um** dos dois campos. Enviar os dois juntos retorna `400`.
+
+| Campo | Quando usar | Exemplo |
+|---|---|---|
+| `amount` | Todas as cobranças têm o mesmo valor | Assinatura de R\$ 150,75 por mês |
+| `minPayerMaxAmount` | O valor muda a cada ciclo | Conta de luz. Com `minPayerMaxAmount` de R\$ 300,00, o pagador não pode definir um valor máximo menor que esse |
+
+Sem nenhum dos dois, a recorrência tem valor variável e o pagador escolhe o valor máximo livremente.
+
+<Warning>
+Hoje, as cobranças automáticas só são geradas para recorrências com `amount`. Uma recorrência de valor variável pode ser autorizada, mas não recebe cobranças.
+</Warning>
+
+## Periodicidade e datas
+
+| `frequencyType` | Periodicidade |
+|---|---|
+| `WEEKLY` | Semanal |
+| `MONTHLY` | Mensal |
+| `QUARTERLY` | Trimestral |
+| `SEMIANNUAL` | Semestral |
+| `ANNUAL` | Anual |
+
+- `recurrenceStartDate` é a data prevista da **primeira cobrança**, no formato `YYYY-MM-DD`.
+- `recurrenceEndDate` é opcional. Sem ela, a recorrência não tem prazo para acabar. Se informar, deixe alguns dias de folga depois do último vencimento, para caber eventuais retentativas.
+
+## Devedor e pagador
+
+O `debtor` é a pessoa ou empresa a quem o contrato se refere: o assinante, o aluno, o titular da conta de luz. Ele pode ser diferente de quem paga. Exemplo: um responsável (pagador) autoriza a mensalidade escolar de um aluno (devedor).
+
+<Note>
+O `beneficiaryConciliationId` é obrigatório, mas hoje ele não volta em nenhuma consulta nem webhook. Use o `recurrenceId` para conciliar a recorrência no seu sistema.
+</Note>
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Criar QR Code de autorização" icon="qrcode" href="/api-reference/pix-automatico/criar-qrcode-autorizacao">
+    `POST /baas/api/v1/pix/qrcode/recurrences`
+  </Card>
+</CardGroup>

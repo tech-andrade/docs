@@ -1,0 +1,67 @@
+---
+title: "Responder solicitação"
+api: "PUT /baas/api/v1/pix/automatic/authorizations/{recurrenceId}"
+description: "Registra a resposta do pagador a uma solicitação de Pix Automático da jornada 1."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Lado do pagador](/guias/pix/pix-automatico/pagador#jornada-1-responder-uma-solicitação).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada chamada.
+</ParamField>
+
+## Path params
+
+<ParamField path="recurrenceId" type="string" required>
+  Identificador da recorrência da solicitação.
+</ParamField>
+
+## Body
+
+<ParamField body="authorizationResult" type="boolean" required>
+  `true` para aceitar, `false` para recusar.
+</ParamField>
+
+<ParamField body="payerMaxAmount" type="number">
+  Valor máximo definido pelo pagador, em recorrências de valor variável.
+</ParamField>
+
+<ParamField body="rejectionReason" type="string">
+  Motivo da recusa. Informe quando `authorizationResult` for `false`.
+</ParamField>
+
+## Response
+
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data e hora do pedido, em UTC, sem `Z`.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "authorizationResult": true,
+    "payerMaxAmount": 150.00
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T17:41:09.220"
+}
+```
+</ResponseExample>

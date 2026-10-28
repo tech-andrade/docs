@@ -1,0 +1,133 @@
+---
+title: "Listar autorizações"
+api: "GET /baas/api/v1/pix/automatic/authorizations"
+description: "Lista as autorizações de Pix Automático da conta, do lado do pagador ou do recebedor."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar autorizações e agendamentos](/guias/pix/pix-automatico/consultar).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+## Query params
+
+<ParamField query="flow" type="number" required>
+  Lado da consulta: `0` pagador, `1` recebedor.
+</ParamField>
+
+<ParamField query="status" type="string">
+  `PROCESSING`, `SUCCESS`, `CANCELLED` ou `PROCESSING_ERROR`. Diferencia maiúsculas de minúsculas.
+</ParamField>
+
+<ParamField query="authorizationResult" type="string">
+  Resultado da autorização, como `PENDING_USER` ou `ACCEPTED`.
+</ParamField>
+
+<ParamField query="beneficiaryDocument" type="string">
+  CNPJ do recebedor.
+</ParamField>
+
+<ParamField query="beneficiaryAccount" type="string">
+  Conta do recebedor.
+</ParamField>
+
+<ParamField query="payerDocument" type="string">
+  CPF ou CNPJ do pagador.
+</ParamField>
+
+<ParamField query="payerPersonType" type="number">
+  `0` pessoa física, `1` pessoa jurídica.
+</ParamField>
+
+<ParamField query="payerAgencyNumber" type="string">
+  Agência do pagador, até 4 caracteres.
+</ParamField>
+
+<ParamField query="payerAccountNumber" type="string">
+  Conta do pagador, até 20 caracteres.
+</ParamField>
+
+<ParamField query="recurrenceStartDateFrom" type="string">
+  Data inicial da recorrência, a partir de (`YYYY-MM-DD`). Use com `recurrenceStartDateTo`.
+</ParamField>
+
+<ParamField query="recurrenceCreatedDateTimeFrom" type="string">
+  Criação a partir de. Use com `recurrenceCreatedDateTimeTo`.
+</ParamField>
+
+<ParamField query="recurrenceUpdatedDateTimeFrom" type="string">
+  Última atualização a partir de. Use com `recurrenceUpdatedDateTimeTo`.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Página, a partir de 1.
+</ParamField>
+
+<ParamField query="pageSize" type="number" default="50">
+  Itens por página, de 1 a 100.
+</ParamField>
+
+## Response
+
+Array de autorizações, ordenado pela última atualização. A paginação vem no header `Pagination` (`CurrentPage`, `PageCount`, `PageSize`, `RowCount`). Campos sem valor são omitidos.
+
+<ResponseField name="id" type="string">Identificador interno (GUID). Use em [Consultar autorização](/api-reference/pix-automatico/consultar-autorizacao).</ResponseField>
+<ResponseField name="flow" type="string">`PAYER` ou `BENEFICIARY`.</ResponseField>
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="journey" type="number">Jornada de autorização: `1`, `2`, `3` ou `4`.</ResponseField>
+<ResponseField name="frequencyType" type="string">Periodicidade.</ResponseField>
+<ResponseField name="authorizationResult" type="string">`PROCESSING`, `AWAITING_VALIDATION`, `PENDING_USER`, `ACCEPTED`, `REJECTED` ou `CANCELLED`.</ResponseField>
+<ResponseField name="status" type="string">`PROCESSING`, `SUCCESS`, `CANCELLED` ou `PROCESSING_ERROR`.</ResponseField>
+<ResponseField name="beneficiary" type="object">Recebedor: `ispb`, `document` e `name`.</ResponseField>
+<ResponseField name="payer" type="object">Pagador: `ispb`, `type`, `document`, `name`, `agencyNumber`, `accountType`, `accountNumber` e `municipalityIbgeCode`.</ResponseField>
+<ResponseField name="debtor" type="object">Devedor: `type`, `document` e `name`.</ResponseField>
+<ResponseField name="contractNumber" type="string">Identificador do contrato.</ResponseField>
+<ResponseField name="contractDescription" type="string">Descrição do contrato.</ResponseField>
+<ResponseField name="recurrenceStartDate" type="string">Data inicial, `yyyy-MM-dd`.</ResponseField>
+<ResponseField name="recurrenceEndDate" type="string">Data final, `yyyy-MM-dd`.</ResponseField>
+<ResponseField name="recurrenceCreatedAt" type="string">Criação da recorrência, `yyyy-MM-ddTHH:mm:ss`.</ResponseField>
+<ResponseField name="requestCreatedAt" type="string">Envio da solicitação (jornada 1).</ResponseField>
+<ResponseField name="requestExpirationAt" type="string">Expiração da solicitação (jornada 1).</ResponseField>
+<ResponseField name="recurrenceAuthorizedAt" type="string">Data da autorização.</ResponseField>
+<ResponseField name="lastInstructionAt" type="string">Vencimento da última cobrança enviada.</ResponseField>
+<ResponseField name="amount" type="number">Valor fixo.</ResponseField>
+<ResponseField name="minPayerMaxAmount" type="number">Piso do valor máximo.</ResponseField>
+<ResponseField name="payerMaxAmount" type="number">Valor máximo definido pelo pagador. Só aparece no lado pagador.</ResponseField>
+<ResponseField name="reasonRejection" type="string">Motivo da recusa.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations?flow=1&status=SUCCESS&page=1&pageSize=50' \
+--header 'Authorization: {{apiKey}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "8f3c2a1e-5b7d-4e9f-a0c1-2d3e4f5a6b7c",
+        "flow": "BENEFICIARY",
+        "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+        "journey": 1,
+        "frequencyType": "MONTHLY",
+        "authorizationResult": "ACCEPTED",
+        "beneficiary": { "ispb": "38224857", "document": "11222333000181", "name": "SUA EMPRESA LTDA" },
+        "payer": { "ispb": "60701190", "type": "NATURAL", "document": "12345678901", "agencyNumber": "1234", "accountNumber": "567890", "municipalityIbgeCode": 0 },
+        "contractNumber": "CTR-555001",
+        "contractDescription": "Plano Familia",
+        "recurrenceStartDate": "2026-12-05",
+        "recurrenceCreatedAt": "2026-10-27T14:32:10",
+        "recurrenceAuthorizedAt": "2026-10-27T18:05:44",
+        "amount": 99.90,
+        "status": "SUCCESS"
+    }
+]
+```
+</ResponseExample>

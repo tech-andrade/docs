@@ -1,0 +1,120 @@
+---
+title: "Jornada 3: Pagamento Imediato e Autorização"
+sidebarTitle: "Jornada 3: pagamento + autorização"
+description: "Gere um QR Code composto com uma cobrança imediata e a recorrência. O pagador paga a primeira cobrança e autoriza o Pix Automático no mesmo passo."
+icon: "bolt"
+tag: "BETA"
+---
+
+Na jornada 3, o QR Code junta uma **cobrança imediata** e a **recorrência**. Ao pagar, o pagador autoriza o Pix Automático no mesmo comando, depois de marcar que está ciente da adesão. Não dá para pagar sem autorizar.
+
+A autorização só vale se o pagamento for **liquidado**. Se o QR Code expirar ou o pagamento falhar, a recorrência não é ativada.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Adesão com primeiro pagamento" icon="cart-shopping">
+    Checkout de assinatura em que o cliente paga o primeiro mês na hora e já deixa os próximos no automático.
+  </Card>
+  <Card title="Taxa de adesão" icon="receipt">
+    Matrícula, instalação ou ativação cobrada na adesão, seguida de mensalidades recorrentes.
+  </Card>
+</CardGroup>
+
+<Note>
+O pagamento imediato é um Pix comum. Ele chega pelo webhook `PIX_RECEIVED` e **não conta** como parcela da recorrência. A primeira cobrança recorrente é a de `recurrenceData.recurrenceStartDate`.
+</Note>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Crie o QR Code composto">
+Informe os dados da cobrança imediata na raiz do body e os dados da recorrência em `recurrenceData`.
+
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences/immediate-payment' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "key": "e7c3d5f2-4a1b-4c3d-9d15-1b2c3d4e5f60",
+    "city": "Sao Paulo",
+    "originalAmount": 49.90,
+    "payerRequest": "Plano Premium - primeiro mes",
+    "qrExpiration": 3600,
+    "recurrenceData": {
+        "recurrenceId": "RR3822485720261027F6E5D4C3B2A",
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-11-27",
+        "debtor": {
+            "type": "NATURAL",
+            "document": "12345678901",
+            "name": "Joao da Silva"
+        },
+        "amount": 49.90,
+        "contractNumber": "CTR-123456",
+        "contractDescription": "Plano Premium",
+        "retry": "ALLOWED"
+    }
+}'
+```
+```json Response
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179024",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020101021226...80...6304A1B2",
+    "payloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6...",
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</CodeGroup>
+
+A chave Pix em `key` precisa ser da sua conta.
+</Step>
+
+<Step title="Exiba o QR Code">
+Mostre a imagem de `qrCodeImageBase64` e o `payloadPix` como Pix Copia e Cola. O `qrExpiration` define por quanto tempo o pagador pode pagar e autorizar. O padrão é 24 horas.
+</Step>
+
+<Step title="Receba o pagamento">
+Quando o pagador paga, você recebe o webhook `PIX_RECEIVED`, como em qualquer Pix. A partir daí, a recorrência está autorizada.
+</Step>
+
+<Step title="Acompanhe as cobranças recorrentes">
+A Delfinance envia automaticamente a cobrança de cada ciclo, entre 10 e 2 dias antes do vencimento, a partir de `recurrenceStartDate`. Veja [Cobranças recorrentes](/guias/pix/pix-automatico/visao-geral#cobranças-recorrentes).
+</Step>
+
+</Steps>
+
+## Dados da cobrança imediata
+
+| Campo | Obrigatório | Descrição |
+|---|---|---|
+| `key` | Sim | Chave Pix da sua conta que recebe o pagamento. Até 77 caracteres |
+| `originalAmount` | Sim | Valor do pagamento imediato |
+| `city` | Sim | Cidade do recebedor, até 15 caracteres |
+| `qrExpiration` | Não | Validade em segundos. Padrão: `86400` (24 horas) |
+| `changeValue` | Não | `NOT_ALLOWED` (padrão) ou `ALLOWED`, se o pagador pode alterar o valor |
+| `payerRequest` | Não | Mensagem exibida ao pagador, até 140 caracteres |
+| `payerDocument` / `payerName` | Não | CPF ou CNPJ e nome do pagador esperado |
+| `additionalData` | Não | Lista de `{ "name", "value" }` exibida ao pagador |
+
+Os campos de `recurrenceData` são os mesmos da [jornada 2](/guias/pix/pix-automatico/jornada-2-qrcode#valor-fixo-ou-variável): periodicidade, datas, valor fixo ou piso do valor máximo, devedor, contrato e retentativa.
+
+<Warning>
+Envie todos os campos obrigatórios de `recurrenceData`: `frequencyType`, `recurrenceStartDate`, `debtor`, `contractNumber` e `retry`. Hoje, a falta de um deles dentro de `recurrenceData` retorna `500` em vez de um erro de validação.
+</Warning>
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Criar QR Code com pagamento imediato" icon="bolt" href="/api-reference/pix-automatico/criar-qrcode-imediato">
+    `POST /baas/api/v1/pix/qrcode/recurrences/immediate-payment`
+  </Card>
+</CardGroup>

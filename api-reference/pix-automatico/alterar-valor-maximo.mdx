@@ -1,0 +1,58 @@
+---
+title: "Alterar valor máximo"
+api: "PUT /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/max-amount"
+description: "Altera o valor máximo que o pagador aceita debitar em uma recorrência."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Lado do pagador](/guias/pix/pix-automatico/pagador#alterar-o-valor-máximo).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada chamada.
+</ParamField>
+
+## Path params
+
+<ParamField path="recurrenceId" type="string" required>
+  Identificador da recorrência.
+</ParamField>
+
+## Body
+
+<ParamField body="newPayerMaxAmount" type="number" required>
+  Novo valor máximo. Não pode ser menor que o `minPayerMaxAmount` da recorrência. A API não valida esse piso.
+</ParamField>
+
+## Response
+
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data e hora do pedido.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location --request PUT 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A/max-amount' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "newPayerMaxAmount": 200.00
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T16:22:51.003Z"
+}
+```
+</ResponseExample>

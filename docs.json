@@ -76,6 +76,21 @@
             ]
           },
           {
+            "group": "Pix Automático",
+            "tag": "BETA",
+            "pages": [
+              "guias/pix/pix-automatico/visao-geral",
+              "guias/pix/pix-automatico/regras-e-prazos",
+              "guias/pix/pix-automatico/jornada-1-solicitacao",
+              "guias/pix/pix-automatico/jornada-2-qrcode",
+              "guias/pix/pix-automatico/jornada-3-pagamento-imediato",
+              "guias/pix/pix-automatico/jornada-4-oferta",
+              "guias/pix/pix-automatico/consultar",
+              "guias/pix/pix-automatico/cancelar",
+              "guias/pix/pix-automatico/pagador"
+            ]
+          },
+          {
             "group": "Pagar via TED (TED Cash-out)",
             "pages": [
               "guias/ted/pagar-ted/visao-geral",
@@ -204,6 +219,30 @@
               "api-reference/pix/criar-chave-pix",
               "api-reference/pix/consultar-chaves-pix",
               "api-reference/pix/remover-chave-pix"
+            ]
+          },
+          {
+            "group": "Pix Automático",
+            "tag": "BETA",
+            "pages": [
+              "api-reference/pix-automatico/criar-qrcode-autorizacao",
+              "api-reference/pix-automatico/criar-qrcode-imediato",
+              "api-reference/pix-automatico/criar-qrcode-vencimento",
+              "api-reference/pix-automatico/criar-qrcode-estatico",
+              "api-reference/pix-automatico/solicitar-autorizacao",
+              "api-reference/pix-automatico/listar-autorizacoes",
+              "api-reference/pix-automatico/consultar-autorizacao",
+              "api-reference/pix-automatico/listar-agendamentos",
+              "api-reference/pix-automatico/cancelar-autorizacao",
+              "api-reference/pix-automatico/cancelar-agendamento",
+              {
+                "group": "Conta pagadora",
+                "pages": [
+                  "api-reference/pix-automatico/confirmar-autorizacao",
+                  "api-reference/pix-automatico/responder-solicitacao",
+                  "api-reference/pix-automatico/alterar-valor-maximo"
+                ]
+              }
             ]
           },
           {

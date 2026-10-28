@@ -1,0 +1,52 @@
+---
+title: "Consultar autorização"
+api: "GET /baas/api/v1/pix/automatic/authorizations/{id}"
+description: "Consulta uma autorização de Pix Automático pelo identificador interno."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar autorizações e agendamentos](/guias/pix/pix-automatico/consultar).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+## Path params
+
+<ParamField path="id" type="string" required>
+  Identificador interno da autorização (GUID), retornado em [Listar autorizações](/api-reference/pix-automatico/listar-autorizacoes). Não é o `recurrenceId`.
+</ParamField>
+
+## Response
+
+Os mesmos campos de um item de [Listar autorizações](/api-reference/pix-automatico/listar-autorizacoes). Se o `id` não existir, a resposta é `204 No Content`.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/8f3c2a1e-5b7d-4e9f-a0c1-2d3e4f5a6b7c' \
+--header 'Authorization: {{apiKey}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "8f3c2a1e-5b7d-4e9f-a0c1-2d3e4f5a6b7c",
+    "flow": "BENEFICIARY",
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "journey": 1,
+    "frequencyType": "MONTHLY",
+    "authorizationResult": "ACCEPTED",
+    "beneficiary": { "ispb": "38224857", "document": "11222333000181", "name": "SUA EMPRESA LTDA" },
+    "payer": { "ispb": "60701190", "type": "NATURAL", "document": "12345678901", "agencyNumber": "1234", "accountNumber": "567890", "municipalityIbgeCode": 0 },
+    "contractNumber": "CTR-555001",
+    "recurrenceStartDate": "2026-12-05",
+    "amount": 99.90,
+    "status": "SUCCESS"
+}
+```
+</ResponseExample>

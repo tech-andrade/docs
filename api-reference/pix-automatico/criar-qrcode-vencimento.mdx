@@ -1,0 +1,148 @@
+---
+title: "Criar QR Code com vencimento"
+api: "POST /baas/api/v1/pix/qrcode/recurrences/due-date"
+description: "Cria um QR Code composto com uma cobrança com vencimento e a oferta de recorrência (jornada 4)."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Jornada 4: pagamento com oferta de adesão](/guias/pix/pix-automatico/jornada-4-oferta).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance do recebedor.
+</ParamField>
+
+## Body
+
+<ParamField body="responseFormat" type="string" default="PAYLOAD_AND_QRCODE">
+  `ONLY_PAYLOAD` ou `PAYLOAD_AND_QRCODE`.
+</ParamField>
+
+<ParamField body="key" type="string" required>
+  Chave Pix da sua conta, até 77 caracteres.
+</ParamField>
+
+<ParamField body="beneficiaryFantasyName" type="string">
+  Nome fantasia do recebedor, até 100 caracteres.
+</ParamField>
+
+<ParamField body="beneficiaryAddress" type="string" required>
+  Endereço do recebedor, até 150 caracteres.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  Cidade, até 15 caracteres.
+</ParamField>
+
+<ParamField body="state" type="string" required>
+  UF, 2 letras.
+</ParamField>
+
+<ParamField body="zipCode" type="string" required>
+  CEP.
+</ParamField>
+
+<ParamField body="payerName" type="string" required>
+  Nome do pagador, até 200 caracteres.
+</ParamField>
+
+<ParamField body="payerDocument" type="string">
+  CPF ou CNPJ do pagador.
+</ParamField>
+
+<ParamField body="payerRequest" type="string">
+  Mensagem ao pagador, até 140 caracteres.
+</ParamField>
+
+<ParamField body="dueDate" type="string" required>
+  Vencimento, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="daysAfterDue" type="number" required>
+  Dias após o vencimento em que a cobrança ainda pode ser paga.
+</ParamField>
+
+<ParamField body="originalAmount" type="number" required>
+  Valor original. Sempre envie: a falta deste campo retorna `500`.
+</ParamField>
+
+<ParamField body="rebate" type="number">
+  Abatimento, em reais.
+</ParamField>
+
+<ParamField body="discount" type="number">
+  Desconto, em reais.
+</ParamField>
+
+<ParamField body="interest" type="number">
+  Juros, em reais.
+</ParamField>
+
+<ParamField body="fine" type="number">
+  Multa, em reais.
+</ParamField>
+
+<ParamField body="additionalData" type="object[]">
+  Lista de `{ "name", "value" }` exibida ao pagador.
+</ParamField>
+
+<ParamField body="recurrenceData" type="object" required>
+  Dados da recorrência. Mesmos campos de [Criar QR Code com pagamento imediato](/api-reference/pix-automatico/criar-qrcode-imediato): `recurrenceId`, `frequencyType`, `recurrenceStartDate`, `recurrenceEndDate`, `amount`, `minPayerMaxAmount`, `debtor`, `contractNumber`, `contractDescription` e `retry`.
+</ParamField>
+
+## Response
+
+`201 Created`. Os mesmos campos de [Criar QR Code de autorização](/api-reference/pix-automatico/criar-qrcode-autorizacao), com `payloadJws` preenchido com a cobrança com vencimento.
+
+O valor final da cobrança é `originalAmount` − `rebate` − `discount` + `interest` + `fine`, calculado na criação.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences/due-date' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "key": "e7c3d5f2-4a1b-4c3d-9d15-1b2c3d4e5f60",
+    "beneficiaryAddress": "Av. Paulista, 1000",
+    "city": "Sao Paulo",
+    "state": "SP",
+    "zipCode": "01310100",
+    "payerName": "Joao da Silva",
+    "dueDate": "2026-11-10",
+    "daysAfterDue": 30,
+    "originalAmount": 189.90,
+    "recurrenceData": {
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-12-10",
+        "debtor": { "type": "NATURAL", "document": "12345678901", "name": "Joao da Silva" },
+        "amount": 189.90,
+        "contractNumber": "MAT-00012345",
+        "contractDescription": "Mensalidade escolar",
+        "retry": "ALLOWED"
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179025",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020101021226...80...6304C3D4",
+    "payloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6...",
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</ResponseExample>

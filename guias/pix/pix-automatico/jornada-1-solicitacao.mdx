@@ -1,0 +1,119 @@
+---
+title: "Jornada 1: Solicitação de Autorização"
+sidebarTitle: "Jornada 1: solicitação no app"
+description: "Envie uma solicitação de Pix Automático direto para a conta do pagador. Ela aparece no app do banco dele para aprovar, sem QR Code."
+icon: "mobile-screen"
+tag: "BETA"
+---
+
+Na jornada 1, você combina a adesão com o cliente fora do Pix, por telefone, e-mail ou no balcão, e envia uma **solicitação de autorização** para a conta dele. A solicitação aparece em "Autorizações pendentes" no app do banco do pagador, que aprova ou recusa.
+
+Não há QR Code. Em compensação, você precisa dos **dados bancários do pagador**: instituição, agência, conta e CPF ou CNPJ. O Pix Automático não usa chave Pix.
+
+## Quando usar
+
+<CardGroup cols={2}>
+  <Card title="Venda por telefone ou balcão" icon="headset">
+    O cliente fecha o contrato com um atendente e recebe a solicitação no app do banco para confirmar.
+  </Card>
+  <Card title="Migração de débito automático" icon="right-left">
+    Você já tem os dados bancários dos clientes e quer convidá-los a migrar para o Pix Automático.
+  </Card>
+</CardGroup>
+
+<Warning>
+Não reenvie a mesma oferta para quem não autorizou em menos de 30 dias. O Banco Central considera isso envio excessivo.
+</Warning>
+
+## Passo a passo
+
+<Steps>
+
+<Step title="Envie a solicitação">
+<CodeGroup>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-05",
+    "amount": 99.90,
+    "beneficiary": {
+        "ispb": "38224857",
+        "document": "11222333000181",
+        "name": "SUA EMPRESA LTDA"
+    },
+    "payer": {
+        "ispb": "60701190",
+        "type": "NATURAL",
+        "document": "12345678901",
+        "agencyNumber": "1234",
+        "accountNumber": "567890"
+    },
+    "debtor": {
+        "type": "NATURAL",
+        "document": "12345678901",
+        "name": "Joao da Silva"
+    },
+    "contractNumber": "CTR-555001",
+    "contractDescription": "Plano Familia",
+    "requestExpiresAt": "2026-11-15T23:59:59.000Z"
+}'
+```
+```json Response
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T14:32:10.512"
+}
+```
+</CodeGroup>
+
+- O header `IdempotencyKey` é obrigatório. Use um valor novo a cada solicitação.
+- Em `beneficiary`, envie os dados da sua empresa. O documento precisa ser um **CNPJ**. A API sobrescreve esses dados com os da conta autenticada.
+- Em `payer`, informe a instituição (`ispb`), a agência, a conta e o CPF ou CNPJ do pagador.
+- `requestExpiresAt` é o prazo para o pagador responder, no máximo **30 dias** após o envio.
+</Step>
+
+<Step title="Aguarde a resposta do pagador">
+A solicitação começa com `authorizationResult` igual a `PENDING_USER` ou `PROCESSING`. Quando o pagador responde, ela passa a `ACCEPTED` ou `REJECTED`.
+
+Consulte o andamento em [Consultar autorizações](/guias/pix/pix-automatico/consultar), filtrando por `flow=1` (recebedor). O status é sincronizado com a instituição do pagador a cada **15 minutos**.
+</Step>
+
+<Step title="Acompanhe as cobranças">
+Com a autorização aceita, a Delfinance envia automaticamente a cobrança de cada ciclo. Veja [Cobranças recorrentes](/guias/pix/pix-automatico/visao-geral#cobranças-recorrentes).
+</Step>
+
+</Steps>
+
+## Campos da solicitação
+
+| Campo | Obrigatório | Descrição |
+|---|---|---|
+| `recurrenceId` | Não | Identificador da recorrência. Gerado pela API se omitido, sempre com prefixo `RR` |
+| `frequencyType` | Sim | `WEEKLY`, `MONTHLY`, `QUARTERLY`, `SEMIANNUAL` ou `ANNUAL` |
+| `recurrenceStartDate` | Sim | Data da primeira cobrança, `YYYY-MM-DD` |
+| `recurrenceEndDate` | Não | Data final, `YYYY-MM-DD` |
+| `amount` | Não | Valor fixo de cada cobrança. Necessário para as cobranças automáticas |
+| `minPayerMaxAmount` | Não | Piso do valor máximo, para valor variável |
+| `beneficiary` | Sim | `ispb`, `document` (CNPJ) e `name` da sua empresa |
+| `payer` | Sim | `ispb`, `type` (`NATURAL` ou `LEGAL`), `document`, `agencyNumber` e `accountNumber` do pagador |
+| `debtor` | Não | `type`, `document` e `name` do devedor, se for diferente do pagador |
+| `contractNumber` | Sim | Identificador do contrato, exibido ao pagador |
+| `contractDescription` | Não | Descrição exibida ao pagador |
+| `requestExpiresAt` | Sim | Data e hora de expiração da solicitação, em UTC |
+
+<Note>
+Envie `frequencyType` sempre. Se ele faltar, a API assume `WEEKLY` sem retornar erro.
+</Note>
+
+## Referência da API
+
+<CardGroup cols={1}>
+  <Card title="Solicitar autorização" icon="paper-plane" href="/api-reference/pix-automatico/solicitar-autorizacao">
+    `POST /baas/api/v1/pix/automatic/authorizations`
+  </Card>
+</CardGroup>

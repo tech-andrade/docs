@@ -1,0 +1,124 @@
+---
+title: "Solicitar autorização"
+api: "POST /baas/api/v1/pix/automatic/authorizations"
+description: "Envia uma solicitação de Pix Automático para a conta do pagador (jornada 1)."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Jornada 1: solicitação no app](/guias/pix/pix-automatico/jornada-1-solicitacao).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada solicitação.
+</ParamField>
+
+## Body
+
+<ParamField body="recurrenceId" type="string">
+  Identificador da recorrência, 29 caracteres. Gerado pela API se omitido, com prefixo `RR`.
+</ParamField>
+
+<ParamField body="frequencyType" type="string" required>
+  `WEEKLY`, `MONTHLY`, `QUARTERLY`, `SEMIANNUAL` ou `ANNUAL`. Se omitido, a API assume `WEEKLY`.
+</ParamField>
+
+<ParamField body="recurrenceStartDate" type="string" required>
+  Data da primeira cobrança, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="recurrenceEndDate" type="string">
+  Data final, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Valor fixo de cada cobrança. Necessário para as cobranças automáticas.
+</ParamField>
+
+<ParamField body="minPayerMaxAmount" type="number">
+  Piso do valor máximo do pagador, para valor variável.
+</ParamField>
+
+<ParamField body="beneficiary" type="object" required>
+  Dados da sua empresa. Sobrescritos com os dados da conta autenticada.
+
+  <Expandable title="beneficiary">
+    <ParamField body="beneficiary.ispb" type="string" required>ISPB da instituição do recebedor (`38224857`).</ParamField>
+    <ParamField body="beneficiary.document" type="string" required>CNPJ válido do recebedor.</ParamField>
+    <ParamField body="beneficiary.name" type="string" required>Razão social.</ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="payer" type="object" required>
+  Dados bancários do pagador.
+
+  <Expandable title="payer">
+    <ParamField body="payer.ispb" type="string" required>ISPB da instituição do pagador.</ParamField>
+    <ParamField body="payer.type" type="string" required>`NATURAL` (CPF) ou `LEGAL` (CNPJ).</ParamField>
+    <ParamField body="payer.document" type="string" required>CPF ou CNPJ válido do pagador.</ParamField>
+    <ParamField body="payer.agencyNumber" type="string">Agência.</ParamField>
+    <ParamField body="payer.accountNumber" type="string">Número da conta.</ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="debtor" type="object">
+  Devedor, se for diferente do pagador: `type` (`NATURAL` ou `LEGAL`), `document` e `name`.
+</ParamField>
+
+<ParamField body="contractNumber" type="string" required>
+  Identificador do contrato, exibido ao pagador.
+</ParamField>
+
+<ParamField body="contractDescription" type="string">
+  Descrição exibida ao pagador.
+</ParamField>
+
+<ParamField body="requestExpiresAt" type="string" required>
+  Data e hora de expiração da solicitação, em UTC (ISO 8601). No máximo 30 dias após o envio.
+</ParamField>
+
+## Response
+
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data e hora do pedido, em UTC, no formato `yyyy-MM-ddTHH:mm:ss.fff` (sem `Z`).</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "frequencyType": "MONTHLY",
+    "recurrenceStartDate": "2026-12-05",
+    "amount": 99.90,
+    "beneficiary": { "ispb": "38224857", "document": "11222333000181", "name": "SUA EMPRESA LTDA" },
+    "payer": { "ispb": "60701190", "type": "NATURAL", "document": "12345678901", "agencyNumber": "1234", "accountNumber": "567890" },
+    "contractNumber": "CTR-555001",
+    "contractDescription": "Plano Familia",
+    "requestExpiresAt": "2026-11-15T23:59:59.000Z"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T14:32:10.512"
+}
+```
+```json 400
+{
+    "code": "REQUEST_ERROR",
+    "instance": "/api/v1/automatic-pix/authorizations",
+    "errors": ["Payer.Document: Campo inválido."]
+}
+```
+</ResponseExample>

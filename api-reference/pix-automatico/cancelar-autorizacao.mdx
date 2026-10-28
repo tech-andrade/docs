@@ -1,0 +1,60 @@
+---
+title: "Cancelar autorização"
+api: "POST /baas/api/v1/pix/automatic/authorizations/{recurrenceId}/cancellations"
+description: "Cancela uma recorrência de Pix Automático, do lado do recebedor ou do pagador."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Cancelar](/guias/pix/pix-automatico/cancelar).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+<ParamField header="IdempotencyKey" type="string" required>
+  Chave de idempotência. Use um valor novo a cada chamada.
+</ParamField>
+
+## Path params
+
+<ParamField path="recurrenceId" type="string" required>
+  Identificador da recorrência.
+</ParamField>
+
+## Body
+
+<ParamField body="cancellationReason" type="string" required>
+  Motivo: `REQUESTED_BY_PAYEE`, `REQUESTED_BY_PAYER`, `ACCOUNT_CLOSED`, `COMPANY_CLOSED`, `PAYER_DECEASED`, `REQUEST_ERROR_BY_RECEIVER`, `FRAUD_SUSPECTED`, `DUPLICATE_CONFIRMATION` ou `NO_RESPONSE_TO_PAIN009`.
+</ParamField>
+
+## Response
+
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="requestedAt" type="string">Data e hora do pedido, em UTC, sem `Z`.</ResponseField>
+
+Se a recorrência não for encontrada, a resposta é `404`.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/authorizations/RR3822485720261027B7C8D9E0F1A/cancellations' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: {{apiKey}}' \
+--header 'IdempotencyKey: {{$guid}}' \
+--data '{
+    "cancellationReason": "REQUESTED_BY_PAYEE"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+    "requestedAt": "2026-10-27T15:02:44.120"
+}
+```
+</ResponseExample>

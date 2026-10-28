@@ -1,0 +1,100 @@
+---
+title: "Criar QR Code estático com recorrência"
+api: "POST /baas/api/v1/pix/qrcode/recurrences/static"
+description: "Cria um QR Code estático composto com a oferta de recorrência (jornada 4)."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Jornada 4: pagamento com oferta de adesão](/guias/pix/pix-automatico/jornada-4-oferta#qr-code-estático).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta Delfinance do recebedor.
+</ParamField>
+
+## Body
+
+<ParamField body="responseFormat" type="string" required>
+  `ONLY_PAYLOAD` ou `PAYLOAD_AND_QRCODE`. Neste endpoint não há valor padrão.
+</ParamField>
+
+<ParamField body="key" type="string" required>
+  Chave Pix da sua conta.
+</ParamField>
+
+<ParamField body="city" type="string" required>
+  Cidade do recebedor.
+</ParamField>
+
+<ParamField body="zipCode" type="string">
+  CEP do recebedor.
+</ParamField>
+
+<ParamField body="amount" type="number">
+  Valor do pagamento. Sem ele, o pagador digita o valor.
+</ParamField>
+
+<ParamField body="categoryCode" type="string" default="0000">
+  Código de categoria (MCC).
+</ParamField>
+
+<ParamField body="additionalData" type="string">
+  Texto exibido ao pagador. Neste endpoint é uma string, não uma lista.
+</ParamField>
+
+<ParamField body="ispbFss" type="string">
+  ISPB do facilitador de serviço de saque, quando houver.
+</ParamField>
+
+<ParamField body="recurrenceData" type="object" required>
+  Dados da recorrência. Mesmos campos de [Criar QR Code com pagamento imediato](/api-reference/pix-automatico/criar-qrcode-imediato).
+</ParamField>
+
+## Response
+
+`201 Created`. Os mesmos campos de [Criar QR Code de autorização](/api-reference/pix-automatico/criar-qrcode-autorizacao). `payloadJws` vem `null`, porque o QR estático não tem cobrança assinada.
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/qrcode/recurrences/static' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "responseFormat": "PAYLOAD_AND_QRCODE",
+    "key": "e7c3d5f2-4a1b-4c3d-9d15-1b2c3d4e5f60",
+    "city": "Sao Paulo",
+    "amount": 79.90,
+    "recurrenceData": {
+        "frequencyType": "MONTHLY",
+        "recurrenceStartDate": "2026-12-05",
+        "debtor": { "type": "NATURAL", "document": "12345678901", "name": "Joao da Silva" },
+        "amount": 79.90,
+        "contractNumber": "ALUNO-7788",
+        "retry": "NOT_ALLOWED"
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+    "documentId": "01000000-3353-6e2c-12c9-08de9f179026",
+    "revision": "0",
+    "qrCodeImageBase64": "iVBORw0KGgoAAAANSUhEUgAAASQAAAEkAQAAAACugnFBAAAD60lEQVR4nO2a...",
+    "payloadBase64": "MDAwMjAxMjYxODAwMTRici5nb3YuYmNiLnBpeDUyMDQwMDAw...",
+    "payloadPix": "00020126...80...6304E5F6",
+    "payloadJws": null,
+    "compositePayloadJws": null,
+    "recurrencePayloadJws": "eyJhbGciOiJQUzUxMiIsImtpZCI6IjE0NzhFNDZB..."
+}
+```
+</ResponseExample>

@@ -1,0 +1,95 @@
+---
+title: "Listar agendamentos"
+api: "GET /baas/api/v1/pix/automatic/scheduling"
+description: "Lista os débitos agendados de Pix Automático em um período de vencimento."
+tag: "BETA"
+---
+
+<Note>
+Para o passo a passo completo, veja o guia [Consultar autorizações e agendamentos](/guias/pix/pix-automatico/consultar#listar-agendamentos).
+</Note>
+
+## Headers
+
+<ParamField header="Authorization" type="string" required>
+  Sua API key, sem o prefixo `Bearer`.
+</ParamField>
+
+## Query params
+
+<ParamField query="flow" type="number" required>
+  Lado da consulta: `0` **recebedor**, `1` **pagador**. É o inverso da listagem de autorizações.
+</ParamField>
+
+<ParamField query="dueDateStart" type="string" required>
+  Início do período de vencimento, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="dueDateEnd" type="string" required>
+  Fim do período de vencimento, `YYYY-MM-DD`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  `PROCESSING`, `SUCCESS`, `CANCELLED` ou `PROCESSING_ERROR`.
+</ParamField>
+
+<ParamField query="beneficiaryDocument" type="string">
+  CNPJ do recebedor.
+</ParamField>
+
+<ParamField query="payerDocument" type="string">
+  CPF ou CNPJ do pagador.
+</ParamField>
+
+<ParamField query="payerPersonType" type="number">
+  `0` pessoa física, `1` pessoa jurídica.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Página, a partir de 1.
+</ParamField>
+
+<ParamField query="pageSize" type="number" default="50">
+  Itens por página, de 1 a 100.
+</ParamField>
+
+## Response
+
+Array de agendamentos, ordenado pela última atualização. A paginação vem no header `Pagination` (`CurrentPage`, `PageCount`, `PageSize`, `RowCount`).
+
+<ResponseField name="endToEndId" type="string">Identificador do débito. Use para [cancelar o agendamento](/api-reference/pix-automatico/cancelar-agendamento).</ResponseField>
+<ResponseField name="recurrenceId" type="string">Identificador da recorrência.</ResponseField>
+<ResponseField name="dueDate" type="string">Vencimento, `yyyy-MM-dd`.</ResponseField>
+<ResponseField name="amount" type="number">Valor da cobrança.</ResponseField>
+<ResponseField name="status" type="string">`PROCESSING`, `SUCCESS`, `CANCELLED` ou `PROCESSING_ERROR`.</ResponseField>
+<ResponseField name="processingStatus" type="string">`PROCESSING`, `SUCCESS` ou `CANCELLED`.</ResponseField>
+<ResponseField name="schedulePurpose" type="string">`FIRST_ATTEMPT`, `RETRY_AFTER_EXPIRATION` ou `RESEND_DUE_TO_SETTLEMENT_ERROR`.</ResponseField>
+<ResponseField name="beneficiaryConciliationId" type="string">Referência de conciliação do recebedor.</ResponseField>
+<ResponseField name="beneficiary" type="object">Recebedor: `ispb`, `document`, `name`, `branchNumber`, `accountType` e `accountNumber`.</ResponseField>
+<ResponseField name="payer" type="object">Pagador: `ispb`, `type` e `document`.</ResponseField>
+<ResponseField name="infoBetweenCustomers" type="string">Informação do recebedor para o pagador.</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/pix/automatic/scheduling?flow=0&dueDateStart=2026-12-01&dueDateEnd=2026-12-31' \
+--header 'Authorization: {{apiKey}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "endToEndId": "E38224857202612010300a1b2c3d4e5f",
+        "recurrenceId": "RR3822485720261027B7C8D9E0F1A",
+        "dueDate": "2026-12-05",
+        "amount": 99.90,
+        "status": "PROCESSING",
+        "processingStatus": "PROCESSING",
+        "schedulePurpose": "FIRST_ATTEMPT",
+        "beneficiary": { "ispb": "38224857", "document": "11222333000181", "name": "SUA EMPRESA LTDA", "branchNumber": "0001", "accountType": "PAYMENT", "accountNumber": "41820" },
+        "payer": { "ispb": "60701190", "type": "NATURAL", "document": "12345678901" }
+    }
+]
+```
+</ResponseExample>
