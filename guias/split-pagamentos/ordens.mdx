@@ -5,7 +5,7 @@ description: "Consulte ordens e payouts de split, acompanhe o status e solicite 
 icon: "receipt"
 ---
 
-Este guia descreve como consultar ordens e payouts de Split de Pagamentos e como solicitar o processamento forçado ou o cancelamento de um payout. As rotas desta API operam sobre a conta autenticada, podendo consultar insformações somente da mesma.
+Este guia descreve como consultar ordens e payouts de Split de Pagamentos e como solicitar o processamento forçado ou o cancelamento de um payout.
 
 ## Conceitos
 
@@ -15,10 +15,6 @@ Este guia descreve como consultar ordens e payouts de Split de Pagamentos e como
 - **Base do split**: valor bruto do cash-in menos a tarifa, quando a cobrança da tarifa antes do split estiver habilitada.
 
 Payouts com data de pagamento futura ficam agendados. Payouts elegíveis para a data corrente podem seguir para processamento sem uma chamada manual. A API permite consultar o andamento e, quando aplicável, solicitar novamente o processamento ou cancelar a operação.
-
-<Warning>
-    O processamento automático de payouts agendados está em desenvolvimento, assim, por enquanto será necessário processa-los manualmente pelo endpoint de processamento.
-</Warning>
 
 <Note>
     Payouts só podem ser agendados através das instruções de split na criação do qr code.
