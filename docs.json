@@ -100,7 +100,8 @@
               "guias/split-pagamentos/visao-geral",
               "guias/split-pagamentos/configurar",
               "guias/split-pagamentos/consultar",
-              "guias/split-pagamentos/remover"
+              "guias/split-pagamentos/remover",
+              "guias/split-pagamentos/ordens"
             ]
           },
           {
@@ -202,6 +203,9 @@
               "api-reference/split-pagamentos/criar-split",
               "api-reference/split-pagamentos/listar-splits",
               "api-reference/split-pagamentos/consultar-split",
+              "api-reference/split-pagamentos/consultar-ordens",
+              "api-reference/split-pagamentos/consultar-payouts",
+              "api-reference/split-pagamentos/cancelar-payout",
               "api-reference/split-pagamentos/adicionar-beneficiario",
               "api-reference/split-pagamentos/atualizar-beneficiario",
               "api-reference/split-pagamentos/remover-split",

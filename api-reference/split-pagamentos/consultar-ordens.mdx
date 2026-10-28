@@ -1,0 +1,236 @@
+---
+title: "Consultar ordens de split"
+api: "GET /api/v1/external/split-payments/orders"
+description: "Busque uma ordem específica ou liste ordens por transação, página e limite."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Ordens de Split de Pagamentos](/guias/split-pagamentos/ordens).
+</Note>
+
+Retorna uma ordem específica ou uma listagem paginada de ordens associadas à credencial autenticada.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+## Query params
+
+<ParamField query="id" type="string">
+  Identificador da ordem a ser consultada.
+</ParamField>
+
+<ParamField query="transactionId" type="string">
+  Identificador da transação original de cash-in associada à ordem.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Página da listagem. Padrão: `1`.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Quantidade de itens por página. Padrão: `10`; valores maiores que `100` são limitados a `100`.
+</ParamField>
+
+<ParamField query="include" type="string">
+  Quando definido como `metadata`, retorna os itens em `data` e os metadados de paginação em `metadata`.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="number" required>
+  Identificador único da ordem.
+</ResponseField>
+
+<ResponseField name="transactionOriginalId" type="string" required>
+  Identificador da transação original do cash-in relacionado.
+</ResponseField>
+
+<ResponseField name="source" type="string" required>
+  Origem do split: `QR_CODE` ou `ACCOUNT_CONFIGURATOIN`.
+</ResponseField>
+
+<ResponseField name="grossAmount" type="number" required>
+  Valor bruto do cash-in.
+</ResponseField>
+
+<ResponseField name="tariffAmount" type="number">
+  Valor da tarifa cobrada antes do split, quando aplicável.
+</ResponseField>
+
+<ResponseField name="splitBaseAmount" type="number" required>
+  Base do cálculo do split após as regras de tarifa.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string" required>
+  Data de criação da ordem em ISO 8601.
+</ResponseField>
+
+<ResponseField name="payouts" type="array">
+  Lista dos payouts associados a essa ordem.
+</ResponseField>
+
+<RequestExample>
+```bash cURL (ordem por id)
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?id=12345' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+
+```bash cURL (ordem por transação)
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?transactionId=ID-DO-CASHIN' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+
+```bash cURL (listagem paginada)
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?page=1&limit=20' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+
+```bash cURL (listagem paginada com metadata)
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/orders?page=1&limit=10&include=metadata' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": 12345,
+    "transactionOriginalId": "ID-DO-CASHIN",
+    "grossAmount": 10.00,
+    "tariffAmount": 0.25,
+    "splitBaseAmount": 9.75,
+    "source": {
+        "name": "QR_CODE",
+        "description": "QrCode",
+        "value": 0
+    },
+    "createdAt": "2025-09-22T12:00:00.000Z",
+    "payouts": [
+        {
+            "id": 12545,
+            "splitOrderId": 12345,
+            "beneficiary": {
+                "bankIspb": "ISPBCODE",
+                "bankAccountNumber": "12345",
+                "bankAccountBranch": "0001",
+                "holderDocument": "01234567890",
+                "holderName": "Nome do beneficiário",
+                "bankAccountType": "Tipo da conta bancária do beneficiário"
+            },
+            "transferType": {
+                "name": "PIX_MANUAL",
+                "description": "Pix Manual",
+                "value": 2
+            },
+            "instructionType": {
+                "name": "PERCENTAGE",
+                "description": "Porcentagem",
+                "value": 0
+            },
+            "instructionAmount": 85.00,
+            "amount": 8.29,
+            "paymentDate": "2025-09-22T12:00:00.000Z",
+            "status": {
+                "name": "SUCCESS",
+                "description": "Sucesso",
+                "value": 1
+            },
+            "transactionId": "ID-DO-SPLIT-CASHOUT",
+            "endToEndId": "E2E-DO-SPLIT-CASHOUT",
+            "paidAt": "2025-09-22T12:00:00.000Z",
+            "createdAt": "2025-09-22T12:00:00.000Z",
+            "updatedAt": "2025-09-22T12:00:00.000Z"
+        }
+    ]
+}
+```
+
+```json 200 (listagem paginada)
+[
+    {
+        "id": 12345,
+        "transactionOriginalId": "ID-DO-CASHIN",
+        "grossAmount": 10.00,
+        "tariffAmount": 0.25,
+        "splitBaseAmount": 9.75,
+        "source": {
+            "name": "QR_CODE",
+            "description": "QrCode",
+            "value": 0
+        },
+        "createdAt": "2025-09-22T12:00:00.000Z"
+    },
+    {
+        "id": 12346,
+        "transactionOriginalId": "ID-DO-CASHIN",
+        "grossAmount": 100.00,
+        "tariffAmount": 0.00,
+        "splitBaseAmount": 100.00,
+        "source": {
+            "name": "QR_CODE",
+            "description": "QrCode",
+            "value": 0
+        },
+        "createdAt": "2025-09-26T12:00:00.000Z"
+    }
+]
+```
+
+```json 200 (listagem paginada com metadata)
+{
+    "data": [
+        {
+            "id": 12345,
+            "transactionOriginalId": "ID-DO-CASHIN",
+            "grossAmount": 10.00,
+            "tariffAmount": 0.25,
+            "splitBaseAmount": 9.75,
+            "source": {
+                "name": "QR_CODE",
+                "description": "QrCode",
+                "value": 0
+            },
+            "createdAt": "2025-09-22T12:00:00.000Z"
+        },
+        {
+            "id": 12346,
+            "transactionOriginalId": "ID-DO-CASHIN",
+            "grossAmount": 100.00,
+            "tariffAmount": 0.00,
+            "splitBaseAmount": 100.00,
+            "source": {
+                "name": "QR_CODE",
+                "description": "QrCode",
+                "value": 0
+            },
+            "createdAt": "2025-09-26T12:00:00.000Z"
+        }
+    ],
+    "metadata": {
+        "pageNumber": 1,
+        "pageSize": 10,
+        "pageCount": 3,
+        "rowCount": 21
+    }
+}
+```
+
+```json 400
+{
+    "errors": [
+        "'id' e 'transactionId' são mutuamente exclusivos."
+    ]
+}
+```
+
+```json 404
+{
+    "type": "https://tools.ietf.org/html/rfc7231#section-6.5.4",
+    "title": "Not Found",
+    "status": 404
+}
+```
+</ResponseExample>

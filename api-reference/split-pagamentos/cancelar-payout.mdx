@@ -1,0 +1,65 @@
+---
+title: "Cancelar payout"
+api: "PATCH /api/v1/external/split-payments/payouts/cancel"
+description: "Solicite o cancelamento de um payout agendado ou em erro."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Ordens de Split de Pagamentos](/guias/split-pagamentos/ordens).
+</Note>
+
+Solicita o cancelamento de um payout que esteja em `SCHEDULED` ou `ERROR`.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+## Body
+
+<ParamField body="splitPayoutId" type="number" required>
+  Identificador do payout a ser cancelado.
+</ParamField>
+
+<ParamField body="reason" type="string">
+  Motivo do cancelamento registrado pela operação.
+</ParamField>
+
+<ParamField body="canceledBy" type="string">
+  Nome ou identificação da pessoa que solicitou o cancelamento. Se não informado, a API registra `Não informado.`
+</ParamField>
+
+## Response
+
+Em caso de sucesso, a API retorna `202 Accepted` e o payout passa a ser tratado como cancelado. A confirmação final do estado deve ser verificada em `GET /api/v1/external/split-payments/payouts`.
+
+<RequestExample>
+```bash cURL
+curl --request PATCH \
+  --url 'https://api.delbank.com.br/api/v1/external/split-payments/payouts/cancel' \
+  --header 'Content-Type: application/json' \
+  --header 'x-delbank-api-key: {{apiKey}}' \
+  --data '{
+    "splitPayoutId": 98765,
+    "reason": "Solicitação do cliente",
+    "canceledBy": "Nome ou identificação do solicitante"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```text 202
+Accepted
+```
+
+```json 422
+{
+    "title": "Please refer to the errors property for additional details.",
+    "status": 422,
+    "errors": [
+        "SplitPayout não encontrado ou não pode ser cancelado."
+    ]
+}
+```
+</ResponseExample>

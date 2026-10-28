@@ -1,0 +1,193 @@
+---
+title: "Consultar payouts de split"
+api: "GET /api/v1/external/split-payments/payouts"
+description: "Liste payouts por beneficiário, data, status e paginação."
+---
+
+<Note>
+Para o contexto completo, veja o guia [Ordens de Split de Pagamentos](/guias/split-pagamentos/ordens).
+</Note>
+
+Retorna os payouts da conta vinculada à credencial autenticada, com filtros opcionais para buscar um beneficiário, intervalo de datas ou estado específico.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+## Query params
+
+<ParamField query="beneficiaryDocument" type="string">
+  CPF ou CNPJ do beneficiário. Deve ser um documento válido.
+</ParamField>
+
+<ParamField query="beneficiaryName" type="string">
+  Nome do beneficiário ou fragmento do nome para busca parcial.
+</ParamField>
+
+<ParamField query="startDate" type="string">
+  Data inicial para filtrar pela criação do payout. Formato aceito pela API, por exemplo `2025-01-31`.
+</ParamField>
+
+<ParamField query="endDate" type="string">
+  Data final para filtrar pela criação do payout. Formato aceito pela API, por exemplo `2025-01-31`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Estado do payout. Valores aceitos: `PENDING`, `PROCESSING`, `SUCCESS`, `ERROR`, `SCHEDULED` ou `CANCELED`.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página. Padrão: `1`.
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Quantidade de itens por página. Padrão: `10`.
+</ParamField>
+
+<ParamField query="include" type="string">
+  Quando `metadata` é informado, a resposta retorna `data` e `metadata` em vez do array simples.
+</ParamField>
+
+## Response
+
+<ResponseField name="id" type="number" required>
+  Identificador do payout.
+</ResponseField>
+
+<ResponseField name="splitOrderId" type="number">
+  Identificador da ordem de split à qual o payout pertence.
+</ResponseField>
+
+<ResponseField name="beneficiary" type="object">
+  Dados do beneficiário, incluindo documento e nome.
+</ResponseField>
+
+<ResponseField name="transferType" type="string">
+  Tipo de transferência do payout.
+</ResponseField>
+
+<ResponseField name="instructionType" type="string">
+  Tipo de regra que originou o payout, como `PERCENTAGE` ou `FIXED`.
+</ResponseField>
+
+<ResponseField name="instructionAmount" type="number">
+  Valor da instrução original aplicada.
+</ResponseField>
+
+<ResponseField name="amount" type="number">
+  Valor do payout.
+</ResponseField>
+
+<ResponseField name="paymentDate" type="string">
+  Data prevista para o pagamento.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Status atual do payout: `PENDING`, `PROCESSING`, `SUCCESS`, `ERROR`, `SCHEDULED` ou `CANCELED`.
+</ResponseField>
+
+<ResponseField name="transactionId" type="string">
+  ID da transação associada ao payout, quando disponível.
+</ResponseField>
+
+<ResponseField name="endToEndId" type="string">
+  Identificador de ponta a ponta da transferência, quando disponível.
+</ResponseField>
+
+<ResponseField name="errorMessage" type="string">
+  Mensagem de erro do processamento, quando existir.
+</ResponseField>
+
+<ResponseField name="cancellationDetails" type="object">
+  Detalhes do cancelamento, quando o payout foi cancelado.
+</ResponseField>
+
+<ResponseField name="paidAt" type="string">
+  Data/hora do pagamento concluído.
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Data/hora de criação do payout.
+</ResponseField>
+
+<ResponseField name="updatedAt" type="string">
+  Data/hora da última atualização.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/payouts?beneficiaryDocument=12345678901&status=ERROR&page=1&limit=10' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+
+```bash cURL (com metadata)
+curl --location 'https://api.delbank.com.br/api/v1/external/split-payments/payouts?startDate=2025-01-01&endDate=2025-01-31&include=metadata&page=1&limit=20' \
+--header 'x-delbank-api-key: {{apiKey}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": 98765,
+        "splitOrderId": 12345,
+        "beneficiary": {
+            "bankIspb": "ISPBCODE",
+            "bankAccountNumber": "12345",
+            "bankAccountBranch": "0001",
+            "holderDocument": "12345678901",
+            "holderName": "Nome do beneficiário",
+            "bankAccountType": "Tipo da conta bancária do beneficiário"
+        },
+        "transferType": {
+            "name": "PIX_MANUAL",
+            "description": "Pix Manual",
+            "value": 2
+        },
+        "instructionType": {
+            "name": "PERCENTAGE",
+            "description": "Porcentagem",
+            "value": 0
+        },
+        "instructionAmount": 85.00,
+        "amount": 8.29,
+        "paymentDate": "2025-09-22T12:00:00.000Z",
+        "status": {
+            "name": "ERROR",
+            "description": "Error",
+            "value": 2
+        },
+        "transactionId": "ID-DO-SPLIT-CASHOUT",
+        "endToEndId": "E2E-DO-SPLIT-CASHOUT",
+        "errorMessage": "Banco rejeitou a transferência",
+        "paidAt": "2025-09-22T12:00:00.000Z",
+        "createdAt": "2025-09-22T12:00:00.000Z",
+        "updatedAt": "2025-09-22T12:00:00.000Z",
+        "splitOrder": {
+            "id": 12345,
+            "transactionOriginalId": "ID-DO-CASHIN",
+            "grossAmount": 10.00,
+            "tariffAmount": 0.25,
+            "splitBaseAmount": 9.75,
+            "source": {
+                "name": "QR_CODE",
+                "description": "QrCode",
+                "value": 0
+            },
+            "createdAt": "2025-09-22T12:00:00.000Z",
+        }
+    }
+]
+```
+
+```json 400
+{
+    "errors": [
+        "O valor de 'status' não é um status válido."
+    ]
+}
+```
+</ResponseExample>
