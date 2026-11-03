@@ -63,7 +63,7 @@ Nos filtros das consultas (query params), informe só o `name`, por exemplo `sta
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: sem data futura
-    [*] --> SCHEDULED: paymentDate futuro
+    [*] --> SCHEDULED: data futura
     SCHEDULED --> PENDING: chegou a data do repasse
     SCHEDULED --> HOLDING: HOLD
     HOLDING --> SCHEDULED: RELEASE
@@ -83,17 +83,17 @@ stateDiagram-v2
 
 | Status (`name`) | Significado | Final? |
 |---|---|---|
-| `SCHEDULED` | Repasse com data futura (`paymentDate`), ainda não executado. É executado automaticamente na data | Não |
+| `SCHEDULED` | Repasse agendado para uma data futura, ainda não executado. A data vem de `paymentDate` (data fixa) ou é calculada por `daysUntilPayment` (dias após o pagamento). É executado automaticamente na data | Não |
 | `PENDING` | Pronto para ser executado | Não |
 | `HOLDING` | Repasse pausado pelo gestor do marketplace, por exemplo, por uma disputa da venda. Não é executado até ser liberado. Os dados da pausa vêm em `holdDetails` | Não |
-| `PROCESSING` | Pix enviado ao beneficiário, aguardando confirmação. Só acontece em repasses `PIX_MANUAL` | Não |
+| `PROCESSING` | Pix enviado ao beneficiário, aguardando confirmação. Só acontece em repasses por Pix (`PIX_MANUAL` e `PIX_KEY`) | Não |
 | `SUCCESS` | Valor creditado na conta do beneficiário | Sim |
 | `ERROR` | O repasse não pôde ser concluído. O motivo vem em `errorMessage`, e o valor permanece na conta de recebimento. Pode ser [reprocessado](/api-reference/split-pagamentos/reprocessar-repasses) | Não |
 | `CANCELED` | Repasse cancelado antes de ser executado. O valor permanece na conta de recebimento. Os dados do cancelamento vêm em `cancellationDetails` | Sim |
 | `REFUNDED` | Todo o valor do repasse foi devolvido ao cliente final antes da execução. Veja [Devoluções](#devoluções) | Sim |
 
 <Note>
-Repasses `INTERNAL` passam direto de `PENDING` para `SUCCESS`, porque a transferência entre contas Delfinance é instantânea. Repasses `PIX_MANUAL` passam por `PROCESSING` até a confirmação do Pix.
+Repasses `INTERNAL` passam direto de `PENDING` para `SUCCESS`, porque a transferência entre contas Delfinance é instantânea. Repasses `PIX_MANUAL` e `PIX_KEY` passam por `PROCESSING` até a confirmação do Pix.
 </Note>
 
 <Info>
@@ -102,10 +102,19 @@ A falha de um repasse não afeta os outros repasses da mesma ordem. Cada repasse
 
 ## Repasses agendados
 
-Na criação do QR Code, cada instrução de split pode ter um `paymentDate`, a data em que o repasse deve ser feito. Veja como em [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+Na criação do QR Code, cada instrução de split pode definir quando o repasse deve ser feito, de duas formas. Use uma ou outra, nunca as duas na mesma instrução:
 
-- **Sem `paymentDate`, ou com a data de hoje:** o repasse nasce em `PENDING` e é executado logo após o recebimento.
-- **Com `paymentDate` futuro:** o repasse nasce em `SCHEDULED` e é executado automaticamente na data.
+| Campo | Como a data do repasse é definida |
+|---|---|
+| `daysUntilPayment` | Quantidade de dias corridos depois do pagamento. A data é calculada quando o Pix é recebido: data do pagamento + `daysUntilPayment`. Por exemplo, com `30` e pagamento em 03/11/2026, o repasse é feito em 03/12/2026. `0` repassa logo após o pagamento |
+| `paymentDate` | Data fixa, no formato `YYYY-MM-DD`, informada na criação do QR Code, independente de quando o pagamento acontecer |
+
+O status inicial do repasse depende da data:
+
+- **Sem agendamento, `daysUntilPayment` igual a `0`, ou `paymentDate` igual ou anterior à data do pagamento:** o repasse nasce em `PENDING` e é executado logo após o recebimento.
+- **Com uma data futura:** o repasse nasce em `SCHEDULED` e é executado automaticamente na data.
+
+Nas consultas, a data do repasse sempre aparece em `paymentDate`, também quando ela foi calculada por `daysUntilPayment`. Veja os exemplos em [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
 
 Enquanto o repasse está agendado, você pode [cancelá-lo, pausá-lo ou mudar a data](/api-reference/split-pagamentos/atualizar-repasse), [devolver parte do valor](/api-reference/split-pagamentos/devolver-repasse) ou [antecipá-lo com o reprocessamento](/api-reference/split-pagamentos/reprocessar-repasses).
 
@@ -251,7 +260,7 @@ Acompanhe o Pix de devolução em [Listar devoluções de um repasse](/api-refer
 | Recurso | Situação |
 |---|---|
 | Webhook de mudança de status do repasse | Em avaliação. Por enquanto, acompanhe pelas consultas |
-| Agendamento no split padrão da conta | Não disponível. Só o split por cobrança aceita `paymentDate` |
+| Agendamento no split padrão da conta | Não disponível. Só o split por cobrança aceita `daysUntilPayment` e `paymentDate` |
 
 ## Referência da API
 

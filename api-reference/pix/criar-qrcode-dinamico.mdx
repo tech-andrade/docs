@@ -108,17 +108,23 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
           `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais).
         </ParamField>
         <ParamField body="instructions[].transferType" type="string" required>
-          `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, por dados bancários).
+          `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix).
+        </ParamField>
+        <ParamField body="instructions[].daysUntilPayment" type="integer">
+          Quantidade de dias corridos, contados a partir do pagamento, para fazer o repasse. Por exemplo, `30` repassa 30 dias depois que o cliente final pagar. `0` repassa logo após o pagamento. Não pode ser usado com `paymentDate`. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
         </ParamField>
         <ParamField body="instructions[].paymentDate" type="string">
-          Data do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+          Data fixa do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Não pode ser usado com `daysUntilPayment`. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
         </ParamField>
         <ParamField body="instructions[].beneficiary" type="object" required>
-          Dados da conta do beneficiário, no mesmo formato de conta do Pix manual. Com `INTERNAL`, apenas `number` é obrigatório. Com `PIX_MANUAL`, todos os campos são obrigatórios.
+          Dados da conta do beneficiário, no mesmo formato de conta do Pix manual. Os campos obrigatórios dependem do `transferType`:
+          - `INTERNAL`: só `number`.
+          - `PIX_MANUAL`: `number`, `branch`, `type`, `participantIspb` e `holder`.
+          - `PIX_KEY`: `pixKey` e `holder`.
 
           <Expandable title="beneficiary">
-            <ParamField body="beneficiary.number" type="string" required>
-              Número da conta do beneficiário.
+            <ParamField body="beneficiary.number" type="string">
+              Número da conta do beneficiário. Obrigatório para `INTERNAL` e `PIX_MANUAL`.
             </ParamField>
             <ParamField body="beneficiary.branch" type="string">
               Agência da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
@@ -129,8 +135,11 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
             <ParamField body="beneficiary.participantIspb" type="string">
               ISPB da instituição de destino. Obrigatório para `PIX_MANUAL`.
             </ParamField>
+            <ParamField body="beneficiary.pixKey" type="string">
+              Chave Pix do beneficiário: CPF, CNPJ, e-mail, telefone (`+55...`) ou chave aleatória. Obrigatório para `PIX_KEY`. No momento do repasse, o titular da chave precisa ter o mesmo documento de `holder.document`.
+            </ParamField>
             <ParamField body="beneficiary.holder" type="object">
-              Titular da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
+              Titular da conta do beneficiário. Obrigatório para `PIX_MANUAL` e `PIX_KEY`.
 
               <Expandable title="holder">
                 <ParamField body="holder.document" type="string">

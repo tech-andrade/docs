@@ -38,7 +38,7 @@ Todos os filtros são opcionais e podem ser combinados.
 </ParamField>
 
 <ParamField query="transferType" type="string">
-  Forma do repasse: `INTERNAL` ou `PIX_MANUAL`.
+  Forma do repasse: `INTERNAL`, `PIX_MANUAL` ou `PIX_KEY`.
 </ParamField>
 
 <ParamField query="startDate" type="string">
@@ -90,7 +90,7 @@ Os campos `status`, `transferType`, `instructionType` e `order.source` são enum
   Status do repasse. `name`: `SCHEDULED`, `PENDING`, `HOLDING`, `PROCESSING`, `SUCCESS`, `ERROR`, `CANCELED` ou `REFUNDED`. Veja o significado de cada um em [Status do repasse](/guias/split-pagamentos/acompanhar-repasses#status-do-repasse).
 </ResponseField>
 <ResponseField name="transferType" type="object">
-  Forma do repasse. `name`: `INTERNAL` ou `PIX_MANUAL`.
+  Forma do repasse. `name`: `INTERNAL`, `PIX_MANUAL` ou `PIX_KEY`.
 </ResponseField>
 <ResponseField name="instructionType" type="object">
   Tipo da instrução que gerou o repasse. `name`: `PERCENTAGE` ou `FIXED`.
@@ -105,12 +105,13 @@ Os campos `status`, `transferType`, `instructionType` e `order.source` são enum
   Soma das devoluções do repasse, em reais. O valor calculado pela instrução é `amount + refundedAmount`. `0` quando não houve devolução.
 </ResponseField>
 <ResponseField name="paymentDate" type="string">
-  Data prevista do repasse, no formato `YYYY-MM-DD`. É a data do recebimento, exceto quando a instrução de split do QR Code define um `paymentDate` futuro. Nesse caso, o repasse fica em `SCHEDULED` até a data. A data pode ser alterada em [Atualizar repasse](/api-reference/split-pagamentos/atualizar-repasse).
+  Data prevista do repasse, no formato `YYYY-MM-DD`. É a data do recebimento, exceto quando a instrução de split do QR Code agenda o repasse para uma data futura, com `paymentDate` ou `daysUntilPayment` (data do recebimento + dias). Nesse caso, o repasse fica em `SCHEDULED` até a data. A data pode ser alterada em [Atualizar repasse](/api-reference/split-pagamentos/atualizar-repasse).
 </ResponseField>
 <ResponseField name="beneficiary" type="object">
-  Conta do beneficiário, no mesmo formato usado nas transferências.
+  Conta do beneficiário, no mesmo formato usado nas transferências. Em repasses `PIX_KEY`, os dados da conta (`number`, `branch`, `type` e `participant`) vêm da consulta da chave no DICT e ficam `null` até o repasse ser executado.
 
   <Expandable title="beneficiary">
+    <ResponseField name="pixKey" type="string">Chave Pix do beneficiário, em repasses `PIX_KEY`. `null` nas demais formas de repasse.</ResponseField>
     <ResponseField name="number" type="string">Número da conta do beneficiário.</ResponseField>
     <ResponseField name="branch" type="string">Agência da conta do beneficiário.</ResponseField>
     <ResponseField name="type" type="string">Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`.</ResponseField>
@@ -137,7 +138,7 @@ Os campos `status`, `transferType`, `instructionType` e `order.source` são enum
   Id da transferência que executou o repasse (transferência interna ou Pix). `null` enquanto o repasse não é executado.
 </ResponseField>
 <ResponseField name="endToEndId" type="string">
-  Identificador do Pix, em repasses `PIX_MANUAL`.
+  Identificador do Pix, em repasses `PIX_MANUAL` e `PIX_KEY`.
 </ResponseField>
 <ResponseField name="errorMessage" type="string">
   Motivo da falha, quando o status é `ERROR`. Depois de corrigir a causa, você pode [reprocessar o repasse](/api-reference/split-pagamentos/reprocessar-repasses).

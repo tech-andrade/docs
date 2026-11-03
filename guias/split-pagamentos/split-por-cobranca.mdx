@@ -16,7 +16,7 @@ A diferença para o [split padrão da conta](/guias/split-pagamentos/configurar)
 | Onde a regra é definida | Configuração da conta (`/split-payments/configurations`) | Campo `splitPayment` na criação do QR Code |
 | A quem se aplica | Todo Pix recebido na conta | Apenas os pagamentos daquele QR Code |
 | Beneficiários diferentes por venda | Não | Sim |
-| Formas de repasse | `INTERNAL` e `PIX_MANUAL` | `INTERNAL` e `PIX_MANUAL` |
+| Formas de repasse | `INTERNAL` e `PIX_MANUAL` | `INTERNAL`, `PIX_MANUAL` e `PIX_KEY` |
 
 <Tip>
 Use o split por cobrança quando cada venda tem um destinatário diferente. Por exemplo: em um marketplace, cada pedido é de um vendedor, e a parte de cada vendedor é repassada no próprio QR Code do pedido.
@@ -42,7 +42,7 @@ sequenceDiagram
 1. Você cria o QR Code dinâmico com as instruções de repasse em `splitPayment.instructions`.
 2. A Delfinance valida as instruções e as guarda junto com a cobrança.
 3. Quando o Pix é pago, o valor **integral** entra na conta que criou o QR Code.
-4. Logo depois, a Delfinance calcula o valor de cada instrução e transfere da conta de recebimento para cada beneficiário: por transferência interna (`INTERNAL`) ou por Pix (`PIX_MANUAL`).
+4. Logo depois, a Delfinance calcula o valor de cada instrução e transfere da conta de recebimento para cada beneficiário: por transferência interna (`INTERNAL`) ou por Pix, com dados bancários (`PIX_MANUAL`) ou com chave Pix (`PIX_KEY`).
 5. O que não foi destinado a nenhuma instrução permanece na conta de recebimento.
 
 <Note>
@@ -155,7 +155,7 @@ Use o `payloadPix` (copia e cola) ou o `qrCodeImageBase64` normalmente. Para o p
 Quando o Pix é pago, você recebe um evento [`PIX_RECEIVED`](/guias/webhooks/pix) com o valor integral. Em seguida, cada repasse gera os eventos da forma de transferência usada:
 
 - **`INTERNAL`**: um [`TRANSFER_INTERNAL_DEBITED`](/guias/webhooks/transferencias) na conta de recebimento. Se a conta do beneficiário tiver webhook configurado, ela recebe um `TRANSFER_INTERNAL_CREDITED`.
-- **`PIX_MANUAL`**: um [`PIX_PAYMENT_UPDATED`](/guias/webhooks/pix) com o status do Pix enviado ao beneficiário.
+- **`PIX_MANUAL` e `PIX_KEY`**: um [`PIX_PAYMENT_UPDATED`](/guias/webhooks/pix) com o status do Pix enviado ao beneficiário.
 </Step>
 
 </Steps>
@@ -173,24 +173,26 @@ Quando o Pix é pago, você recebe um evento [`PIX_RECEIVED`](/guias/webhooks/pi
 |---|---|---|---|
 | `amount` | `number` | Sim | Percentual ou valor do repasse, conforme o `type`. Deve ser maior que zero |
 | `type` | `string` | Sim | `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais) |
-| `transferType` | `string` | Sim | `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) |
+| `transferType` | `string` | Sim | `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix) |
 | `beneficiary` | `object` | Sim | Dados da conta do beneficiário |
-| `paymentDate` | `string` | Não | Data do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse é agendado. Veja [Agendar um repasse](#agendar-um-repasse) |
+| `daysUntilPayment` | `integer` | Não | Quantidade de dias corridos, contados a partir do pagamento, para fazer o repasse. `0` repassa logo após o pagamento. Não pode ser usado com `paymentDate`. Veja [Agendar um repasse](#agendar-um-repasse) |
+| `paymentDate` | `string` | Não | Data fixa do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse é agendado. Não pode ser usado com `daysUntilPayment` |
 
 ### Beneficiário (`beneficiary`)
 
-O `beneficiary` segue o mesmo formato de conta usado no Pix manual e no split padrão da conta. Os campos obrigatórios dependem do `transferType`.
+O `beneficiary` segue o mesmo formato de conta usado no Pix manual e no split padrão da conta. Com `PIX_KEY`, a conta é identificada pela chave Pix, no lugar dos dados bancários. Os campos obrigatórios dependem do `transferType`.
 
-| Campo | Tipo | `INTERNAL` | `PIX_MANUAL` | Descrição |
-|---|---|---|---|---|
-| `number` | `string` | Obrigatório | Obrigatório | Número da conta do beneficiário |
-| `branch` | `string` | — | Obrigatório | Agência da conta do beneficiário |
-| `type` | `string` | — | Obrigatório | Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING` |
-| `participantIspb` | `string` | — | Obrigatório | ISPB da instituição de destino (8 caracteres) |
-| `holder` | `object` | — | Obrigatório | Titular da conta do beneficiário |
-| `holder.document` | `string` | — | Obrigatório | CPF ou CNPJ do titular, somente números |
-| `holder.name` | `string` | — | Obrigatório | Nome do titular |
-| `holder.type` | `string` | — | Obrigatório | `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica) |
+| Campo | Tipo | `INTERNAL` | `PIX_MANUAL` | `PIX_KEY` | Descrição |
+|---|---|---|---|---|---|
+| `number` | `string` | Obrigatório | Obrigatório | — | Número da conta do beneficiário |
+| `branch` | `string` | — | Obrigatório | — | Agência da conta do beneficiário |
+| `type` | `string` | — | Obrigatório | — | Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING` |
+| `participantIspb` | `string` | — | Obrigatório | — | ISPB da instituição de destino (8 caracteres) |
+| `pixKey` | `string` | — | — | Obrigatório | Chave Pix do beneficiário: CPF, CNPJ, e-mail, telefone (`+55...`) ou chave aleatória |
+| `holder` | `object` | — | Obrigatório | Obrigatório | Titular da conta do beneficiário |
+| `holder.document` | `string` | — | Obrigatório | Obrigatório | CPF ou CNPJ do titular, somente números |
+| `holder.name` | `string` | — | Obrigatório | Obrigatório | Nome do titular |
+| `holder.type` | `string` | — | Obrigatório | Obrigatório | `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica) |
 
 <Tabs>
   <Tab title="INTERNAL">
@@ -229,32 +231,81 @@ O `beneficiary` segue o mesmo formato de conta usado no Pix manual e no split pa
     }
     ```
   </Tab>
+  <Tab title="PIX_KEY">
+    Para repassar para uma conta em qualquer instituição sem pedir os dados bancários ao beneficiário, informe a chave Pix dele e o titular. O repasse é feito por um Pix saindo da conta de recebimento.
+
+    ```json
+    {
+        "amount": 5.00,
+        "type": "FIXED",
+        "transferType": "PIX_KEY",
+        "beneficiary": {
+            "pixKey": "12345678909",
+            "holder": {
+                "document": "12345678909",
+                "name": "Maria Souza",
+                "type": "NATURAL"
+            }
+        }
+    }
+    ```
+
+    No momento do repasse, a Delfinance consulta a chave no DICT (o diretório de chaves do Pix) para encontrar a conta. O repasse só é enviado se o titular da chave tiver o mesmo CPF ou CNPJ informado em `holder.document`. Assim, uma chave digitada errado não manda o dinheiro para outra pessoa.
+  </Tab>
 </Tabs>
 
 ## Agendar um repasse
 
-Por padrão, cada repasse é feito logo após o pagamento. Para fazer o repasse em outra data, informe `paymentDate` na instrução. Um uso comum: o marketplace só libera a parte do vendedor depois do prazo de entrega ou de devolução do produto.
+Por padrão, cada repasse é feito logo após o pagamento. Um uso comum para agendar: o marketplace só libera a parte do vendedor depois do prazo de entrega ou de devolução do produto.
 
-No exemplo abaixo, o vendedor recebe R\$ 54,00 em 27/11/2026, e não no momento do pagamento:
+Há duas formas de agendar. Informe uma ou outra na instrução, nunca as duas:
 
-```json
-{
-    "amount": 54.00,
-    "type": "FIXED",
-    "transferType": "INTERNAL",
-    "paymentDate": "2026-11-27",
-    "beneficiary": {
-        "number": "10073"
-    }
-}
-```
-
-O comportamento depende da data:
-
-| `paymentDate` | Status inicial do repasse | Quando o repasse é feito |
+| Campo | Tipo | Quando usar |
 |---|---|---|
-| Não informado, ou a data de hoje | `PENDING` | Logo após o pagamento |
-| Data futura | `SCHEDULED` | Automaticamente, na data informada |
+| `daysUntilPayment` | `integer` | Para repassar uma quantidade de dias **depois do pagamento**. É a forma mais comum, porque você não sabe quando o cliente final vai pagar. A data do repasse é calculada quando o Pix é recebido: data do pagamento + dias corridos |
+| `paymentDate` | `string` | Para repassar numa **data fixa**, no formato `YYYY-MM-DD`, independente de quando o pagamento acontecer |
+
+<Tabs>
+  <Tab title="daysUntilPayment">
+    No exemplo abaixo, o vendedor recebe R\$ 54,00 30 dias depois do pagamento. Se o cliente final pagar em 03/11/2026, o repasse é feito em 03/12/2026.
+
+    ```json
+    {
+        "amount": 54.00,
+        "type": "FIXED",
+        "transferType": "INTERNAL",
+        "daysUntilPayment": 30,
+        "beneficiary": {
+            "number": "10073"
+        }
+    }
+    ```
+  </Tab>
+  <Tab title="paymentDate">
+    No exemplo abaixo, o vendedor recebe R\$ 54,00 em 27/11/2026, e não no momento do pagamento.
+
+    ```json
+    {
+        "amount": 54.00,
+        "type": "FIXED",
+        "transferType": "INTERNAL",
+        "paymentDate": "2026-11-27",
+        "beneficiary": {
+            "number": "10073"
+        }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+O comportamento depende da data do repasse:
+
+| Data do repasse | Status inicial do repasse | Quando o repasse é feito |
+|---|---|---|
+| Sem `paymentDate` nem `daysUntilPayment`, `daysUntilPayment` igual a `0`, ou `paymentDate` igual ou anterior à data do pagamento | `PENDING` | Logo após o pagamento |
+| Data futura | `SCHEDULED` | Automaticamente, na data |
+
+Nos dois casos, a data calculada aparece em `paymentDate` nas consultas de repasses.
 
 Enquanto o repasse está agendado, você pode [cancelá-lo, pausá-lo ou mudar a data](/api-reference/split-pagamentos/atualizar-repasse), ou antecipá-lo com o [reprocessamento](/api-reference/split-pagamentos/reprocessar-repasses). Acompanhe os repasses agendados em [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
 
@@ -278,10 +329,12 @@ As regras abaixo são verificadas na criação do QR Code. Se qualquer uma falha
 | Cada instrução `PERCENTAGE` | Até 100% |
 | Soma de todos os repasses (percentuais convertidos em reais + valores fixos) | Até o valor da cobrança |
 | Campos do `beneficiary` | Conforme o `transferType`, veja a tabela acima |
-| `paymentDate`, quando informado | Data válida, no formato `YYYY-MM-DD` |
+| `paymentDate`, quando informado | Data válida, no formato `YYYY-MM-DD`, igual ou posterior à data de criação do QR Code |
+| `daysUntilPayment`, quando informado | Número inteiro maior ou igual a `0` |
+| `paymentDate` e `daysUntilPayment` | Não podem ser informados juntos na mesma instrução |
 
 <Note>
-Os dados do beneficiário não são verificados na criação do QR Code. Confira o número da conta e os dados bancários antes de enviar: um dado incorreto só aparece como falha no momento do repasse.
+Os dados do beneficiário não são verificados na criação do QR Code. Confira o número da conta, os dados bancários ou a chave Pix antes de enviar: um dado incorreto só aparece como falha no momento do repasse.
 </Note>
 
 ## Como o valor de cada repasse é calculado
@@ -321,10 +374,13 @@ Se a soma dos repasses ultrapassar o valor líquido (depois da tarifa), **nenhum
     Se o `beneficiary.number` de uma instrução `INTERNAL` não corresponder a uma conta Delfinance, aquele repasse não é executado e o valor permanece na conta de recebimento. O pagamento do Pix não é afetado.
   </Accordion>
   <Accordion title="Pix de repasse rejeitado">
-    Em uma instrução `PIX_MANUAL`, se o Pix para o beneficiário for rejeitado (por exemplo, por dados bancários incorretos), o valor não é repassado e o erro chega no evento `PIX_PAYMENT_UPDATED`.
+    Em uma instrução `PIX_MANUAL` ou `PIX_KEY`, se o Pix para o beneficiário for rejeitado (por exemplo, por dados bancários incorretos), o valor não é repassado e o erro chega no evento `PIX_PAYMENT_UPDATED`.
+  </Accordion>
+  <Accordion title="Chave Pix inexistente ou de outro titular">
+    Em uma instrução `PIX_KEY`, se a chave não existir no DICT ou pertencer a um CPF ou CNPJ diferente de `holder.document`, o Pix não é enviado. O repasse termina em `ERROR`, com o motivo em `errorMessage`, e o valor permanece na conta de recebimento. Como os dados do beneficiário não podem ser alterados depois, [cancele o repasse](/api-reference/split-pagamentos/atualizar-repasse) e acerte o valor com o beneficiário pela sua plataforma.
   </Accordion>
   <Accordion title="Momento do repasse">
-    Sem `paymentDate`, o repasse é feito logo após o crédito do Pix. Com `paymentDate` futuro, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Veja [Agendar um repasse](#agendar-um-repasse).
+    Sem `paymentDate` nem `daysUntilPayment`, o repasse é feito logo após o crédito do Pix. Com uma data futura, informada em `paymentDate` ou calculada por `daysUntilPayment`, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Veja [Agendar um repasse](#agendar-um-repasse).
   </Accordion>
   <Accordion title="Consulta dos repasses">
     Para ver os repasses gerados por uma cobrança, o status de cada um e o valor a receber de cada beneficiário, use as consultas de [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses) (em beta).

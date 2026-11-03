@@ -185,13 +185,13 @@ Com valores fixos, deixe margem para a tarifa. Se a soma dos repasses ultrapassa
     A Delfinance não valida os dados da conta do beneficiário na criação do QR Code. Um dado incorreto só aparece como falha no momento do repasse. Valide agência, conta, ISPB e documento quando o vendedor se cadastrar na sua plataforma.
   </Accordion>
   <Accordion title="Prefira contas Delfinance para os vendedores">
-    Repasses `INTERNAL` são instantâneos e vão direto para `SUCCESS`. Repasses `PIX_MANUAL` dependem da confirmação do Pix pela instituição do vendedor.
+    Repasses `INTERNAL` são instantâneos e vão direto para `SUCCESS`. Repasses `PIX_MANUAL` e `PIX_KEY` dependem da confirmação do Pix pela instituição do vendedor.
   </Accordion>
   <Accordion title="Calcule os valores na plataforma">
     Quando o pedido tem frete, desconto ou comissões diferentes por produto, calcule o valor de cada vendedor na plataforma e envie como `FIXED`. Assim o repasse corresponde exatamente ao que o seu sistema registrou.
   </Accordion>
   <Accordion title="Agende o repasse para depois do prazo de devolução">
-    Use `paymentDate` na instrução para fazer o repasse ao vendedor só depois do prazo de entrega ou de devolução. Se o pedido for devolvido antes da data, [cancele o repasse](/api-reference/split-pagamentos/atualizar-repasse) e o valor continua na conta de recebimento. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+    Use `daysUntilPayment` na instrução para fazer o repasse ao vendedor só depois do prazo de entrega ou de devolução. Por exemplo, `30` repassa 30 dias depois do pagamento, sem que a plataforma precise saber quando o cliente final vai pagar. Se o pedido for devolvido antes da data, [cancele o repasse](/api-reference/split-pagamentos/atualizar-repasse) e o valor continua na conta de recebimento. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
   </Accordion>
   <Accordion title="Pause o repasse quando houver disputa da venda">
     Se o comprador abrir uma disputa antes do repasse, [pause o repasse](/api-reference/split-pagamentos/atualizar-repasse) com a ação `HOLD`. Ele vai para `HOLDING` e não é executado, nem na data prevista. Se só parte da venda for desfeita, [devolva essa parte ao cliente final](/api-reference/split-pagamentos/devolver-repasse): o valor é descontado do repasse do vendedor. Quando a disputa for resolvida, use `RELEASE` para liberar o repasse com o valor restante, com uma nova data se quiser, ou `CANCEL` se a venda for desfeita por inteiro.

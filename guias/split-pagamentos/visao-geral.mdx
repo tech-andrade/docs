@@ -19,9 +19,9 @@ Toda a documentação de split usa os termos abaixo.
 |---|---|
 | **Conta de recebimento** | A conta Delfinance que recebe o pagamento original, com o valor integral. É dela que saem os repasses. No split padrão, é o `bankAccountNumber` da configuração. No split por cobrança, é a conta que cria o QR Code (header `x-delfinance-account-id`) |
 | **Beneficiário** | A pessoa ou empresa que recebe uma parte do pagamento. Por exemplo: o vendedor, o parceiro ou o afiliado |
-| **Conta do beneficiário** | A conta para onde a parte do beneficiário é transferida. Pode ser uma conta Delfinance (`INTERNAL`) ou uma conta em outra instituição (`PIX_MANUAL`). Os dados dela vão no objeto `beneficiary` |
+| **Conta do beneficiário** | A conta para onde a parte do beneficiário é transferida. Pode ser uma conta Delfinance (`INTERNAL`) ou uma conta em outra instituição, informada pelos dados bancários (`PIX_MANUAL`) ou, no split por cobrança, pela chave Pix (`PIX_KEY`). Os dados dela vão no objeto `beneficiary` |
 | **Instrução** | A regra de um repasse: quanto sai (`amount`), como o valor é calculado (`type`: `PERCENTAGE` ou `FIXED`), por qual meio é enviado (`transferType`) e para quem (`beneficiary`) |
-| **Repasse** (*payout*) | A transferência efetiva da conta de recebimento para a conta do beneficiário, gerada por uma instrução a cada pagamento recebido. Pode ser feito logo após o pagamento ou agendado para uma data (`paymentDate`) |
+| **Repasse** (*payout*) | A transferência efetiva da conta de recebimento para a conta do beneficiário, gerada por uma instrução a cada pagamento recebido. Pode ser feito logo após o pagamento ou agendado, para alguns dias depois do pagamento (`daysUntilPayment`) ou para uma data fixa (`paymentDate`) |
 | **Ordem de recebimento com split** | O registro criado quando um pagamento com instruções de split chega na conta de recebimento. Guarda os valores usados no cálculo e agrupa os repasses daquele pagamento |
 
 Um jeito simples de visualizar: um pagamento de R$ 100 chega na conta de recebimento, e cada instrução gera um repasse para a conta do beneficiário. O valor que não foi destinado a nenhuma instrução permanece na conta de recebimento.
@@ -81,7 +81,7 @@ O campo `transferType` define por qual meio o beneficiário recebe o valor. Cada
 | `INTERNAL` | Suportado. Repasse entre contas da mesma titularidade (mesmo dono da API key). |
 | `PIX_MANUAL` | Suportado. Repasse via dados bancários informados manualmente, com validação completa. |
 | `EXTERNAL` | Aceito pela API, mas ainda sem validação específica dos dados bancários. Não recomendado para produção. |
-| `PIX_KEY` | Ainda não funcional nesta rota. Não utilize até que o suporte seja anunciado. |
+| `PIX_KEY` | Ainda não funcional no split padrão da conta. No [split por cobrança](/guias/split-pagamentos/split-por-cobranca#beneficiário-beneficiary), é aceito: o repasse é feito por Pix para a chave do beneficiário. |
 
 <Warning>
 Hoje, use apenas `INTERNAL` e `PIX_MANUAL` em produção. Veja os detalhes e exemplos de cada tipo no guia [Configurar o split padrão da conta](/guias/split-pagamentos/configurar).
