@@ -1,7 +1,7 @@
 ---
 title: "Devolver parte de um repasse"
 api: "POST /baas/api/v1/split-payments/payouts/{payoutId}/refunds"
-description: "Devolva ao cliente final parte do valor de uma venda e desconte essa parte do repasse do beneficiário, antes de o repasse ser executado."
+description: "Devolva ao cliente final parte do valor de uma venda e desconte essa parte do repasse do beneficiário, enquanto o repasse está pausado."
 tag: "BETA"
 ---
 
@@ -18,7 +18,7 @@ Use quando uma venda precisa ser desfeita em parte antes de o beneficiário rece
 
 ```mermaid
 flowchart LR
-    A["Repasse agendado<br/>amount R$ 100,00"] -->|"Devolução de R$ 30,00"| B["Pix de devolução<br/>R$ 30,00 ao cliente final"]
+    A["Repasse pausado (HOLDING)<br/>amount R$ 100,00"] -->|"Devolução de R$ 30,00"| B["Pix de devolução<br/>R$ 30,00 ao cliente final"]
     A --> C["Repasse atualizado<br/>amount R$ 70,00<br/>refundedAmount R$ 30,00"]
 ```
 
@@ -26,20 +26,26 @@ flowchart LR
 
 | Regra | Detalhe |
 |---|---|
-| Status do repasse | Só `SCHEDULED` ou `HOLDING`, ou seja, enquanto o repasse espera a data ou está pausado |
+| Status do repasse | Só `HOLDING`. Antes de devolver, [pause o repasse](/api-reference/split-pagamentos/atualizar-repasse) com `HOLD` |
 | Valor | Maior que zero e até o `amount` atual do repasse |
 | Prazo | Até 90 dias depois do Pix original, que é o limite do Pix para devoluções |
 | Quantidade | Você pode fazer várias devoluções no mesmo repasse, até devolver o valor todo |
 
-Quando a soma das devoluções concluídas chega ao valor original do repasse, o repasse vai para `REFUNDED` e não é mais executado. Enquanto sobra algum valor, o repasse continua no status em que estava e é executado normalmente, com o valor restante.
+Quando a soma das devoluções concluídas chega ao valor original do repasse, o repasse vai para `REFUNDED` e não é mais executado. Enquanto sobra algum valor, o repasse continua em `HOLDING`. Depois de liberado, ele é executado com o valor restante.
 
 <Note>
 Depois que o repasse é concluído (`SUCCESS`), não é possível devolver por esta rota, porque o dinheiro já está na conta do beneficiário. Nesse caso, a conta de recebimento ainda pode devolver o Pix original ao cliente final, mas o valor sai do caixa do marketplace, sem desconto no repasse.
 </Note>
 
-<Tip>
-Em uma disputa, [pause o repasse](/api-reference/split-pagamentos/atualizar-repasse) com `HOLD` antes de negociar com o cliente final. Assim o repasse não é executado na data prevista enquanto você decide quanto devolver.
-</Tip>
+<Note>
+A devolução exige o repasse pausado. Em uma disputa, o fluxo é:
+
+1. [Pause o repasse](/api-reference/split-pagamentos/atualizar-repasse) com `HOLD`. Só repasses em `SCHEDULED` podem ser pausados, então agende os repasses que podem ter disputa (`daysUntilPayment` ou `paymentDate`).
+2. Devolva o valor acordado com esta rota. Pode haver mais de uma devolução.
+3. [Libere o repasse](/api-reference/split-pagamentos/atualizar-repasse) com `RELEASE`, para o beneficiário receber o restante, ou cancele com `CANCEL`.
+
+Enquanto o repasse está em `HOLDING`, ele não é executado, nem na data prevista.
+</Note>
 
 ## Headers
 
@@ -117,7 +123,7 @@ O valor é descontado do repasse assim que a devolução é criada. Se a devolu�
 |---|---|---|
 | `400` | `VALIDATION_ERROR` | `amount` ausente, menor ou igual a zero, ou maior que o `amount` atual do repasse |
 | `404` | `SPLIT_PAYOUT_NOT_FOUND` | Não existe repasse com esse `payoutId` na conta de recebimento |
-| `422` | `SPLIT_PAYOUT_NOT_REFUNDABLE` | O repasse não está em `SCHEDULED` nem em `HOLDING`, ou o Pix original passou do prazo de 90 dias |
+| `422` | `SPLIT_PAYOUT_NOT_REFUNDABLE` | O repasse não está em `HOLDING`, ou o Pix original passou do prazo de 90 dias |
 | `422` | `INSUFFICIENT_BALANCE` | A conta de recebimento não tem saldo para o Pix de devolução |
 
 <RequestExample>

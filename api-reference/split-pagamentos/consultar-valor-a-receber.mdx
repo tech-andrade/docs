@@ -12,7 +12,7 @@ tag: "BETA"
 Retorna o **valor a receber** de um beneficiário na conta de recebimento: a soma dos repasses (*payouts*) que ainda não foram concluídos, em `SCHEDULED`, `PENDING` e `PROCESSING`. Se você informar um período, a resposta também traz o total já recebido nesse período.
 
 <Note>
-Repasses em `ERROR` não entram no valor a receber. Depois de [reprocessados](/api-reference/split-pagamentos/reprocessar-repasses), eles voltam para `PENDING` e passam a contar de novo.
+Repasses em `ERROR` não entram no valor a receber. Depois de [reprocessados](/api-reference/split-pagamentos/reprocessar-repasses), eles voltam para `PROCESSING` e passam a contar de novo.
 
 Repasses pausados (`HOLDING`) também ficam fora do valor a receber, porque podem ser cancelados ou ter parte devolvida. A soma deles vem separada, em `onHoldAmount`. Quando um repasse é [liberado](/api-reference/split-pagamentos/atualizar-repasse), ele volta a contar no valor a receber.
 

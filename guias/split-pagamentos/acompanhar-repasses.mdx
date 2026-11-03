@@ -60,41 +60,20 @@ Nos filtros das consultas (query params), informe só o `name`, por exemplo `sta
 
 ## Status do repasse
 
-```mermaid
-stateDiagram-v2
-    [*] --> PENDING: sem data futura
-    [*] --> SCHEDULED: data futura
-    SCHEDULED --> PENDING: chegou a data do repasse
-    SCHEDULED --> HOLDING: HOLD
-    HOLDING --> SCHEDULED: RELEASE
-    SCHEDULED --> CANCELED
-    PENDING --> CANCELED
-    HOLDING --> CANCELED
-    ERROR --> CANCELED
-    SCHEDULED --> REFUNDED: devolução total
-    HOLDING --> REFUNDED: devolução total
-    PENDING --> PROCESSING: Pix enviado
-    PENDING --> SUCCESS: transferência interna
-    PROCESSING --> SUCCESS
-    PROCESSING --> ERROR
-    PENDING --> ERROR
-    ERROR --> PENDING: reprocessamento
-```
-
-| Status (`name`) | Significado | Final? |
+| Status (`name`) | Resumo | Final? |
 |---|---|---|
-| `SCHEDULED` | Repasse agendado para uma data futura, ainda não executado. A data vem de `paymentDate` (data fixa) ou é calculada por `daysUntilPayment` (dias após o pagamento). É executado automaticamente na data | Não |
-| `PENDING` | Pronto para ser executado | Não |
-| `HOLDING` | Repasse pausado pelo gestor do marketplace, por exemplo, por uma disputa da venda. Não é executado até ser liberado. Os dados da pausa vêm em `holdDetails` | Não |
-| `PROCESSING` | Pix enviado ao beneficiário, aguardando confirmação. Só acontece em repasses por Pix (`PIX_MANUAL` e `PIX_KEY`) | Não |
+| `SCHEDULED` | Agendado para uma data futura (`paymentDate` ou `daysUntilPayment`) | Não |
+| `PENDING` | Pronto para execução | Não |
+| `HOLDING` | Pausado pelo gestor do marketplace | Não |
+| `PROCESSING` | Transferência em andamento. Dura um instante em `INTERNAL` e vai até a confirmação do Pix em `PIX_MANUAL` e `PIX_KEY` | Não |
 | `SUCCESS` | Valor creditado na conta do beneficiário | Sim |
-| `ERROR` | O repasse não pôde ser concluído. O motivo vem em `errorMessage`, e o valor permanece na conta de recebimento. Pode ser [reprocessado](/api-reference/split-pagamentos/reprocessar-repasses) | Não |
-| `CANCELED` | Repasse cancelado antes de ser executado. O valor permanece na conta de recebimento. Os dados do cancelamento vêm em `cancellationDetails` | Sim |
-| `REFUNDED` | Todo o valor do repasse foi devolvido ao cliente final antes da execução. Veja [Devoluções](#devoluções) | Sim |
+| `ERROR` | Execução falhou. O valor fica na conta de recebimento. Pode ser reprocessado | Não |
+| `CANCELED` | Cancelado antes da execução. O valor fica na conta de recebimento | Sim |
+| `REFUNDED` | Todo o valor foi devolvido ao cliente final antes da execução | Sim |
 
-<Note>
-Repasses `INTERNAL` passam direto de `PENDING` para `SUCCESS`, porque a transferência entre contas Delfinance é instantânea. Repasses `PIX_MANUAL` e `PIX_KEY` passam por `PROCESSING` até a confirmação do Pix.
-</Note>
+<Tip>
+Veja o ciclo de vida completo em [Status do repasse](/guias/split-pagamentos/status-do-repasse): os diagramas, as transições permitidas, quem provoca cada mudança e o que acontece com o dinheiro em cada status.
+</Tip>
 
 <Info>
 A falha de um repasse não afeta os outros repasses da mesma ordem. Cada repasse é executado e registrado de forma independente.
@@ -116,7 +95,7 @@ O status inicial do repasse depende da data:
 
 Nas consultas, a data do repasse sempre aparece em `paymentDate`, também quando ela foi calculada por `daysUntilPayment`. Veja os exemplos em [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
 
-Enquanto o repasse está agendado, você pode [cancelá-lo, pausá-lo ou mudar a data](/api-reference/split-pagamentos/atualizar-repasse), [devolver parte do valor](/api-reference/split-pagamentos/devolver-repasse) ou [antecipá-lo com o reprocessamento](/api-reference/split-pagamentos/reprocessar-repasses).
+Enquanto o repasse está agendado, você pode [cancelá-lo, pausá-lo ou mudar a data](/api-reference/split-pagamentos/atualizar-repasse), ou [antecipá-lo com o reprocessamento](/api-reference/split-pagamentos/reprocessar-repasses). Depois de pausado, também é possível [devolver parte do valor](/api-reference/split-pagamentos/devolver-repasse).
 
 <Warning>
 Até a data do repasse, o valor fica na conta de recebimento. Mantenha saldo suficiente para os repasses agendados: se faltar saldo na data, o repasse termina em `ERROR` e precisa ser reprocessado.
@@ -130,7 +109,7 @@ Quando parte de uma venda é desfeita antes do repasse, por exemplo, em uma disp
 2. [Devolva o valor acordado](/api-reference/split-pagamentos/devolver-repasse). A Delfinance envia um Pix de devolução ao cliente final, vinculado ao Pix original, e desconta o valor do repasse: o `amount` diminui e o `refundedAmount` aumenta.
 3. [Libere o repasse](/api-reference/split-pagamentos/atualizar-repasse) com `RELEASE`. O beneficiário recebe o valor restante na data do repasse.
 
-Só é possível devolver enquanto o repasse está em `SCHEDULED` ou `HOLDING`. Você pode fazer várias devoluções no mesmo repasse. Quando a soma delas chega ao valor original do repasse, ele vai para `REFUNDED` e não é executado.
+Só é possível devolver com o repasse pausado (`HOLDING`). Você pode fazer várias devoluções no mesmo repasse. Quando a soma delas chega ao valor original do repasse, ele vai para `REFUNDED` e não é executado.
 
 <Note>
 Depois que o repasse é concluído (`SUCCESS`), o dinheiro já está na conta do beneficiário e não há devolução de repasse. A conta de recebimento ainda pode devolver o Pix original ao cliente final, mas o valor sai do caixa do marketplace.
