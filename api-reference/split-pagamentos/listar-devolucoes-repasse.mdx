@@ -1,0 +1,80 @@
+---
+title: "Listar devoluções de um repasse"
+api: "GET /baas/api/v1/split-payments/payouts/{payoutId}/refunds"
+description: "Consulte as devoluções de um repasse e o status de cada Pix de devolução."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Retorna todas as devoluções (*refunds*) de um repasse (*payout*), da mais recente para a mais antiga. Use para acompanhar o resultado de cada Pix de devolução criado em [Devolver parte de um repasse](/api-reference/split-pagamentos/devolver-repasse).
+
+As devoluções também vêm no campo `refunds` de cada repasse em [Consultar ordem de recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="payoutId" type="string" required>
+  Identificador do repasse (`id`).
+</ParamField>
+
+## Response
+
+Array de devoluções, sem paginação. Um repasse vazio retorna `[]`.
+
+Cada item tem a estrutura descrita em [Devolver parte de um repasse](/api-reference/split-pagamentos/devolver-repasse#response): `id`, `payoutId`, `amount`, `status`, `reason`, `requestedBy`, `transactionId`, `endToEndId`, `errorMessage`, `createdAt` e `updatedAt`.
+
+| Status da devolução (`name`) | Significado |
+|---|---|
+| `PROCESSING` | Pix de devolução enviado, aguardando confirmação. O valor já foi descontado do repasse |
+| `SUCCESS` | Valor devolvido ao cliente final |
+| `ERROR` | Devolução não concluída. O motivo vem em `errorMessage`, e o valor volta para o `amount` do repasse |
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `404` | `SPLIT_PAYOUT_NOT_FOUND` | Não existe repasse com esse `payoutId` na conta de recebimento |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3/refunds' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "9a7b6c5d-4e3f-4a2b-8c1d-0e9f8a7b6c5d",
+        "payoutId": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
+        "amount": 30.00,
+        "status": {
+            "name": "SUCCESS",
+            "description": "Sucesso",
+            "value": 1
+        },
+        "reason": "Devolução de 1 item do pedido 4821",
+        "requestedBy": "Equipe financeira",
+        "transactionId": "d4c3b2a1-f6e5-4d7c-9b8a-7f6e5d4c3b2a",
+        "endToEndId": "D38224857202611031305abcdef654321",
+        "errorMessage": null,
+        "createdAt": "2026-11-03T13:05:00.000Z",
+        "updatedAt": "2026-11-03T13:05:04.000Z"
+    }
+]
+```
+</ResponseExample>

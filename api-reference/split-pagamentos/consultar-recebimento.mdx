@@ -1,7 +1,7 @@
 ---
-title: "Consultar recebimento com split"
+title: "Consultar ordem de recebimento com split"
 api: "GET /baas/api/v1/split-payments/orders/{id}"
-description: "Consulte um recebimento com split e a lista completa de repasses que ele gerou, com o status de cada um."
+description: "Consulte uma ordem de recebimento com split e a lista completa de repasses que ela gerou, com o status de cada um."
 tag: "BETA"
 ---
 
@@ -9,7 +9,7 @@ tag: "BETA"
 **Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
 </Warning>
 
-Retorna o detalhe de um recebimento com split: os valores usados no cálculo e todos os repasses gerados, um por instrução.
+Retorna o detalhe de uma ordem de recebimento com split: os valores usados no cálculo e todos os repasses (*payouts*) gerados, um por instrução.
 
 ## Headers
 
@@ -24,17 +24,17 @@ Retorna o detalhe de um recebimento com split: os valores usados no cálculo e t
 ## Path params
 
 <ParamField path="id" type="string" required>
-  Identificador do recebimento com split: o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+  Identificador da ordem de recebimento com split: o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
 </ParamField>
 
 ## Response
 
 <ResponseField name="id" type="string">
-  Identificador do recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+  Identificador da ordem de recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
 </ResponseField>
 
-<ResponseField name="source" type="string">
-  `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+<ResponseField name="source" type="object">
+  Origem das instruções, como enum (`name`, `description` e `value`). `name`: `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança). Veja [Formato dos enums](/guias/split-pagamentos/acompanhar-repasses#formato-dos-enums).
 </ResponseField>
 
 <ResponseField name="grossAmount" type="number">
@@ -77,18 +77,24 @@ Retorna o detalhe de um recebimento com split: os valores usados no cálculo e t
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Data e hora do recebimento, em ISO 8601.
+  Data e hora de criação da ordem, que coincide com o recebimento do pagamento, em ISO 8601.
 </ResponseField>
 
 <ResponseField name="payouts" type="array">
-  Repasses gerados pelo recebimento. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response), exceto o objeto `order`, que não se repete aqui porque os dados do recebimento já estão no nível de cima.
+  Repasses (*payouts*) gerados pela ordem. Cada item tem a estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response), exceto o objeto `order`, que não se repete aqui porque os dados da ordem já estão no nível de cima. Cada repasse traz também o array `refunds`.
+
+  <Expandable title="payouts[]">
+    <ResponseField name="refunds" type="array">
+      Devoluções do repasse, da mais recente para a mais antiga. `[]` quando não houve devolução. Cada item tem a estrutura descrita em [Devolver parte de um repasse](/api-reference/split-pagamentos/devolver-repasse#response).
+    </ResponseField>
+  </Expandable>
 </ResponseField>
 
 ## Erros
 
 | HTTP | Código | Quando acontece |
 |---|---|---|
-| `404` | `SPLIT_PAYMENT_ORDER_NOT_FOUND` | Não existe recebimento com split com esse `id` na conta de recebimento |
+| `404` | `SPLIT_PAYMENT_ORDER_NOT_FOUND` | Não existe ordem de recebimento com split com esse `id` na conta de recebimento |
 
 <RequestExample>
 ```bash cURL
@@ -102,7 +108,11 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
 ```json 200
 {
     "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
-    "source": "QR_CODE",
+    "source": {
+        "name": "QR_CODE",
+        "description": "QrCode",
+        "value": 0
+    },
     "grossAmount": 200.00,
     "tariffAmount": 2.00,
     "splitBaseAmount": 198.00,
@@ -124,11 +134,24 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
     "payouts": [
         {
             "id": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
-            "status": "PAID",
-            "transferType": "INTERNAL",
-            "instructionType": "PERCENTAGE",
+            "status": {
+                "name": "SUCCESS",
+                "description": "Sucesso",
+                "value": 1
+            },
+            "transferType": {
+                "name": "INTERNAL",
+                "description": "Transferência Interna Delfinance",
+                "value": 0
+            },
+            "instructionType": {
+                "name": "PERCENTAGE",
+                "description": "Porcentagem",
+                "value": 0
+            },
             "instructionAmount": 10,
             "amount": 19.80,
+            "refundedAmount": 0.00,
             "paymentDate": "2026-10-26",
             "beneficiary": {
                 "number": "10073",
@@ -144,22 +167,36 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
                     "name": "DELFINANCE SCD S.A."
                 }
             },
-            "executedTransactionId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
+            "transactionId": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
             "endToEndId": null,
-            "failureReason": null,
+            "errorMessage": null,
             "paidAt": "2026-10-26T14:32:11.000Z",
-            "canceledAt": null,
-            "cancelReason": null,
+            "holdDetails": null,
+            "cancellationDetails": null,
+            "refunds": [],
             "createdAt": "2026-10-26T14:32:10.000Z",
             "updatedAt": "2026-10-26T14:32:11.000Z"
         },
         {
             "id": "8c41d0a9-2e7b-4f3c-b6d8-9a0e1f2b3c4d",
-            "status": "PROCESSING",
-            "transferType": "PIX_MANUAL",
-            "instructionType": "FIXED",
+            "status": {
+                "name": "PROCESSING",
+                "description": "Processando",
+                "value": 3
+            },
+            "transferType": {
+                "name": "PIX_MANUAL",
+                "description": "Pix Manual",
+                "value": 2
+            },
+            "instructionType": {
+                "name": "FIXED",
+                "description": "Valor Fixo",
+                "value": 1
+            },
             "instructionAmount": 5.00,
             "amount": 5.00,
+            "refundedAmount": 0.00,
             "paymentDate": "2026-10-26",
             "beneficiary": {
                 "number": "123456",
@@ -175,12 +212,13 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
                     "name": "BANCO EXEMPLO S.A."
                 }
             },
-            "executedTransactionId": "f0e1d2c3-b4a5-4968-8776-655443322110",
+            "transactionId": "f0e1d2c3-b4a5-4968-8776-655443322110",
             "endToEndId": "E00000000202610261432abcdef123456",
-            "failureReason": null,
+            "errorMessage": null,
             "paidAt": null,
-            "canceledAt": null,
-            "cancelReason": null,
+            "holdDetails": null,
+            "cancellationDetails": null,
+            "refunds": [],
             "createdAt": "2026-10-26T14:32:10.000Z",
             "updatedAt": "2026-10-26T14:32:12.000Z"
         }

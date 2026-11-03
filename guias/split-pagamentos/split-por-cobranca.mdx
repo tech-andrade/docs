@@ -75,7 +75,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynami
                 "type": "PERCENTAGE",
                 "transferType": "INTERNAL",
                 "beneficiary": {
-                    "bankAccountNumber": "10073"
+                    "number": "10073"
                 }
             },
             {
@@ -83,12 +83,15 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynami
                 "type": "FIXED",
                 "transferType": "PIX_MANUAL",
                 "beneficiary": {
-                    "bankAccountNumber": "123456",
-                    "bankAccountBranch": "0001",
+                    "number": "123456",
+                    "branch": "0001",
+                    "type": "CURRENT",
                     "participantIspb": "00000000",
-                    "bankAccountType": "CURRENT",
-                    "holderName": "Maria Souza",
-                    "holderDocument": "12345678909"
+                    "holder": {
+                        "document": "12345678909",
+                        "name": "Maria Souza",
+                        "type": "NATURAL"
+                    }
                 }
             }
         ]
@@ -118,19 +121,22 @@ A resposta é a mesma da criação de um QR Code dinâmico comum. O objeto `spli
                 "amount": 10,
                 "type": "PERCENTAGE",
                 "transferType": "INTERNAL",
-                "beneficiary": { "bankAccountNumber": "10073" }
+                "beneficiary": { "number": "10073" }
             },
             {
                 "amount": 5.00,
                 "type": "FIXED",
                 "transferType": "PIX_MANUAL",
                 "beneficiary": {
-                    "bankAccountNumber": "123456",
-                    "bankAccountBranch": "0001",
+                    "number": "123456",
+                    "branch": "0001",
+                    "type": "CURRENT",
                     "participantIspb": "00000000",
-                    "bankAccountType": "CURRENT",
-                    "holderName": "Maria Souza",
-                    "holderDocument": "12345678909"
+                    "holder": {
+                        "document": "12345678909",
+                        "name": "Maria Souza",
+                        "type": "NATURAL"
+                    }
                 }
             }
         ]
@@ -169,19 +175,22 @@ Quando o Pix é pago, você recebe um evento [`PIX_RECEIVED`](/guias/webhooks/pi
 | `type` | `string` | Sim | `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais) |
 | `transferType` | `string` | Sim | `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) |
 | `beneficiary` | `object` | Sim | Dados da conta do beneficiário |
+| `paymentDate` | `string` | Não | Data do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse é agendado. Veja [Agendar um repasse](#agendar-um-repasse) |
 
 ### Beneficiário (`beneficiary`)
 
-Os campos obrigatórios dependem do `transferType`.
+O `beneficiary` segue o mesmo formato de conta usado no Pix manual e no split padrão da conta. Os campos obrigatórios dependem do `transferType`.
 
 | Campo | Tipo | `INTERNAL` | `PIX_MANUAL` | Descrição |
 |---|---|---|---|---|
-| `bankAccountNumber` | `string` | Obrigatório | Obrigatório | Número da conta do beneficiário |
-| `bankAccountBranch` | `string` | — | Obrigatório | Agência da conta do beneficiário |
+| `number` | `string` | Obrigatório | Obrigatório | Número da conta do beneficiário |
+| `branch` | `string` | — | Obrigatório | Agência da conta do beneficiário |
+| `type` | `string` | — | Obrigatório | Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING` |
 | `participantIspb` | `string` | — | Obrigatório | ISPB da instituição de destino (8 caracteres) |
-| `bankAccountType` | `string` | — | Obrigatório | Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING` |
-| `holderName` | `string` | — | Obrigatório | Nome do titular da conta do beneficiário |
-| `holderDocument` | `string` | — | Obrigatório | CPF ou CNPJ do titular, somente números |
+| `holder` | `object` | — | Obrigatório | Titular da conta do beneficiário |
+| `holder.document` | `string` | — | Obrigatório | CPF ou CNPJ do titular, somente números |
+| `holder.name` | `string` | — | Obrigatório | Nome do titular |
+| `holder.type` | `string` | — | Obrigatório | `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica) |
 
 <Tabs>
   <Tab title="INTERNAL">
@@ -193,7 +202,7 @@ Os campos obrigatórios dependem do `transferType`.
         "type": "PERCENTAGE",
         "transferType": "INTERNAL",
         "beneficiary": {
-            "bankAccountNumber": "10073"
+            "number": "10073"
         }
     }
     ```
@@ -207,17 +216,55 @@ Os campos obrigatórios dependem do `transferType`.
         "type": "FIXED",
         "transferType": "PIX_MANUAL",
         "beneficiary": {
-            "bankAccountNumber": "123456",
-            "bankAccountBranch": "0001",
+            "number": "123456",
+            "branch": "0001",
+            "type": "CURRENT",
             "participantIspb": "00000000",
-            "bankAccountType": "CURRENT",
-            "holderName": "Maria Souza",
-            "holderDocument": "12345678909"
+            "holder": {
+                "document": "12345678909",
+                "name": "Maria Souza",
+                "type": "NATURAL"
+            }
         }
     }
     ```
   </Tab>
 </Tabs>
+
+## Agendar um repasse
+
+Por padrão, cada repasse é feito logo após o pagamento. Para fazer o repasse em outra data, informe `paymentDate` na instrução. Um uso comum: o marketplace só libera a parte do vendedor depois do prazo de entrega ou de devolução do produto.
+
+No exemplo abaixo, o vendedor recebe R\$ 54,00 em 27/11/2026, e não no momento do pagamento:
+
+```json
+{
+    "amount": 54.00,
+    "type": "FIXED",
+    "transferType": "INTERNAL",
+    "paymentDate": "2026-11-27",
+    "beneficiary": {
+        "number": "10073"
+    }
+}
+```
+
+O comportamento depende da data:
+
+| `paymentDate` | Status inicial do repasse | Quando o repasse é feito |
+|---|---|---|
+| Não informado, ou a data de hoje | `PENDING` | Logo após o pagamento |
+| Data futura | `SCHEDULED` | Automaticamente, na data informada |
+
+Enquanto o repasse está agendado, você pode [cancelá-lo, pausá-lo ou mudar a data](/api-reference/split-pagamentos/atualizar-repasse), ou antecipá-lo com o [reprocessamento](/api-reference/split-pagamentos/reprocessar-repasses). Acompanhe os repasses agendados em [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+
+<Warning>
+Até a data do repasse, o valor fica na conta de recebimento. Mantenha saldo suficiente para os repasses agendados: se faltar saldo na data, o repasse termina em `ERROR` e precisa ser reprocessado.
+</Warning>
+
+<Note>
+O agendamento só está disponível no split por cobrança. No split padrão da conta, os repasses são sempre feitos logo após o pagamento.
+</Note>
 
 ## Regras de validação
 
@@ -231,6 +278,7 @@ As regras abaixo são verificadas na criação do QR Code. Se qualquer uma falha
 | Cada instrução `PERCENTAGE` | Até 100% |
 | Soma de todos os repasses (percentuais convertidos em reais + valores fixos) | Até o valor da cobrança |
 | Campos do `beneficiary` | Conforme o `transferType`, veja a tabela acima |
+| `paymentDate`, quando informado | Data válida, no formato `YYYY-MM-DD` |
 
 <Note>
 Os dados do beneficiário não são verificados na criação do QR Code. Confira o número da conta e os dados bancários antes de enviar: um dado incorreto só aparece como falha no momento do repasse.
@@ -270,16 +318,16 @@ Se a soma dos repasses ultrapassar o valor líquido (depois da tarifa), **nenhum
     Se a conta de recebimento também tem um [split padrão](/guias/split-pagamentos/configurar), ele **não** é aplicado aos pagamentos de um QR Code com `splitPayment`. Para esses pagamentos, valem apenas as instruções da cobrança. Os demais Pix recebidos na conta continuam seguindo o split padrão.
   </Accordion>
   <Accordion title="Conta Delfinance inexistente">
-    Se o `bankAccountNumber` de uma instrução `INTERNAL` não corresponder a uma conta Delfinance, aquele repasse não é executado e o valor permanece na conta de recebimento. O pagamento do Pix não é afetado.
+    Se o `beneficiary.number` de uma instrução `INTERNAL` não corresponder a uma conta Delfinance, aquele repasse não é executado e o valor permanece na conta de recebimento. O pagamento do Pix não é afetado.
   </Accordion>
   <Accordion title="Pix de repasse rejeitado">
     Em uma instrução `PIX_MANUAL`, se o Pix para o beneficiário for rejeitado (por exemplo, por dados bancários incorretos), o valor não é repassado e o erro chega no evento `PIX_PAYMENT_UPDATED`.
   </Accordion>
   <Accordion title="Momento do repasse">
-    O repasse é feito logo após o crédito do Pix. Ainda não é possível agendar um repasse para uma data futura.
+    Sem `paymentDate`, o repasse é feito logo após o crédito do Pix. Com `paymentDate` futuro, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Veja [Agendar um repasse](#agendar-um-repasse).
   </Accordion>
   <Accordion title="Consulta dos repasses">
-    Ainda não há um endpoint para listar os repasses gerados por uma cobrança. Use os webhooks e o extrato da conta para acompanhar os valores repassados.
+    Para ver os repasses gerados por uma cobrança, o status de cada um e o valor a receber de cada beneficiário, use as consultas de [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses) (em beta).
   </Accordion>
 </AccordionGroup>
 

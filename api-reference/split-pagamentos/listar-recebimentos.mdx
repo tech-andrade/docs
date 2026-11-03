@@ -1,7 +1,7 @@
 ---
-title: "Listar recebimentos com split"
+title: "Listar ordens de recebimento com split"
 api: "GET /baas/api/v1/split-payments/orders"
-description: "Liste os pagamentos da conta de recebimento que geraram repasses, com os valores usados no cálculo dos repasses."
+description: "Liste as ordens de recebimento com split da conta de recebimento, com os valores usados no cálculo dos repasses."
 tag: "BETA"
 ---
 
@@ -9,7 +9,7 @@ tag: "BETA"
 **Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
 </Warning>
 
-Retorna, de forma paginada, os recebimentos com split da conta de recebimento informada em `x-delfinance-account-id`. Cada item traz os valores usados no cálculo dos repasses. Para ver os repasses, use [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+Retorna, de forma paginada, as ordens de recebimento com split da conta de recebimento informada em `x-delfinance-account-id`. Cada ordem corresponde a um pagamento recebido com split e traz os valores usados no cálculo dos repasses (*payouts*). Para ver os repasses, use [Consultar ordem de recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
 
 ## Headers
 
@@ -24,15 +24,23 @@ Retorna, de forma paginada, os recebimentos com split da conta de recebimento in
 ## Query params
 
 <ParamField query="startDate" type="string" required>
-  Data inicial do recebimento, no formato `YYYY-MM-DD`.
+  Data inicial de criação da ordem, no formato `YYYY-MM-DD`.
 </ParamField>
 
 <ParamField query="endDate" type="string" required>
-  Data final do recebimento, no formato `YYYY-MM-DD`.
+  Data final de criação da ordem, no formato `YYYY-MM-DD`.
 </ParamField>
 
 <ParamField query="source" type="string">
   Origem das instruções: `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+</ParamField>
+
+<ParamField query="transactionId" type="string">
+  Id da transação de recebimento (o `id` da ordem). Não pode ser usado junto com `correlationId`.
+</ParamField>
+
+<ParamField query="correlationId" type="string">
+  `correlationId` informado na criação do QR Code. Use para encontrar a ordem de uma cobrança específica a partir do identificador do seu sistema. Não pode ser usado junto com `transactionId`.
 </ParamField>
 
 <ParamField query="page" type="number" default="1">
@@ -45,14 +53,14 @@ Retorna, de forma paginada, os recebimentos com split da conta de recebimento in
 
 ## Response
 
-Array de recebimentos com split. Os dados de paginação vêm no header `Pagination`, descrito em [Paginação](#paginação).
+Array de ordens de recebimento com split. Os dados de paginação vêm no header `Pagination`, descrito em [Paginação](#paginação).
 
 <ResponseField name="id" type="string">
-  Identificador do recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
+  Identificador da ordem de recebimento com split. É o id da transação de crédito que gerou os repasses, o mesmo do extrato e do webhook de recebimento.
 </ResponseField>
 
-<ResponseField name="source" type="string">
-  `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança).
+<ResponseField name="source" type="object">
+  Origem das instruções, como enum (`name`, `description` e `value`). `name`: `ACCOUNT_CONFIGURATION` (split padrão da conta) ou `QR_CODE` (split por cobrança). Veja [Formato dos enums](/guias/split-pagamentos/acompanhar-repasses#formato-dos-enums).
 </ResponseField>
 
 <ResponseField name="grossAmount" type="number">
@@ -95,7 +103,7 @@ Array de recebimentos com split. Os dados de paginação vêm no header `Paginat
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
-  Data e hora do recebimento, em ISO 8601.
+  Data e hora de criação da ordem, que coincide com o recebimento do pagamento, em ISO 8601.
 </ResponseField>
 
 ## Paginação
@@ -111,8 +119,8 @@ Pagination: {"currentPage":1,"pageSize":20,"pageCount":1,"rowCount":1,"totalAmou
 | `currentPage` | Página retornada |
 | `pageSize` | Itens por página (`limit`) |
 | `pageCount` | Total de páginas |
-| `rowCount` | Total de recebimentos encontrados |
-| `totalAmount` | Soma do `grossAmount` de todos os recebimentos encontrados, considerando todas as páginas |
+| `rowCount` | Total de ordens encontradas |
+| `totalAmount` | Soma do `grossAmount` de todas as ordens encontradas, considerando todas as páginas |
 
 <RequestExample>
 ```bash cURL
@@ -127,7 +135,11 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/or
 [
     {
         "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
-        "source": "QR_CODE",
+        "source": {
+            "name": "QR_CODE",
+            "description": "QrCode",
+            "value": 0
+        },
         "grossAmount": 200.00,
         "tariffAmount": 2.00,
         "splitBaseAmount": 198.00,

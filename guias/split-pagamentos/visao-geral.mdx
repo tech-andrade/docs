@@ -21,7 +21,8 @@ Toda a documentação de split usa os termos abaixo.
 | **Beneficiário** | A pessoa ou empresa que recebe uma parte do pagamento. Por exemplo: o vendedor, o parceiro ou o afiliado |
 | **Conta do beneficiário** | A conta para onde a parte do beneficiário é transferida. Pode ser uma conta Delfinance (`INTERNAL`) ou uma conta em outra instituição (`PIX_MANUAL`). Os dados dela vão no objeto `beneficiary` |
 | **Instrução** | A regra de um repasse: quanto sai (`amount`), como o valor é calculado (`type`: `PERCENTAGE` ou `FIXED`), por qual meio é enviado (`transferType`) e para quem (`beneficiary`) |
-| **Repasse** | A transferência efetiva da conta de recebimento para a conta do beneficiário, gerada por uma instrução a cada pagamento recebido |
+| **Repasse** (*payout*) | A transferência efetiva da conta de recebimento para a conta do beneficiário, gerada por uma instrução a cada pagamento recebido. Pode ser feito logo após o pagamento ou agendado para uma data (`paymentDate`) |
+| **Ordem de recebimento com split** | O registro criado quando um pagamento com instruções de split chega na conta de recebimento. Guarda os valores usados no cálculo e agrupa os repasses daquele pagamento |
 
 Um jeito simples de visualizar: um pagamento de R$ 100 chega na conta de recebimento, e cada instrução gera um repasse para a conta do beneficiário. O valor que não foi destinado a nenhuma instrução permanece na conta de recebimento.
 

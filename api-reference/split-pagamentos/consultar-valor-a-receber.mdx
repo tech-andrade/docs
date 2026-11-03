@@ -9,10 +9,14 @@ tag: "BETA"
 **Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
 </Warning>
 
-Retorna o **valor a receber** de um beneficiário na conta de recebimento: a soma dos repasses que ainda não foram concluídos (`SCHEDULED`, `PENDING` e `PROCESSING`). Se você informar um período, a resposta também traz o total já pago nesse período.
+Retorna o **valor a receber** de um beneficiário na conta de recebimento: a soma dos repasses (*payouts*) que ainda não foram concluídos, em `SCHEDULED`, `PENDING` e `PROCESSING`. Se você informar um período, a resposta também traz o total já recebido nesse período.
 
 <Note>
-Nesta fase, todo repasse é executado logo após o recebimento. Por isso, o valor a receber costuma se resumir aos repasses Pix ainda em `PROCESSING`. Com os repasses com data futura, previstos para uma próxima fase, os repasses agendados (`SCHEDULED`) também entram nessa soma.
+Repasses em `ERROR` não entram no valor a receber. Depois de [reprocessados](/api-reference/split-pagamentos/reprocessar-repasses), eles voltam para `PENDING` e passam a contar de novo.
+
+Repasses pausados (`HOLDING`) também ficam fora do valor a receber, porque podem ser cancelados ou ter parte devolvida. A soma deles vem separada, em `onHoldAmount`. Quando um repasse é [liberado](/api-reference/split-pagamentos/atualizar-repasse), ele volta a contar no valor a receber.
+
+Todos os valores já descontam as [devoluções](/api-reference/split-pagamentos/devolver-repasse) feitas nos repasses.
 </Note>
 
 ## Headers
@@ -32,11 +36,11 @@ Nesta fase, todo repasse é executado logo após o recebimento. Por isso, o valo
 </ParamField>
 
 <ParamField query="paidFrom" type="string">
-  Data inicial para o total pago, no formato `YYYY-MM-DD`. Informe junto com `paidTo`.
+  Data inicial para o total recebido, no formato `YYYY-MM-DD`. Informe junto com `paidTo`.
 </ParamField>
 
 <ParamField query="paidTo" type="string">
-  Data final para o total pago, no formato `YYYY-MM-DD`. Informe junto com `paidFrom`.
+  Data final para o total recebido, no formato `YYYY-MM-DD`. Informe junto com `paidFrom`.
 </ParamField>
 
 ## Response
@@ -59,14 +63,18 @@ Nesta fase, todo repasse é executado logo após o recebimento. Por isso, o valo
   </Expandable>
 </ResponseField>
 
+<ResponseField name="onHoldAmount" type="number">
+  Soma dos repasses pausados (`HOLDING`), por exemplo, por disputa da venda. Não entra em `receivableAmount`.
+</ResponseField>
+
 <ResponseField name="paid" type="object">
-  Total pago no período. Presente apenas quando `paidFrom` e `paidTo` são informados.
+  Total recebido no período. Presente apenas quando `paidFrom` e `paidTo` são informados.
 
   <Expandable title="paid">
     <ResponseField name="from" type="string">Data inicial do período.</ResponseField>
     <ResponseField name="to" type="string">Data final do período.</ResponseField>
-    <ResponseField name="amount" type="number">Soma dos repasses `PAID` no período.</ResponseField>
-    <ResponseField name="count" type="number">Quantidade de repasses `PAID` no período.</ResponseField>
+    <ResponseField name="amount" type="number">Soma dos repasses em `SUCCESS` no período, pela data de conclusão (`paidAt`).</ResponseField>
+    <ResponseField name="count" type="number">Quantidade de repasses em `SUCCESS` no período.</ResponseField>
   </Expandable>
 </ResponseField>
 
@@ -82,12 +90,13 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/re
 ```json 200
 {
     "beneficiaryDocument": "12345678909",
-    "receivableAmount": 5.00,
+    "receivableAmount": 125.00,
     "receivableByStatus": {
-        "scheduled": 0.00,
+        "scheduled": 120.00,
         "pending": 0.00,
         "processing": 5.00
     },
+    "onHoldAmount": 19.80,
     "paid": {
         "from": "2026-10-01",
         "to": "2026-10-26",

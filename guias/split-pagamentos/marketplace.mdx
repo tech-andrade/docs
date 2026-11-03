@@ -1,13 +1,13 @@
 ---
 title: "Split para marketplaces"
 sidebarTitle: "Guia para marketplaces"
-description: "Veja como um marketplace usa o split por cobrança para repassar a parte de cada vendedor e como acompanhar recebimentos e repasses."
+description: "Veja como um marketplace usa o split por cobrança para repassar a parte de cada vendedor e como acompanhar as ordens de recebimento com split e os repasses."
 icon: "store"
 tag: "BETA"
 ---
 
 <Warning>
-**Parte deste guia usa funcionalidades em beta.** As consultas de recebimentos, repasses e valor a receber estão em beta, e o contrato pode mudar antes da versão final. Veja [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+**Parte deste guia usa funcionalidades em beta.** As consultas de ordens de recebimento com split, repasses e valor a receber, o reprocessamento e a atualização de repasses estão em beta, e o contrato pode mudar antes da versão final. Veja [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
 </Warning>
 
 Este guia mostra, de ponta a ponta, como um marketplace usa o Split de Pagamentos da Delfinance: o comprador paga o pedido inteiro, a Delfinance repassa automaticamente a parte de cada vendedor e a parte do marketplace fica na conta dele. Depois, a plataforma consulta os recebimentos e oferece a cada vendedor uma visão do que ele já recebeu e do que tem a receber.
@@ -40,7 +40,7 @@ sequenceDiagram
     D->>D: Credita o valor integral na conta de recebimento
     D->>D: Repassa a parte de cada vendedor
     D-->>P: Webhooks do recebimento e dos repasses
-    P->>D: Lista recebimentos e repasses
+    P->>D: Lista ordens de recebimento com split e repasses
     V->>P: Consulta o que recebeu e o que tem a receber
     P->>D: Lista repasses e valor a receber do vendedor
 ```
@@ -96,7 +96,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynami
                 "type": "FIXED",
                 "transferType": "INTERNAL",
                 "beneficiary": {
-                    "bankAccountNumber": "10073"
+                    "number": "10073"
                 }
             },
             {
@@ -104,12 +104,15 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v2/pix/qrcode/dynami
                 "type": "FIXED",
                 "transferType": "PIX_MANUAL",
                 "beneficiary": {
-                    "bankAccountNumber": "123456",
-                    "bankAccountBranch": "0001",
+                    "number": "123456",
+                    "branch": "0001",
+                    "type": "CURRENT",
                     "participantIspb": "00000000",
-                    "bankAccountType": "CURRENT",
-                    "holderName": "Maria Souza",
-                    "holderDocument": "12345678909"
+                    "holder": {
+                        "document": "12345678909",
+                        "name": "Maria Souza",
+                        "type": "NATURAL"
+                    }
                 }
             }
         ]
@@ -132,12 +135,12 @@ A plataforma recebe os webhooks:
 - `PIX_PAYMENT_UPDATED`, para cada repasse via Pix a uma conta de outro banco.
 </Step>
 
-<Step title="Acompanhe os recebimentos do marketplace">
-Para a gestão do marketplace (conciliação, relatórios, painel financeiro), use [Listar recebimentos com split](/api-reference/split-pagamentos/listar-recebimentos). Cada item mostra o valor integral do pagamento, a tarifa e a base de cálculo dos repasses.
+<Step title="Acompanhe as ordens de recebimento do marketplace">
+Para a gestão do marketplace (conciliação, relatórios, painel financeiro), use [Listar ordens de recebimento com split](/api-reference/split-pagamentos/listar-recebimentos). Cada ordem corresponde a um pedido pago e mostra o valor integral do pagamento, a tarifa e a base de cálculo dos repasses.
 
-Para ver os repasses de um pedido específico, use [Consultar recebimento com split](/api-reference/split-pagamentos/consultar-recebimento) com o `id` da transação de recebimento.
+Para ver os repasses de um pedido específico, use [Consultar ordem de recebimento com split](/api-reference/split-pagamentos/consultar-recebimento) com o `id` da transação de recebimento.
 
-Para monitorar problemas, use [Listar repasses](/api-reference/split-pagamentos/listar-repasses) com `status=FAILED` e trate os repasses que falharam.
+Para monitorar problemas, use [Listar repasses](/api-reference/split-pagamentos/listar-repasses) com `status=ERROR`. Corrija a causa informada em `errorMessage` e use [Reprocessar repasses](/api-reference/split-pagamentos/reprocessar-repasses) para tentar de novo.
 </Step>
 
 <Step title="Mostre a cada vendedor o que ele recebeu e o que tem a receber">
@@ -153,7 +156,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
 ```
 
 <Note>
-Nesta fase, todo repasse é executado logo após o pagamento. Por isso, o valor a receber se resume aos repasses Pix ainda em processamento. Com os repasses com data futura, previstos para uma próxima fase, o vendedor também vai ver os valores agendados.
+Se a plataforma agenda os repasses (por exemplo, para depois do prazo de devolução), o valor a receber do vendedor inclui os repasses agendados (`SCHEDULED`), e a lista de repasses mostra a data prevista de cada um em `paymentDate`.
 </Note>
 </Step>
 
@@ -182,13 +185,22 @@ Com valores fixos, deixe margem para a tarifa. Se a soma dos repasses ultrapassa
     A Delfinance não valida os dados da conta do beneficiário na criação do QR Code. Um dado incorreto só aparece como falha no momento do repasse. Valide agência, conta, ISPB e documento quando o vendedor se cadastrar na sua plataforma.
   </Accordion>
   <Accordion title="Prefira contas Delfinance para os vendedores">
-    Repasses `INTERNAL` são instantâneos e vão direto para `PAID`. Repasses `PIX_MANUAL` dependem da confirmação do Pix pela instituição do vendedor.
+    Repasses `INTERNAL` são instantâneos e vão direto para `SUCCESS`. Repasses `PIX_MANUAL` dependem da confirmação do Pix pela instituição do vendedor.
   </Accordion>
   <Accordion title="Calcule os valores na plataforma">
     Quando o pedido tem frete, desconto ou comissões diferentes por produto, calcule o valor de cada vendedor na plataforma e envie como `FIXED`. Assim o repasse corresponde exatamente ao que o seu sistema registrou.
   </Accordion>
-  <Accordion title="Trate devoluções e cancelamentos de pedido">
-    Um repasse só pode ser cancelado antes de ser executado. Nesta fase, os repasses são imediatos, então, se o pedido for devolvido depois do pagamento, o acerto com o vendedor precisa ser feito pela plataforma.
+  <Accordion title="Agende o repasse para depois do prazo de devolução">
+    Use `paymentDate` na instrução para fazer o repasse ao vendedor só depois do prazo de entrega ou de devolução. Se o pedido for devolvido antes da data, [cancele o repasse](/api-reference/split-pagamentos/atualizar-repasse) e o valor continua na conta de recebimento. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+  </Accordion>
+  <Accordion title="Pause o repasse quando houver disputa da venda">
+    Se o comprador abrir uma disputa antes do repasse, [pause o repasse](/api-reference/split-pagamentos/atualizar-repasse) com a ação `HOLD`. Ele vai para `HOLDING` e não é executado, nem na data prevista. Se só parte da venda for desfeita, [devolva essa parte ao cliente final](/api-reference/split-pagamentos/devolver-repasse): o valor é descontado do repasse do vendedor. Quando a disputa for resolvida, use `RELEASE` para liberar o repasse com o valor restante, com uma nova data se quiser, ou `CANCEL` se a venda for desfeita por inteiro.
+  </Accordion>
+  <Accordion title="Trate devoluções depois do repasse">
+    Um repasse só pode ser cancelado antes de ser executado. Se o pedido for devolvido depois que o repasse foi concluído (`SUCCESS`), o acerto com o vendedor precisa ser feito pela plataforma.
+  </Accordion>
+  <Accordion title="Mantenha saldo para os repasses agendados">
+    Até a data do repasse, o valor fica na conta de recebimento. Se faltar saldo na data, o repasse termina em `ERROR`. Depois de recompor o saldo, [reprocesse o repasse](/api-reference/split-pagamentos/reprocessar-repasses).
   </Accordion>
 </AccordionGroup>
 

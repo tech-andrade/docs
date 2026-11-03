@@ -284,7 +284,10 @@
                   "api-reference/split-pagamentos/consultar-recebimento",
                   "api-reference/split-pagamentos/listar-repasses",
                   "api-reference/split-pagamentos/consultar-valor-a-receber",
-                  "api-reference/split-pagamentos/cancelar-repasse"
+                  "api-reference/split-pagamentos/reprocessar-repasses",
+                  "api-reference/split-pagamentos/atualizar-repasse",
+                  "api-reference/split-pagamentos/devolver-repasse",
+                  "api-reference/split-pagamentos/listar-devolucoes-repasse"
                 ]
               }
             ]
@@ -419,6 +422,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/api-reference/split-pagamentos/cancelar-repasse",
+      "destination": "/api-reference/split-pagamentos/atualizar-repasse"
+    },
     {
       "source": "/iniciacao/autenticacao",
       "destination": "/autenticacao/credenciais"

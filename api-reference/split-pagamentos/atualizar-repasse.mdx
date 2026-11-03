@@ -1,0 +1,227 @@
+---
+title: "Atualizar repasse"
+api: "PATCH /baas/api/v1/split-payments/payouts/{payoutId}"
+description: "Cancele, pause, libere ou mude a data de um repasse que ainda não foi executado."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Acompanhar repasses](/guias/split-pagamentos/acompanhar-repasses).
+</Warning>
+
+Atualiza um repasse (*payout*) que ainda não foi executado. Com esta rota, o gestor do marketplace pode:
+
+- **cancelar** o repasse (`CANCEL`), por exemplo, quando o pedido é devolvido;
+- **pausar** o repasse (`HOLD`), por exemplo, quando há uma disputa sobre a venda;
+- **liberar** um repasse pausado (`RELEASE`), quando a disputa é resolvida;
+- **mudar a data** do repasse (`paymentDate`), sozinha ou junto com uma ação.
+
+Enquanto o repasse não é executado, nenhum dinheiro sai da conta de recebimento. Por isso, cancelar ou pausar não gera estorno: o valor apenas permanece na conta de recebimento.
+
+## O que cada atualização faz
+
+| Body | Status aceitos | Resultado |
+|---|---|---|
+| `action.type` = `CANCEL` | `SCHEDULED`, `PENDING`, `HOLDING`, `ERROR` | O repasse vai para `CANCELED`. É irreversível |
+| `action.type` = `HOLD` | `SCHEDULED` | O repasse vai para `HOLDING` e não é executado, nem na data prevista, até ser liberado |
+| `action.type` = `RELEASE` | `HOLDING` | O repasse volta para `SCHEDULED` e é executado no `paymentDate`. Se a data já passou, é executado na próxima rodada diária de repasses agendados, às 6h (horário de Brasília) |
+| Só `paymentDate` | `SCHEDULED`, `HOLDING` | Muda a data do repasse. Em `HOLDING`, o repasse continua pausado até ser liberado |
+
+Você pode enviar `paymentDate` junto com `HOLD` ou `RELEASE`. Por exemplo, para liberar um repasse pausado com uma nova data, envie `RELEASE` e o novo `paymentDate`. Com `CANCEL`, o `paymentDate` não é aceito.
+
+Repasses em `PROCESSING`, `SUCCESS`, `CANCELED` ou `REFUNDED` não podem ser atualizados.
+
+<Tip>
+Em uma disputa em que só parte da venda é desfeita, pause o repasse com `HOLD` e depois use [Devolver parte de um repasse](/api-reference/split-pagamentos/devolver-repasse) para devolver essa parte ao cliente final. O valor devolvido é descontado do repasse. Por fim, libere o repasse com `RELEASE`.
+</Tip>
+
+<Note>
+Um repasse sem data futura é executado logo após o recebimento, então fica em `PENDING` por pouquíssimo tempo. Para ter tempo de cancelar ou pausar um repasse, agende-o com `paymentDate` na [instrução de split do QR Code](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="payoutId" type="string" required>
+  Identificador do repasse (`id`), obtido em [Listar repasses](/api-reference/split-pagamentos/listar-repasses) ou em [Consultar ordem de recebimento com split](/api-reference/split-pagamentos/consultar-recebimento).
+</ParamField>
+
+## Body
+
+Informe `paymentDate`, `action` ou os dois.
+
+<ParamField body="paymentDate" type="string">
+  Nova data do repasse, no formato `YYYY-MM-DD`. Deve ser uma data futura (a partir de amanhã). Para executar um repasse agendado hoje, use [Reprocessar repasse](/api-reference/split-pagamentos/reprocessar-repasses). Não pode ser usado com `CANCEL`.
+</ParamField>
+
+<ParamField body="action" type="object">
+  Ação sobre o repasse.
+
+  <Expandable title="action">
+    <ParamField body="action.type" type="string" required>
+      `CANCEL` (cancelar), `HOLD` (pausar) ou `RELEASE` (liberar um repasse pausado).
+    </ParamField>
+    <ParamField body="action.reason" type="string">
+      Motivo da ação. Até 200 caracteres. Fica registrado em `cancellationDetails.reason` ou em `holdDetails`. Recomendado em `CANCEL` e `HOLD`: sem ele, a API registra `motivo não informado.`
+    </ParamField>
+    <ParamField body="action.requestedBy" type="string">
+      Nome ou identificação de quem pediu a ação, por exemplo, o usuário ou a área da sua plataforma. Até 50 caracteres. Se não for informado, a API registra `Não informado.`
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+Retorna o repasse atualizado, na mesma estrutura descrita em [Listar repasses](/api-reference/split-pagamentos/listar-repasses#response). Conforme a ação:
+
+- `CANCEL`: `status.name` igual a `CANCELED` e `cancellationDetails` preenchido (`canceledBy`, `reason` e `canceledAt`).
+- `HOLD`: `status.name` igual a `HOLDING` e `holdDetails` preenchido (`heldBy`, `reason` e `heldAt`).
+- `RELEASE`: `status.name` igual a `SCHEDULED` e `holdDetails` completado com `releasedBy`, `releaseReason` e `releasedAt`.
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `400` | `VALIDATION_ERROR` | Body vazio, `action.type` inválido ou `paymentDate` junto com `CANCEL` |
+| `400` | `INVALID_SCHEDULE_DATE` | `paymentDate` igual a hoje ou no passado |
+| `404` | `NOT_FOUND` | Não existe repasse com esse `payoutId` na conta de recebimento |
+| `422` | `ACTION_REFUSED` | O status atual do repasse não aceita a atualização. Veja [O que cada atualização faz](#o-que-cada-atualização-faz) |
+
+<RequestExample>
+```bash Pausar
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "action": {
+        "type": "HOLD",
+        "reason": "Disputa aberta pelo comprador",
+        "requestedBy": "Equipe financeira"
+    }
+}'
+```
+
+```bash Liberar com nova data
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "paymentDate": "2026-12-02",
+    "action": {
+        "type": "RELEASE",
+        "reason": "Disputa encerrada a favor do vendedor",
+        "requestedBy": "Equipe financeira"
+    }
+}'
+```
+
+```bash Cancelar
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "action": {
+        "type": "CANCEL",
+        "reason": "Pedido devolvido pelo comprador",
+        "requestedBy": "Equipe financeira"
+    }
+}'
+```
+
+```bash Mudar a data
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/payouts/3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "paymentDate": "2026-12-10"
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "3f9b2c7e-8d14-4b6a-a0e5-71c2d9f4b8a3",
+    "order": {
+        "id": "e7a0c1d2-5b3f-4a8e-9c61-2f4d8b7a1e90",
+        "source": {
+            "name": "QR_CODE",
+            "description": "QrCode",
+            "value": 0
+        },
+        "grossAmount": 200.00,
+        "tariffAmount": 2.00,
+        "splitBaseAmount": 198.00,
+        "createdAt": "2026-10-26T14:32:10.000Z"
+    },
+    "status": {
+        "name": "HOLDING",
+        "description": "Em espera",
+        "value": 6
+    },
+    "transferType": {
+        "name": "INTERNAL",
+        "description": "Transferência Interna Delfinance",
+        "value": 0
+    },
+    "instructionType": {
+        "name": "PERCENTAGE",
+        "description": "Porcentagem",
+        "value": 0
+    },
+    "instructionAmount": 10,
+    "amount": 19.80,
+    "refundedAmount": 0.00,
+    "paymentDate": "2026-11-25",
+    "beneficiary": {
+        "number": "10073",
+        "branch": "0001",
+        "type": "PAYMENT",
+        "holder": {
+            "document": "12345678000190",
+            "name": "LOJA DO JOÃO LTDA",
+            "type": "LEGAL"
+        },
+        "participant": {
+            "ispb": "38224857",
+            "name": "DELFINANCE SCD S.A."
+        }
+    },
+    "transactionId": null,
+    "endToEndId": null,
+    "errorMessage": null,
+    "holdDetails": {
+        "heldBy": "Equipe financeira",
+        "reason": "Disputa aberta pelo comprador",
+        "heldAt": "2026-10-28T09:10:00.000Z",
+        "releasedBy": null,
+        "releaseReason": null,
+        "releasedAt": null
+    },
+    "cancellationDetails": null,
+    "paidAt": null,
+    "createdAt": "2026-10-26T14:32:10.000Z",
+    "updatedAt": "2026-10-28T09:10:00.000Z"
+}
+```
+
+```json 422
+{
+    "code": "ACTION_REFUSED",
+    "message": "O payout não pode ser pausado."
+}
+```
+</ResponseExample>

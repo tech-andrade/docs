@@ -110,27 +110,39 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
         <ParamField body="instructions[].transferType" type="string" required>
           `INTERNAL` (conta Delfinance) ou `PIX_MANUAL` (conta em qualquer instituição, por dados bancários).
         </ParamField>
+        <ParamField body="instructions[].paymentDate" type="string">
+          Data do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
+        </ParamField>
         <ParamField body="instructions[].beneficiary" type="object" required>
-          Dados da conta do beneficiário. Com `INTERNAL`, apenas `bankAccountNumber` é obrigatório. Com `PIX_MANUAL`, todos os campos são obrigatórios.
+          Dados da conta do beneficiário, no mesmo formato de conta do Pix manual. Com `INTERNAL`, apenas `number` é obrigatório. Com `PIX_MANUAL`, todos os campos são obrigatórios.
 
           <Expandable title="beneficiary">
-            <ParamField body="beneficiary.bankAccountNumber" type="string" required>
+            <ParamField body="beneficiary.number" type="string" required>
               Número da conta do beneficiário.
             </ParamField>
-            <ParamField body="beneficiary.bankAccountBranch" type="string">
+            <ParamField body="beneficiary.branch" type="string">
               Agência da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
+            </ParamField>
+            <ParamField body="beneficiary.type" type="string">
+              Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`. Obrigatório para `PIX_MANUAL`.
             </ParamField>
             <ParamField body="beneficiary.participantIspb" type="string">
               ISPB da instituição de destino. Obrigatório para `PIX_MANUAL`.
             </ParamField>
-            <ParamField body="beneficiary.bankAccountType" type="string">
-              Tipo da conta do beneficiário: `PAYMENT`, `CURRENT` ou `SAVING`. Obrigatório para `PIX_MANUAL`.
-            </ParamField>
-            <ParamField body="beneficiary.holderName" type="string">
-              Nome do titular da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
-            </ParamField>
-            <ParamField body="beneficiary.holderDocument" type="string">
-              CPF ou CNPJ do titular, somente números. Obrigatório para `PIX_MANUAL`.
+            <ParamField body="beneficiary.holder" type="object">
+              Titular da conta do beneficiário. Obrigatório para `PIX_MANUAL`.
+
+              <Expandable title="holder">
+                <ParamField body="holder.document" type="string">
+                  CPF ou CNPJ do titular, somente números.
+                </ParamField>
+                <ParamField body="holder.name" type="string">
+                  Nome do titular.
+                </ParamField>
+                <ParamField body="holder.type" type="string">
+                  `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).
+                </ParamField>
+              </Expandable>
             </ParamField>
           </Expandable>
         </ParamField>
