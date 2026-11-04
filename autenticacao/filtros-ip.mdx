@@ -8,18 +8,40 @@ icon: "shield-check"
   Esta é a página de detalhes para filtros de IPs. Para a visão geral da segurança da integração, consulte [Autenticação e segurança](/autenticacao/credenciais).
 </Note>
 
-Em Produção, a Delfinance exige que o tráfego saia de IPs públicos fixos e aprovados pela organização. Esse controle é chamado de allowlist de IPs ou static egress IP.
+A allowlist de IPs restringe as requisições de Produção a IPs públicos fixos cadastrados por você. Esse controle também é chamado de static egress IP. É uma camada adicional de segurança: mesmo que as credenciais vazem, elas não funcionam a partir de IPs fora da lista.
 
-## Quando é obrigatório
+## Quando se aplica
 
-- **Sandbox**: não é obrigatório
-- **Produção**: obrigatório
+- **Sandbox**: não se aplica
+- **Produção**: recomendada. Você pode dispensar a allowlist, desde que dê o seu consentimento.
 
 ## Como funciona
 
-1. Você informa os IPs públicos de saída usados pela sua infraestrutura.
-2. A Delfinance valida se a requisição veio de um IP aprovado.
-3. Requisições vindas de IPs não autorizados são rejeitadas.
+1. Você cadastra os IPs públicos de saída usados pela sua infraestrutura na [contratação da API](/iniciacao/contratar-api), no internet banking. Depois da contratação, você pode adicionar e remover IPs a qualquer momento.
+2. A Delfinance valida se a requisição veio de um IP cadastrado.
+3. Com a allowlist ativa, requisições vindas de IPs não cadastrados são rejeitadas.
+
+## Dispensa da allowlist
+
+Na etapa **IPs Autorizados** da contratação, você pode seguir sem informar IPs. Para isso, marque a opção que confirma sua ciência de que essa é uma etapa de segurança recomendada pela Delfinance.
+
+Você pode mudar essa escolha a qualquer momento, sem custo, em **Contratação de APIs**, no internet banking:
+
+- **Ativar a allowlist**: adicione um IP. A partir daí, só os IPs cadastrados podem originar requisições.
+- **Dispensar a allowlist**: na mesma tela, marque **Quero seguir sem informar IP, mas tenho ciência de que é uma etapa de segurança que a Delfinance recomenda**.
+- **Alterar a lista**: adicione ou remova IPs.
+
+Ao dispensar a allowlist, você reconhece que:
+
+- requisições autenticadas passam a ser aceitas de qualquer IP;
+- o risco de uso indevido das credenciais aumenta;
+- os prejuízos ligados a credenciais sob sua guarda, uso por pessoa não autorizada ou falha na sua infraestrutura ficam sob sua responsabilidade, quando a allowlist poderia ter evitado ou limitado o evento.
+
+As condições completas estão na cláusula 4 do contrato de utilização das APIs, disponível para download na contratação.
+
+<Warning>
+  A Delfinance pode exigir a ativação da allowlist conforme o valor ou o volume das operações, o produto, o perfil de risco ou uma alteração anormal no uso. Nesses casos, também pode suspender o acesso, revogar credenciais ou restringir operações pelo tempo necessário à apuração.
+</Warning>
 
 ## O que você precisa preparar
 
@@ -30,7 +52,7 @@ Em Produção, a Delfinance exige que o tráfego saia de IPs públicos fixos e a
 ## Checklist
 
 - [ ] IPs de saída definidos
-- [ ] Lista enviada à Delfinance
+- [ ] IPs cadastrados no internet banking
 - [ ] Validação testada em ambiente apropriado
 - [ ] Monitoramento de falhas de acesso configurado
 

@@ -1,14 +1,20 @@
 ---
 title: "Chaves de Teste"
-description: "Credenciais compartilhadas para explorar a API sem precisar criar uma conta no portal"
+description: "Credenciais compartilhadas para testar a API no Sandbox"
 icon: "flask"
 ---
 
 <Note>
-  O recomendado é gerar sua própria chave de API pelo [Portal do Desenvolvedor](https://portal-dev.delfinance.com.br). Ela é exclusiva, rastreável e sem compartilhamento com outros desenvolvedores. Use as credenciais abaixo apenas para uma exploração rápida.
+  Estas credenciais valem apenas para o Sandbox. Para Produção, gere sua própria chave de API na [contratação da API](/iniciacao/contratar-api), no internet banking.
 </Note>
 
+{/* PORTAL-DEV: versão anterior, oculta enquanto o portal estiver fora do ar.
+description: "Credenciais compartilhadas para explorar a API sem precisar criar uma conta no portal"
+O recomendado é gerar sua própria chave de API pelo [Portal do Desenvolvedor](https://portal-dev.delfinance.com.br). Ela é exclusiva, rastreável e sem compartilhamento com outros desenvolvedores. Use as credenciais abaixo apenas para uma exploração rápida.
 Caso queira testar a API antes de criar sua conta no portal, disponibilizamos três contas de Sandbox compartilhadas prontas para uso.
+*/}
+
+Para testar a API no Sandbox, disponibilizamos três contas compartilhadas prontas para uso.
 
 Basta escolher qualquer uma das contas abaixo e inserir os valores nos headers `x-delbank-api-key` e `x-delfinance-account-id` das suas requisições.
 
@@ -83,5 +89,5 @@ Basta escolher qualquer uma das contas abaixo e inserir os valores nos headers `
 ---
 
 <Warning>
-  Essas credenciais são **públicas e compartilhadas**, qualquer pessoa com acesso à documentação pode usá-las. Não as utilize para armazenar dados sensíveis ou simular fluxos críticos. Para uma integração isolada, [gere sua própria chave](https://portal-dev.delfinance.com.br).
+  Essas credenciais são **públicas e compartilhadas**, qualquer pessoa com acesso à documentação pode usá-las. Não as utilize para armazenar dados sensíveis ou simular fluxos críticos.{/* PORTAL-DEV: Para uma integração isolada, [gere sua própria chave](https://portal-dev.delfinance.com.br). */}
 </Warning>

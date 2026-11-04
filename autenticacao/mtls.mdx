@@ -29,6 +29,18 @@ No TLS comum, apenas o servidor prova sua identidade. No mTLS, os dois lados apr
 
 ## Processo de emissão do certificado
 
+O certificado de Produção é emitido na contratação da API, no internet banking. Na etapa **Configurações mTLS**, você escolhe uma das opções:
+
+- **Gerado automaticamente neste navegador**: o internet banking cria a chave privada no navegador e emite o certificado. A chave privada não é enviada à Delfinance e só fica disponível naquele navegador. Baixe o arquivo `.key` na etapa de teste.
+- **Meu time técnico já tem um CSR**: você gera a chave privada e o CSR na sua infraestrutura e envia apenas o CSR. Veja [Gerando o CSR com OpenSSL](#gerando-o-csr-com-openssl).
+
+Nos dois casos, você baixa o certificado (`.pem`) e testa a conexão no próprio fluxo. Veja o passo a passo em [Contratar a API](/iniciacao/contratar-api).
+
+<Warning>
+  Guarde a chave privada em um cofre seguro, como AWS KMS, HashiCorp Vault ou HSM. Ela nunca deve ser compartilhada, nem com a Delfinance.
+</Warning>
+
+{/* PORTAL-DEV: fluxo de emissão pelo portal do desenvolvedor, oculto enquanto o portal estiver fora do ar.
 <Steps>
   <Step title="Gere um CSR">
     Crie uma solicitação de certificado com sua chave privada. Veja o passo a passo em [Gerando o CSR com OpenSSL](#gerando-o-csr-com-openssl).
@@ -43,6 +55,7 @@ No TLS comum, apenas o servidor prova sua identidade. No mTLS, os dois lados apr
     Guarde a chave privada em um cofre seguro, como AWS KMS, HashiCorp Vault ou HSM.
   </Step>
 </Steps>
+*/}
 
 ## Gerando o CSR com OpenSSL
 
@@ -82,7 +95,7 @@ openssl req -new -key chave-privada.key -out requisicao.csr
 ```
 
 - **`chave-privada.key`**: a chave privada gerada no passo anterior.
-- **`requisicao.csr`**: arquivo em que o CSR será salvo. Use a extensão `.csr`, que é o formato esperado no envio ao portal.
+- **`requisicao.csr`**: arquivo em que o CSR será salvo. Use a extensão `.csr`, que é o formato esperado no envio pelo internet banking.
 
 Durante a execução, o OpenSSL solicitará os dados de identificação:
 
@@ -130,7 +143,7 @@ Confirme se `Subject` traz exatamente os dados da sua empresa e se `Public-Key` 
 Ao final você terá dois arquivos:
 
 - **`chave-privada.key`**: sua chave privada. Deve ser mantida em segredo e **NUNCA** compartilhada, nem conosco.
-- **`requisicao.csr`**: o CSR a ser enviado no portal do desenvolvedor da Delfinance.
+- **`requisicao.csr`**: o CSR a ser enviado na contratação da API, no internet banking.
 
 ## Exemplo de uso
 

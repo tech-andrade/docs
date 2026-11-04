@@ -99,7 +99,7 @@ export const ChatIntegrationAssistant = () => {
       userText: (value) => `Eu ${labels.hasApiKey[value]}.`,
       options: [
         { value: 'yes', label: 'Sim, já tenho', description: 'Posso começar os testes.' },
-        { value: 'no', label: 'Ainda não tenho', description: 'Preciso gerar no portal.' },
+        { value: 'no', label: 'Ainda não tenho', description: 'Preciso obter as credenciais.' },
       ],
     },
   ];
@@ -323,7 +323,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
 
     const stepsMap = {
       pix_receber: [
-        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        ...(k === 'no' ? ['Use uma das chaves de teste do Sandbox (Autenticação > Chaves de Teste).'] : []),
         'Faça uma chamada de teste para validar a autenticação.',
         'Crie a cobrança Pix no backend e retorne o QR Code ao frontend.',
         'Configure o webhook para o evento PIX_RECEIVED.',
@@ -332,7 +332,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         'Execute o checklist de homologação antes de ir para produção.',
       ],
       pix_pagar: [
-        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        ...(k === 'no' ? ['Use uma das chaves de teste do Sandbox (Autenticação > Chaves de Teste).'] : []),
         'Faça uma chamada de teste para validar a autenticação.',
         'Consulte a chave Pix do destinatário no DICT.',
         'Inicialize o pagamento com idempotência.',
@@ -341,7 +341,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         'Execute o checklist de homologação antes de ir para produção.',
       ],
       boleto: [
-        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        ...(k === 'no' ? ['Use uma das chaves de teste do Sandbox (Autenticação > Chaves de Teste).'] : []),
         'Faça uma chamada de teste para validar a autenticação.',
         'Emita o boleto com vencimento, multa, juros e desconto.',
         'Retorne o código digitável e o link do PDF ao pagador.',
@@ -350,7 +350,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         'Execute o checklist de homologação antes de ir para produção.',
       ],
       webhooks: [
-        ...(k === 'no' ? ['Crie sua conta e gere a API Key sandbox no portal.'] : []),
+        ...(k === 'no' ? ['Use uma das chaves de teste do Sandbox (Autenticação > Chaves de Teste).'] : []),
         'Crie um endpoint HTTPS público para receber os eventos.',
         'Cadastre o webhook via POST /baas/api/v1/webhooks com o tipo de evento.',
         'Implemente o handler com resposta HTTP 200 imediata.',
@@ -362,7 +362,7 @@ Forneça exemplos de código em ${labels.stack[s]}, organizados por etapa do flu
         'Valide todos os fluxos de pagamento no ambiente sandbox.',
         'Configure mTLS com o certificado da Delfinance.',
         'Ative os filtros de IP com os endereços dos seus servidores de produção.',
-        'Gere a API Key de produção no Portal do Desenvolvedor.',
+        'Contrate a API no internet banking para gerar a API Key de produção.',
         'Cadastre os webhooks de produção com URLs e autenticação definitivas.',
         'Realize um pagamento real de baixo valor para validar o fluxo ponta a ponta.',
       ],

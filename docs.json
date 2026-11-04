@@ -35,6 +35,7 @@
             "pages": [
               "index",
               "iniciacao/primeiros-passos",
+              "iniciacao/contratar-api",
               "iniciacao/ida-producao",
               "iniciacao/idempotencia"
             ]
@@ -380,12 +381,7 @@
         "label": "Suporte",
         "href": "mailto:suporte@Delfinance.com.br"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Portal do Desenvolvedor",
-      "href": "https://portal-dev.Delfinance.com.br"
-    }
+    ]
   },
   "contextual": {
     "options": [

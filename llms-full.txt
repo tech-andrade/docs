@@ -14,7 +14,7 @@ Todas as requisições exigem dois headers obrigatórios:
 - x-delbank-api-key — API key da integração
 - x-delfinance-account-id — número da conta Delfinance
 
-Em produção, mTLS (certificado de cliente) e allowlist de IPs também são obrigatórios.
+Em produção, mTLS (certificado de cliente) também é obrigatório. A allowlist de IPs é recomendada, mas o cliente pode dispensá-la dando consentimento.
 No sandbox, apenas os dois headers acima são necessários.
 
 ---

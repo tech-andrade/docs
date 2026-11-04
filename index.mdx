@@ -62,12 +62,20 @@ Nossa documentação está organizada em duas áreas principais:
 ## Fluxo recomendado de integração
 
 <Steps>
+  <Step title="Teste no Sandbox">
+    Use as [chaves de teste](/autenticacao/chaves-teste) para fazer as primeiras chamadas sem impacto financeiro.
+  </Step>
+  <Step title="Contrate a API">
+    No internet banking, [contrate a API](/iniciacao/contratar-api) para obter a chave de API, o account-id e o certificado mTLS de Produção.
+  </Step>
+  {/* PORTAL-DEV: passos anteriores, ocultos enquanto o portal estiver fora do ar.
   <Step title="Crie sua conta">
     Acesse o portal do desenvolvedor da Delfinance e crie sua aplicação em Sandbox.
   </Step>
   <Step title="Gere certificados e credenciais">
     Obtenha seu client ID, client secret e o certificado mTLS para autenticação segura.
   </Step>
+  */}
   <Step title="Implemente a autenticação">
     Configure as credenciais da API, o mTLS e a allowlist de IPs na sua aplicação ou utilize um dos [SDKs](/sdks/visao-geral).
   </Step>

@@ -8,10 +8,10 @@ Para consumir as APIs da Delfinance, sua integração precisa passar por três c
 
 1. **Credenciais da API**: `x-delbank-api-key` e `x-delfinance-account-id`
 2. **mTLS**: certificado do cliente para validar a identidade da conexão
-3. **Allowlist de IPs**: IPs públicos fixos de saída aprovados pela Delfinance
+3. **Allowlist de IPs**: IPs públicos fixos de saída cadastrados por você
 
 <Note>
-  Em Sandbox, as credenciais já permitem testar a integração. Em Produção, mTLS e allowlist de IPs passam a ser obrigatórios.
+  Em Sandbox, as credenciais já permitem testar a integração. Em Produção, o mTLS é obrigatório e a allowlist de IPs é recomendada. Você pode dispensar a allowlist dando o seu consentimento.
 </Note>
 
 ## Credenciais da API
@@ -35,16 +35,16 @@ Para detalhes sobre emissão, instalação, teste e ciclo de vida do certificado
 
 ## Filtros de IPs
 
-A allowlist de IPs restringe o tráfego de saída da sua infraestrutura a IPs públicos aprovados. Esse controle é importante em Produção para reduzir riscos de acesso não autorizado.
+A allowlist de IPs restringe o tráfego de saída da sua infraestrutura a IPs públicos aprovados. Esse controle é recomendado em Produção para reduzir riscos de acesso não autorizado. Você pode dispensá-lo, assumindo os riscos previstos em contrato.
 
-Para ver como funciona a configuração, os pré-requisitos e o checklist de implementação, acesse [Filtros de IPs](/autenticacao/filtros-ip).
+Para ver como funciona a configuração, a dispensa e o checklist de implementação, acesse [Filtros de IPs](/autenticacao/filtros-ip).
 
 ## Resumo por ambiente
 
 | Ambiente | Credenciais da API | mTLS | Allowlist de IPs |
 | --- | --- | --- | --- |
 | Sandbox | Sim | Não | Não |
-| Produção | Sim | Sim | Sim |
+| Produção | Sim | Sim | Recomendada (pode ser dispensada) |
 
 ## Próximo passo
 

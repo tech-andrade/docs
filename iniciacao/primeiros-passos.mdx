@@ -21,7 +21,12 @@ Para começar a integrar com a Delfinance, você precisa configurar seus ambient
 
 ## 2. Configurando seu Ambiente de Sandbox
 
-O ambiente de Sandbox é o ponto de entrada para testar a integração sem impacto financeiro. O fluxo atual no portal do desenvolvedor é o seguinte:
+O ambiente de Sandbox é o ponto de entrada para testar a integração sem impacto financeiro. Para testar, use uma das [chaves de teste do Sandbox](/autenticacao/chaves-teste): escolha uma conta e envie os valores nos headers `x-delbank-api-key` e `x-delfinance-account-id`.
+
+Para Produção, contrate a API no internet banking. A contratação gera a chave de API, o account-id e o certificado mTLS. Veja o passo a passo em [Contratar a API](/iniciacao/contratar-api).
+
+{/* PORTAL-DEV: fluxo do portal do desenvolvedor oculto enquanto o portal estiver fora do ar.
+O fluxo atual no portal do desenvolvedor é o seguinte:
 
 <Steps>
   <Step title="Acesse o portal do desenvolvedor">
@@ -54,6 +59,7 @@ O ambiente de Sandbox é o ponto de entrada para testar a integração sem impac
     Com a chave em mãos, você já pode autenticar suas requisições no Sandbox. Para Produção, o processo é semelhante, mas com as regras de segurança adicionais aplicadas.
   </Step>
 </Steps>
+*/}
 
 <Warning>
   Nunca compartilhe sua API Key, Account ID ou chave privada do certificado em repositórios públicos.

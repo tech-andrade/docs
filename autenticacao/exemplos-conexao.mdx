@@ -13,11 +13,11 @@ Se você ainda não tem o certificado emitido, comece por [mTLS](/autenticacao/m
 
 | Item | Arquivo / valor | Onde obter |
 | --- | --- | --- |
-| Certificado mTLS | `certificado.pem` | Portal do Desenvolvedor, após o envio do CSR |
-| Chave privada | `chave-privada.key` | Gerada por você junto com o CSR, nunca sai da sua infraestrutura |
-| API key | `x-delbank-api-key` | Portal do Desenvolvedor |
-| Account ID | `x-delfinance-account-id` | Conta vinculada à API key |
-| IPs públicos de saída | Lista de IPs fixos | Sua infraestrutura, informados à Delfinance |
+| Certificado mTLS | `certificado.pem` | [Contratação da API](/iniciacao/contratar-api), no internet banking |
+| Chave privada | `chave-privada.key` | Gerada no navegador durante a contratação ou por você junto com o CSR. Nunca é enviada à Delfinance |
+| API key | `x-delbank-api-key` | [Contratação da API](/iniciacao/contratar-api), no internet banking |
+| Account ID | `x-delfinance-account-id` | Conta vinculada à API key, exibida na contratação da API |
+| IPs públicos de saída | Lista de IPs fixos | Sua infraestrutura, cadastrados na contratação da API |
 
 <Warning>
   A chave privada e a API key nunca devem ser versionadas. Use variáveis de ambiente ou um cofre de segredos (AWS KMS, HashiCorp Vault, Azure Key Vault).
@@ -30,7 +30,7 @@ Se você ainda não tem o certificado emitido, comece por [mTLS](/autenticacao/m
 | URL base | `https://apisandbox.delbank.com.br` | `https://api.delbank.com.br` |
 | Headers de credencial | Obrigatórios | Obrigatórios |
 | Certificado mTLS | Opcional | **Obrigatório** |
-| Allowlist de IPs | Não aplicada | **Obrigatória** |
+| Allowlist de IPs | Não aplicada | Recomendada (pode ser dispensada) |
 
 Os exemplos abaixo usam Produção. Para testar em Sandbox, troque a URL base e remova o certificado da configuração do cliente.
 
@@ -321,16 +321,21 @@ openssl s_client -connect api.delbank.com.br:443 \
 Procure por `Verify return code: 0 (ok)` na saída.
 </Step>
 
+<Step title="Valide pelo internet banking">
+Na etapa **Testar o certificado mTLS** da [contratação da API](/iniciacao/contratar-api), o internet banking exibe um endpoint `hello-mtls` exclusivo do seu certificado. Chame essa URL a partir do seu ambiente usando o certificado emitido e clique em **Verificar teste** para confirmar a conclusão da etapa.
+</Step>
+{/* PORTAL-DEV: versão anterior deste passo, oculta enquanto o portal estiver fora do ar.
 <Step title="Valide pelo Portal do Desenvolvedor">
 Na etapa de validação do mTLS, o portal exibe um endpoint `hello-mtls` exclusivo do seu certificado. Chame essa URL a partir do seu ambiente usando o certificado emitido e volte ao portal para confirmar a conclusão da etapa.
 </Step>
+*/}
 
 <Step title="Faça a primeira chamada autenticada">
 Com o handshake funcionando, adicione os headers de credencial e chame um endpoint real, como no exemplo em cURL acima. Use `-v` para inspecionar o handshake caso algo falhe.
 </Step>
 
 <Step title="Confirme o IP de saída">
-Verifique de qual IP público a sua aplicação sai e confirme que ele está na allowlist.
+Se a allowlist estiver ativa, verifique de qual IP público a sua aplicação sai e confirme que ele está cadastrado.
 
 ```bash
 curl https://api.ipify.org
