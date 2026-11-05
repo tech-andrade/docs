@@ -1,0 +1,113 @@
+---
+title: "Listar beneficiários"
+api: "GET /baas/api/v1/split-payments/beneficiaries"
+description: "Liste os beneficiários cadastrados na conta de recebimento, com filtros por externalId, documento, forma de repasse e situação."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Cadastro de beneficiários](/guias/split-pagamentos/beneficiarios).
+</Warning>
+
+Retorna, de forma paginada, os beneficiários cadastrados na conta de recebimento. Use o filtro `externalId` para encontrar o beneficiário de um vendedor a partir do id dele no seu sistema.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Query params
+
+Todos os filtros são opcionais e podem ser combinados.
+
+<ParamField query="externalId" type="string">
+  Identificador do beneficiário no seu sistema.
+</ParamField>
+
+<ParamField query="document" type="string">
+  CPF ou CNPJ do titular (`account.holder.document`), somente números.
+</ParamField>
+
+<ParamField query="transferType" type="string">
+  Forma de repasse: `INTERNAL`, `PIX_MANUAL` ou `PIX_KEY`.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Situação do cadastro: `ACTIVE` ou `INACTIVE`.
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  Número da página (começa em 1).
+</ParamField>
+
+<ParamField query="limit" type="number" default="20">
+  Itens por página. Máximo de 100.
+</ParamField>
+
+## Response
+
+Array de beneficiários, cada um com a estrutura descrita em [Cadastrar beneficiário](/api-reference/split-pagamentos/beneficiarios/cadastrar#response). Os dados de paginação vêm no header `Pagination`.
+
+## Paginação
+
+A resposta é um array. Os dados de paginação vêm no header `Pagination`:
+
+```text Header
+Pagination: {"currentPage":1,"pageSize":20,"pageCount":1,"rowCount":1}
+```
+
+| Campo | Descrição |
+|---|---|
+| `currentPage` | Página retornada |
+| `pageSize` | Itens por página (`limit`) |
+| `pageCount` | Total de páginas |
+| `rowCount` | Total de beneficiários encontrados |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/beneficiaries?externalId=seller-4821&status=ACTIVE' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+[
+    {
+        "id": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+        "bankAccountNumber": "10050",
+        "externalId": "seller-4821",
+        "transferType": {
+            "name": "PIX_MANUAL",
+            "description": "Pix Manual",
+            "value": 2
+        },
+        "account": {
+            "number": "123456",
+            "branch": "0001",
+            "type": "CURRENT",
+            "participantIspb": "00000000",
+            "pixKey": null,
+            "holder": {
+                "document": "12345678909",
+                "name": "Maria Souza",
+                "type": "NATURAL"
+            }
+        },
+        "status": {
+            "name": "ACTIVE",
+            "description": "Ativo",
+            "value": 0
+        },
+        "createdAt": "2026-11-03T14:00:00.000Z",
+        "updatedAt": null
+    }
+]
+```
+</ResponseExample>

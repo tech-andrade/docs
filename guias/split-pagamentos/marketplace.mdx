@@ -178,6 +178,9 @@ Com valores fixos, deixe margem para a tarifa. Se a soma dos repasses ultrapassa
 ## Boas práticas
 
 <AccordionGroup>
+  <Accordion title="Cadastre os vendedores como beneficiários (beta)">
+    Quando o vendedor entra na sua plataforma, cadastre-o no [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios), com o id dele no seu sistema em `externalId`. Guarde o `id` retornado. Nos QR Codes dos pedidos, a instrução leva só a comissão e o `beneficiaryId`. Se o vendedor trocar de conta, atualize o cadastro: os próximos repasses já vão para a conta nova. Na área do vendedor, filtre os repasses por `beneficiaryId`.
+  </Accordion>
   <Accordion title="Guarde o documento de cada vendedor do jeito que a API usa">
     As consultas da área do vendedor filtram pelo CPF ou CNPJ do beneficiário (`beneficiaryDocument`), somente números. Use sempre o mesmo documento do vendedor nas instruções de split e nas consultas.
   </Accordion>

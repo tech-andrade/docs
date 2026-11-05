@@ -1,0 +1,87 @@
+---
+title: "Consultar beneficiário"
+api: "GET /baas/api/v1/split-payments/beneficiaries/{id}"
+description: "Consulte um beneficiário cadastrado na conta de recebimento pelo id."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Cadastro de beneficiários](/guias/split-pagamentos/beneficiarios).
+</Warning>
+
+Retorna um beneficiário cadastrado na conta de recebimento, ativo ou inativo.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="id" type="string" required>
+  Identificador do beneficiário (UUID).
+</ParamField>
+
+## Response
+
+Retorna o beneficiário, com a estrutura descrita em [Cadastrar beneficiário](/api-reference/split-pagamentos/beneficiarios/cadastrar#response).
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `404` | `SPLIT_BENEFICIARY_NOT_FOUND` | Não existe beneficiário com esse `id` na conta de recebimento |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/beneficiaries/6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+    "bankAccountNumber": "10050",
+    "externalId": "seller-4822",
+    "transferType": {
+        "name": "PIX_KEY",
+        "description": "Pix por Chave",
+        "value": 3
+    },
+    "account": {
+        "number": null,
+        "branch": null,
+        "type": null,
+        "participantIspb": null,
+        "pixKey": "12345678909",
+        "holder": {
+            "document": "12345678909",
+            "name": "Maria Souza",
+            "type": "NATURAL"
+        }
+    },
+    "status": {
+        "name": "ACTIVE",
+        "description": "Ativo",
+        "value": 0
+    },
+    "createdAt": "2026-11-03T14:00:00.000Z",
+    "updatedAt": null
+}
+```
+
+```json 404
+{
+    "code": "SPLIT_BENEFICIARY_NOT_FOUND",
+    "message": "Beneficiário não encontrado."
+}
+```
+</ResponseExample>

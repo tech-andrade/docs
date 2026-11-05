@@ -125,6 +125,7 @@
               "guias/split-pagamentos/visao-geral",
               "guias/split-pagamentos/configurar",
               "guias/split-pagamentos/split-por-cobranca",
+              "guias/split-pagamentos/beneficiarios",
               "guias/split-pagamentos/acompanhar-repasses",
               "guias/split-pagamentos/status-do-repasse",
               "guias/split-pagamentos/marketplace",
@@ -279,6 +280,17 @@
               "api-reference/split-pagamentos/atualizar-beneficiario",
               "api-reference/split-pagamentos/remover-split",
               "api-reference/split-pagamentos/remover-beneficiario",
+              {
+                "group": "Beneficiários",
+                "tag": "BETA",
+                "pages": [
+                  "api-reference/split-pagamentos/beneficiarios/cadastrar",
+                  "api-reference/split-pagamentos/beneficiarios/listar",
+                  "api-reference/split-pagamentos/beneficiarios/consultar",
+                  "api-reference/split-pagamentos/beneficiarios/atualizar",
+                  "api-reference/split-pagamentos/beneficiarios/inativar"
+                ]
+              },
               {
                 "group": "Repasses",
                 "pages": [

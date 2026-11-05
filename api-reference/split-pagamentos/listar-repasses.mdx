@@ -29,6 +29,10 @@ Todos os filtros são opcionais e podem ser combinados.
   CPF ou CNPJ do beneficiário, somente números.
 </ParamField>
 
+<ParamField query="beneficiaryId" type="string">
+  Id (UUID) do beneficiário no [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios). Traz todos os repasses dele, inclusive os criados antes de uma mudança na conta.
+</ParamField>
+
 <ParamField query="beneficiaryName" type="string">
   Nome do beneficiário. Aceita parte do nome.
 </ParamField>
@@ -106,6 +110,9 @@ Os campos `status`, `transferType`, `instructionType` e `order.source` são enum
 </ResponseField>
 <ResponseField name="paymentDate" type="string">
   Data prevista do repasse, no formato `YYYY-MM-DD`. É a data do recebimento, exceto quando a instrução de split do QR Code agenda o repasse para uma data futura, com `paymentDate` ou `daysUntilPayment` (data do recebimento + dias). Nesse caso, o repasse fica em `SCHEDULED` até a data. A data pode ser alterada em [Atualizar repasse](/api-reference/split-pagamentos/atualizar-repasse).
+</ResponseField>
+<ResponseField name="beneficiaryId" type="string">
+  Id do beneficiário no [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios), quando a instrução usou `beneficiaryId`. `null` quando a instrução enviou o `beneficiary` completo.
 </ResponseField>
 <ResponseField name="beneficiary" type="object">
   Conta do beneficiário, no mesmo formato usado nas transferências. Em repasses `PIX_KEY`, os dados da conta (`number`, `branch`, `type` e `participant`) vêm da consulta da chave no DICT e ficam `null` até o repasse ser executado.
@@ -234,6 +241,7 @@ curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/pa
         "amount": 5.00,
         "refundedAmount": 0.00,
         "paymentDate": "2026-10-20",
+        "beneficiaryId": null,
         "beneficiary": {
             "number": "123456",
             "branch": "0001",

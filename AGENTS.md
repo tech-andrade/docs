@@ -23,6 +23,7 @@ Definição oficial em `guias/split-pagamentos/visao-geral.mdx` (seção "Concei
 
 - **Conta de recebimento**: conta Delfinance que recebe o pagamento original e de onde saem os repasses. Não use "conta de origem", "conta pagadora", "conta principal" ou "sua conta". Placeholder em exemplos: `CONTA_DE_RECEBIMENTO`.
 - **Beneficiário**: pessoa ou empresa que recebe uma parte do pagamento (vendedor, parceiro, afiliado).
+- **Cadastro de beneficiários** (beta): `/split-payments/beneficiaries`, guia `guias/split-pagamentos/beneficiarios.mdx`. Id UUID, `externalId`, `transferType` e `account` (formato do `beneficiary`). A instrução referencia com `beneficiaryId`. As rotas `/configurations/{id}/beneficiaries` do split padrão são **instruções**, não este cadastro.
 - **Conta do beneficiário**: conta para onde o repasse vai. Não use "conta de destino" nem "conta beneficiária". Placeholder: `CONTA_DO_BENEFICIARIO`.
 - **Instrução**: a regra de um repasse (`amount`, `type`, `transferType`, `beneficiary`).
 - **Repasse** (*payout*): a transferência efetiva da conta de recebimento para a conta do beneficiário. Na doc, escreva "repasse"; use "payout" só entre parênteses na primeira menção ou quando citar campos da API (`payouts`, `payoutId`).

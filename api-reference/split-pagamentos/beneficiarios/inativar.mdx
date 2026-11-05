@@ -1,0 +1,88 @@
+---
+title: "Inativar beneficiário"
+api: "DELETE /baas/api/v1/split-payments/beneficiaries/{id}"
+description: "Inative um beneficiário. O cadastro não é apagado, mas deixa de gerar repasses."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Cadastro de beneficiários](/guias/split-pagamentos/beneficiarios).
+</Warning>
+
+Inativa um beneficiário: o `status` passa para `INACTIVE`. O cadastro não é apagado e continua aparecendo nas consultas.
+
+Depois de inativado:
+
+- os novos pagamentos de QR Codes que referenciam o beneficiário geram repasses em `ERROR`, sem transferência, e o valor fica na conta de recebimento;
+- os repasses já criados não mudam. Os agendados continuam agendados e são executados na data. Para impedir um repasse agendado, [cancele-o](/api-reference/split-pagamentos/atualizar-repasse);
+- o `externalId` fica livre para outro beneficiário ativo.
+
+A inativação não pode ser desfeita. Para voltar a repassar para a mesma conta, cadastre o beneficiário de novo.
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="id" type="string" required>
+  Identificador do beneficiário (UUID).
+</ParamField>
+
+## Response
+
+Retorna o beneficiário, com `status.name` igual a `INACTIVE`, na estrutura descrita em [Cadastrar beneficiário](/api-reference/split-pagamentos/beneficiarios/cadastrar#response).
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `404` | `SPLIT_BENEFICIARY_NOT_FOUND` | Não existe beneficiário com esse `id` na conta de recebimento |
+
+<RequestExample>
+```bash cURL
+curl --location --request DELETE 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/beneficiaries/6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+    "bankAccountNumber": "10050",
+    "externalId": "seller-4821",
+    "transferType": {
+        "name": "PIX_MANUAL",
+        "description": "Pix Manual",
+        "value": 2
+    },
+    "account": {
+        "number": "123456",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participantIspb": "00000000",
+        "pixKey": null,
+        "holder": {
+            "document": "12345678909",
+            "name": "Maria Souza",
+            "type": "NATURAL"
+        }
+    },
+    "status": {
+        "name": "INACTIVE",
+        "description": "Inativo",
+        "value": 1
+    },
+    "createdAt": "2026-11-03T14:00:00.000Z",
+    "updatedAt": "2026-11-12T16:45:00.000Z"
+}
+```
+</ResponseExample>

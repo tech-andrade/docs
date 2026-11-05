@@ -56,6 +56,7 @@ flowchart TB
 
     start -->|"data futura"| SCHEDULED
     start -->|"sem agendamento ou data de hoje"| PENDING
+    start -->|"beneficiário cadastrado não encontrado ou inativo"| ERROR
     SCHEDULED -->|"chegou a data (rodada diária)<br/>ou reprocessar"| PENDING
     PENDING -->|"Delfinance inicia a execução"| PROCESSING
     PROCESSING -->|"transferência confirmada"| SUCCESS
@@ -116,6 +117,7 @@ Qualquer transição que não está nesta tabela não acontece. Se você pedir u
 |---|---|---|---|---|
 | — | `PENDING` | Pix recebido, sem agendamento, com `daysUntilPayment` igual a `0` ou com `paymentDate` igual ou anterior à data do pagamento | Delfinance | Nenhum. O valor já está na conta de recebimento |
 | — | `SCHEDULED` | Pix recebido, com data do repasse futura | Delfinance | Nenhum |
+| — | `ERROR` | Pix recebido, mas o `beneficiaryId` da instrução não existe, é de outra conta de recebimento ou está inativo no [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios) | Delfinance | Nenhum. O valor fica na conta de recebimento |
 | `SCHEDULED` | `PENDING` | Chegou a data do repasse, na rodada diária de repasses agendados (6h, horário de Brasília) | Delfinance | Nenhum |
 | `SCHEDULED` | `PENDING` | [Reprocessar repasse](/api-reference/split-pagamentos/reprocessar-repasses), que antecipa o repasse | Gestor do marketplace | Nenhum |
 | `PENDING` | `PROCESSING` | Início da execução | Delfinance | A transferência começa a partir da conta de recebimento |
@@ -163,7 +165,8 @@ O valor só sai da conta de recebimento na execução. Mantenha saldo para os re
 
 - Em `ERROR`, o motivo vem em `errorMessage`, e o valor fica na conta de recebimento.
 - Depois de corrigir a causa, por exemplo, recompondo o saldo, [reprocesse o repasse](/api-reference/split-pagamentos/reprocessar-repasses). Ele volta para `PROCESSING`.
-- Se a causa não puder ser corrigida, como uma conta do beneficiário encerrada, cancele o repasse. Os dados do beneficiário não podem ser alterados.
+- Se a causa não puder ser corrigida, como uma conta do beneficiário encerrada, cancele o repasse. Os dados do beneficiário de um repasse já criado não podem ser alterados.
+- Um repasse também pode nascer em `ERROR`, quando a instrução usa um `beneficiaryId` que não existe, é de outra conta de recebimento ou está inativo. Nesse caso, reprocessar não resolve: cancele o repasse.
 - A falha de um repasse não afeta os outros repasses da mesma ordem de recebimento com split.
 
 ### Cancelamento

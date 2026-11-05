@@ -173,8 +173,9 @@ Quando o Pix é pago, você recebe um evento [`PIX_RECEIVED`](/guias/webhooks/pi
 |---|---|---|---|
 | `amount` | `number` | Sim | Percentual ou valor do repasse, conforme o `type`. Deve ser maior que zero |
 | `type` | `string` | Sim | `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais) |
-| `transferType` | `string` | Sim | `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix) |
-| `beneficiary` | `object` | Sim | Dados da conta do beneficiário |
+| `beneficiaryId` | `string` | Sim, sem `beneficiary` | Id (UUID) de um beneficiário do [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios). A forma de repasse e a conta vêm do cadastro. Não pode ser usado com `transferType` nem com `beneficiary`. Veja [Usar um beneficiário cadastrado](#usar-um-beneficiário-cadastrado) |
+| `transferType` | `string` | Sim, sem `beneficiaryId` | `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix) |
+| `beneficiary` | `object` | Sim, sem `beneficiaryId` | Dados da conta do beneficiário |
 | `daysUntilPayment` | `integer` | Não | Quantidade de dias corridos, contados a partir do pagamento, para fazer o repasse. `0` repassa logo após o pagamento. Não pode ser usado com `paymentDate`. Veja [Agendar um repasse](#agendar-um-repasse) |
 | `paymentDate` | `string` | Não | Data fixa do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse é agendado. Não pode ser usado com `daysUntilPayment` |
 
@@ -254,6 +255,33 @@ O `beneficiary` segue o mesmo formato de conta usado no Pix manual e no split pa
   </Tab>
 </Tabs>
 
+## Usar um beneficiário cadastrado
+
+<Info>
+**Em beta.** O cadastro de beneficiários e o `beneficiaryId` na instrução são uma proposta e podem mudar.
+</Info>
+
+Se o beneficiário está no [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios), a instrução não precisa repetir os dados da conta. Informe só a regra e o `beneficiaryId`:
+
+```json
+{
+    "amount": 10,
+    "type": "PERCENTAGE",
+    "beneficiaryId": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+    "daysUntilPayment": 30
+}
+```
+
+- A forma de repasse (`transferType`) e a conta vêm do cadastro. Não envie `transferType` nem `beneficiary` junto com o `beneficiaryId`.
+- No mesmo QR Code, você pode misturar instruções com `beneficiaryId` e instruções com `beneficiary`.
+- O agendamento (`daysUntilPayment` ou `paymentDate`) funciona igual.
+- O repasse usa os dados da conta do cadastro **no momento do pagamento**. Uma mudança no cadastro depois disso não altera repasses já criados.
+- O repasse traz o `beneficiaryId`, então você pode listar todos os repasses de um beneficiário com o filtro `beneficiaryId` em [Listar repasses](/api-reference/split-pagamentos/listar-repasses).
+
+<Warning>
+Na criação do QR Code, só o formato do `beneficiaryId` (UUID) é validado. Se, no pagamento, o beneficiário não existir, for de outra conta de recebimento ou estiver inativo, o repasse é criado em `ERROR`, sem transferência, com o motivo em `errorMessage`. O valor fica na conta de recebimento.
+</Warning>
+
 ## Agendar um repasse
 
 Por padrão, cada repasse é feito logo após o pagamento. Um uso comum para agendar: o marketplace só libera a parte do vendedor depois do prazo de entrega ou de devolução do produto.
@@ -329,6 +357,7 @@ As regras abaixo são verificadas na criação do QR Code. Se qualquer uma falha
 | Cada instrução `PERCENTAGE` | Até 100% |
 | Soma de todos os repasses (percentuais convertidos em reais + valores fixos) | Até o valor da cobrança |
 | Campos do `beneficiary` | Conforme o `transferType`, veja a tabela acima |
+| `beneficiaryId`, quando informado | UUID válido, sem `transferType` nem `beneficiary` na mesma instrução. A existência do beneficiário não é verificada na criação |
 | `paymentDate`, quando informado | Data válida, no formato `YYYY-MM-DD`, igual ou posterior à data de criação do QR Code |
 | `daysUntilPayment`, quando informado | Número inteiro maior ou igual a `0` |
 | `paymentDate` e `daysUntilPayment` | Não podem ser informados juntos na mesma instrução |
@@ -369,6 +398,9 @@ Se a soma dos repasses ultrapassar o valor líquido (depois da tarifa), **nenhum
 <AccordionGroup>
   <Accordion title="O split da cobrança substitui o split padrão da conta">
     Se a conta de recebimento também tem um [split padrão](/guias/split-pagamentos/configurar), ele **não** é aplicado aos pagamentos de um QR Code com `splitPayment`. Para esses pagamentos, valem apenas as instruções da cobrança. Os demais Pix recebidos na conta continuam seguindo o split padrão.
+  </Accordion>
+  <Accordion title="Beneficiário cadastrado inexistente ou inativo">
+    Se o `beneficiaryId` de uma instrução não existir, for de outra conta de recebimento ou estiver inativo no momento do pagamento, o repasse é criado em `ERROR`, com o motivo em `errorMessage` ("Beneficiário não encontrado." ou "Beneficiário inativo."). Nenhuma transferência é feita, e o valor fica na conta de recebimento. [Cancele o repasse](/api-reference/split-pagamentos/atualizar-repasse) e acerte o valor pela sua plataforma.
   </Accordion>
   <Accordion title="Conta Delfinance inexistente">
     Se o `beneficiary.number` de uma instrução `INTERNAL` não corresponder a uma conta Delfinance, aquele repasse não é executado e o valor permanece na conta de recebimento. O pagamento do Pix não é afetado.

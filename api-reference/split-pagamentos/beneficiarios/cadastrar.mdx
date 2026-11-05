@@ -1,0 +1,174 @@
+---
+title: "Cadastrar beneficiário"
+api: "POST /baas/api/v1/split-payments/beneficiaries"
+description: "Cadastre um beneficiário na conta de recebimento para usar o id dele nas instruções de split."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Cadastro de beneficiários](/guias/split-pagamentos/beneficiarios).
+</Warning>
+
+Cadastra um beneficiário na conta de recebimento. Use o `id` retornado como `beneficiaryId` nas [instruções de split do QR Code](/guias/split-pagamentos/split-por-cobranca#usar-um-beneficiário-cadastrado).
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento, dona do cadastro.
+</ParamField>
+
+## Body
+
+<ParamField body="externalId" type="string">
+  Identificador do beneficiário no seu sistema, por exemplo, o id do vendedor na sua plataforma. Até 100 caracteres. Não pode se repetir entre os beneficiários ativos da mesma conta de recebimento.
+</ParamField>
+
+<ParamField body="transferType" type="string" required>
+  Forma de repasse: `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix).
+</ParamField>
+
+<ParamField body="account" type="object" required>
+  Conta do beneficiário. Os campos obrigatórios dependem do `transferType`:
+  - `INTERNAL`: só `number`.
+  - `PIX_MANUAL`: `number`, `branch`, `type`, `participantIspb` e `holder`.
+  - `PIX_KEY`: `pixKey` e `holder`.
+
+  <Expandable title="account">
+    <ParamField body="account.number" type="string">
+      Número da conta do beneficiário. Obrigatório para `INTERNAL` e `PIX_MANUAL`. Com `INTERNAL`, a conta precisa existir na Delfinance.
+    </ParamField>
+    <ParamField body="account.branch" type="string">
+      Agência da conta. Obrigatório para `PIX_MANUAL`.
+    </ParamField>
+    <ParamField body="account.type" type="string">
+      Tipo da conta: `PAYMENT`, `CURRENT` ou `SAVING`. Obrigatório para `PIX_MANUAL`.
+    </ParamField>
+    <ParamField body="account.participantIspb" type="string">
+      ISPB da instituição da conta (8 caracteres). Obrigatório para `PIX_MANUAL`.
+    </ParamField>
+    <ParamField body="account.pixKey" type="string">
+      Chave Pix do beneficiário: CPF, CNPJ, e-mail, telefone (`+55...`) ou chave aleatória. Obrigatório para `PIX_KEY`. Só o formato é validado no cadastro. Se a chave for um CPF ou CNPJ, ela precisa ser igual a `account.holder.document`.
+    </ParamField>
+    <ParamField body="account.holder" type="object">
+      Titular da conta. Obrigatório para `PIX_MANUAL` e `PIX_KEY`.
+
+      <Expandable title="holder">
+        <ParamField body="holder.document" type="string">
+          CPF ou CNPJ do titular, somente números.
+        </ParamField>
+        <ParamField body="holder.name" type="string">
+          Nome do titular.
+        </ParamField>
+        <ParamField body="holder.type" type="string">
+          `NATURAL` (pessoa física) ou `LEGAL` (pessoa jurídica).
+        </ParamField>
+      </Expandable>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Response
+
+Retorna `201 Created` com o beneficiário cadastrado.
+
+<ResponseField name="id" type="string">
+  Identificador do beneficiário (UUID). Use como `beneficiaryId` nas instruções de split.
+</ResponseField>
+<ResponseField name="bankAccountNumber" type="string">
+  Conta de recebimento dona do cadastro.
+</ResponseField>
+<ResponseField name="externalId" type="string">
+  Identificador do beneficiário no seu sistema, quando informado.
+</ResponseField>
+<ResponseField name="transferType" type="object">
+  Forma de repasse, como enum (`name`, `description` e `value`). `name`: `INTERNAL`, `PIX_MANUAL` ou `PIX_KEY`. Veja [Formato dos enums](/guias/split-pagamentos/acompanhar-repasses#formato-dos-enums).
+</ResponseField>
+<ResponseField name="account" type="object">
+  Conta do beneficiário, com os campos enviados no cadastro (`number`, `branch`, `type`, `participantIspb`, `pixKey` e `holder`). Os campos que não se aplicam ao `transferType` vêm `null`.
+</ResponseField>
+<ResponseField name="status" type="object">
+  Situação do cadastro, como enum. `name`: `ACTIVE` ou `INACTIVE`.
+</ResponseField>
+<ResponseField name="createdAt" type="string">
+  Data e hora do cadastro, em ISO 8601.
+</ResponseField>
+<ResponseField name="updatedAt" type="string">
+  Data e hora da última atualização, em ISO 8601.
+</ResponseField>
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `400` | `VALIDATION_ERROR` | Campo obrigatório ausente para o `transferType`, formato inválido de documento, ISPB ou chave Pix, ou chave CPF/CNPJ diferente de `account.holder.document` |
+| `409` | `SPLIT_BENEFICIARY_ALREADY_EXISTS` | Já existe um beneficiário ativo com o mesmo `externalId` na conta de recebimento |
+| `422` | `ACCOUNT_NOT_FOUND` | Com `INTERNAL`, a conta informada não existe na Delfinance |
+
+<RequestExample>
+```bash cURL
+curl --location 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/beneficiaries' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "externalId": "seller-4821",
+    "transferType": "PIX_MANUAL",
+    "account": {
+        "number": "123456",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participantIspb": "00000000",
+        "holder": {
+            "document": "12345678909",
+            "name": "Maria Souza",
+            "type": "NATURAL"
+        }
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201
+{
+    "id": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+    "bankAccountNumber": "10050",
+    "externalId": "seller-4821",
+    "transferType": {
+        "name": "PIX_MANUAL",
+        "description": "Pix Manual",
+        "value": 2
+    },
+    "account": {
+        "number": "123456",
+        "branch": "0001",
+        "type": "CURRENT",
+        "participantIspb": "00000000",
+        "pixKey": null,
+        "holder": {
+            "document": "12345678909",
+            "name": "Maria Souza",
+            "type": "NATURAL"
+        }
+    },
+    "status": {
+        "name": "ACTIVE",
+        "description": "Ativo",
+        "value": 0
+    },
+    "createdAt": "2026-11-03T14:00:00.000Z",
+    "updatedAt": null
+}
+```
+
+```json 409
+{
+    "code": "SPLIT_BENEFICIARY_ALREADY_EXISTS",
+    "message": "Já existe um beneficiário ativo com o externalId seller-4821."
+}
+```
+</ResponseExample>

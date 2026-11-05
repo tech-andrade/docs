@@ -107,8 +107,11 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
         <ParamField body="instructions[].type" type="string" required>
           `PERCENTAGE` (porcentagem do valor recebido) ou `FIXED` (valor fixo em reais).
         </ParamField>
-        <ParamField body="instructions[].transferType" type="string" required>
-          `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix).
+        <ParamField body="instructions[].beneficiaryId" type="string">
+          **Beta.** Id (UUID) de um beneficiário do [cadastro de beneficiários](/guias/split-pagamentos/beneficiarios). A forma de repasse e a conta vêm do cadastro. Use `beneficiaryId` **ou** `transferType` com `beneficiary`, nunca os dois. Só o formato é validado na criação. Se, no pagamento, o beneficiário não existir ou estiver inativo, o repasse é criado em `ERROR`. Veja [Usar um beneficiário cadastrado](/guias/split-pagamentos/split-por-cobranca#usar-um-beneficiário-cadastrado).
+        </ParamField>
+        <ParamField body="instructions[].transferType" type="string">
+          `INTERNAL` (conta Delfinance), `PIX_MANUAL` (conta em qualquer instituição, por dados bancários) ou `PIX_KEY` (conta em qualquer instituição, por chave Pix). Obrigatório sem `beneficiaryId`.
         </ParamField>
         <ParamField body="instructions[].daysUntilPayment" type="integer">
           Quantidade de dias corridos, contados a partir do pagamento, para fazer o repasse. Por exemplo, `30` repassa 30 dias depois que o cliente final pagar. `0` repassa logo após o pagamento. Não pode ser usado com `paymentDate`. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
@@ -116,8 +119,8 @@ Para entender quando usar este endpoint e ver o passo a passo completo, veja o g
         <ParamField body="instructions[].paymentDate" type="string">
           Data fixa do repasse, no formato `YYYY-MM-DD`. Sem o campo, ou com a data de hoje, o repasse é feito logo após o pagamento. Com uma data futura, o repasse fica agendado (`SCHEDULED`) e é feito automaticamente na data. Não pode ser usado com `daysUntilPayment`. Veja [Agendar um repasse](/guias/split-pagamentos/split-por-cobranca#agendar-um-repasse).
         </ParamField>
-        <ParamField body="instructions[].beneficiary" type="object" required>
-          Dados da conta do beneficiário, no mesmo formato de conta do Pix manual. Os campos obrigatórios dependem do `transferType`:
+        <ParamField body="instructions[].beneficiary" type="object">
+          Dados da conta do beneficiário, no mesmo formato de conta do Pix manual. Obrigatório sem `beneficiaryId`. Os campos obrigatórios dependem do `transferType`:
           - `INTERNAL`: só `number`.
           - `PIX_MANUAL`: `number`, `branch`, `type`, `participantIspb` e `holder`.
           - `PIX_KEY`: `pixKey` e `holder`.

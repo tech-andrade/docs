@@ -1,0 +1,110 @@
+---
+title: "Atualizar beneficiário"
+api: "PATCH /baas/api/v1/split-payments/beneficiaries/{id}"
+description: "Atualize a forma de repasse, a conta ou o externalId de um beneficiário. A mudança vale para os repasses criados depois dela."
+tag: "BETA"
+---
+
+<Warning>
+**Funcionalidade em beta.** Contrato em proposta, sujeito a mudanças. Veja o guia [Cadastro de beneficiários](/guias/split-pagamentos/beneficiarios).
+</Warning>
+
+Atualiza um beneficiário ativo. Envie só os campos que quer mudar.
+
+<Note>
+A mudança vale para os repasses criados **depois** dela. Os repasses já criados, inclusive os agendados, guardam os dados da conta que tinham no momento da criação.
+</Note>
+
+## Headers
+
+<ParamField header="x-delbank-api-key" type="string" required>
+  Sua API key.
+</ParamField>
+
+<ParamField header="x-delfinance-account-id" type="string" required>
+  Número da conta de recebimento.
+</ParamField>
+
+## Path params
+
+<ParamField path="id" type="string" required>
+  Identificador do beneficiário (UUID).
+</ParamField>
+
+## Body
+
+Os campos são os mesmos de [Cadastrar beneficiário](/api-reference/split-pagamentos/beneficiarios/cadastrar#body), todos opcionais. O `id` e a conta de recebimento dona do cadastro não podem ser alterados.
+
+<ParamField body="externalId" type="string">
+  Novo identificador do beneficiário no seu sistema.
+</ParamField>
+
+<ParamField body="transferType" type="string">
+  Nova forma de repasse. Ao mudar a forma de repasse, envie também o `account` com os campos obrigatórios da nova forma.
+</ParamField>
+
+<ParamField body="account" type="object">
+  Campos da conta a alterar. Depois da atualização, a conta precisa ter todos os campos obrigatórios do `transferType`, e as mesmas validações do cadastro são aplicadas.
+</ParamField>
+
+## Response
+
+Retorna o beneficiário atualizado, com a estrutura descrita em [Cadastrar beneficiário](/api-reference/split-pagamentos/beneficiarios/cadastrar#response).
+
+## Erros
+
+| HTTP | Código | Quando acontece |
+|---|---|---|
+| `400` | `VALIDATION_ERROR` | O resultado não tem os campos obrigatórios do `transferType`, ou algum campo tem formato inválido |
+| `404` | `SPLIT_BENEFICIARY_NOT_FOUND` | Não existe beneficiário com esse `id` na conta de recebimento |
+| `409` | `SPLIT_BENEFICIARY_ALREADY_EXISTS` | O novo `externalId` já é usado por outro beneficiário ativo |
+| `422` | `SPLIT_BENEFICIARY_INACTIVE` | O beneficiário está inativo |
+
+<RequestExample>
+```bash cURL
+curl --location --request PATCH 'https://apisandbox.delbank.com.br/baas/api/v1/split-payments/beneficiaries/6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13' \
+--header 'Content-Type: application/json' \
+--header 'x-delbank-api-key: {{apiKey}}' \
+--header 'x-delfinance-account-id: {{accountId}}' \
+--data '{
+    "account": {
+        "number": "654321",
+        "branch": "0002"
+    }
+}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200
+{
+    "id": "6f1c2a9e-3b7d-4e8a-9c21-5d4f0e7b8a13",
+    "bankAccountNumber": "10050",
+    "externalId": "seller-4821",
+    "transferType": {
+        "name": "PIX_MANUAL",
+        "description": "Pix Manual",
+        "value": 2
+    },
+    "account": {
+        "number": "654321",
+        "branch": "0002",
+        "type": "CURRENT",
+        "participantIspb": "00000000",
+        "pixKey": null,
+        "holder": {
+            "document": "12345678909",
+            "name": "Maria Souza",
+            "type": "NATURAL"
+        }
+    },
+    "status": {
+        "name": "ACTIVE",
+        "description": "Ativo",
+        "value": 0
+    },
+    "createdAt": "2026-11-03T14:00:00.000Z",
+    "updatedAt": "2026-11-10T09:30:00.000Z"
+}
+```
+</ResponseExample>
