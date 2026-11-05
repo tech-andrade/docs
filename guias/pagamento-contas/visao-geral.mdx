@@ -80,8 +80,8 @@ O valor máximo por transação depende do momento em que o pagamento é process
 
 | Quando o pagamento é processado | Valor máximo por transação |
 |---|---|
-| Dias úteis, das 7h às 16h30 | R$ 1.400.000,00 |
-| Dias úteis antes das 7h ou depois das 16h30, e dias não úteis | R$ 999.999,00 |
+| Dias úteis, das 7h às 16h30 | R\$ 1.400.000,00 |
+| Dias úteis antes das 7h ou depois das 16h30, e dias não úteis | R\$ 999.999,00 |
 
 Os pagamentos também respeitam o limite de pagamentos configurado na sua conta.
 
@@ -108,5 +108,16 @@ Para testar o fluxo completo, emita um boleto pela [API de cobrança](/guias/bol
   </Card>
   <Card title="Pagar" icon="paper-plane" href="/guias/pagamento-contas/pagar">
     Pague um boleto, conta de consumo ou tributo.
+  </Card>
+</CardGroup>
+
+## Referência da API
+
+<CardGroup cols={2}>
+  <Card title="Consultar boleto ou conta" icon="magnifying-glass" href="/api-reference/pagamento-contas/consultar-conta">
+    `GET /baas/api/v1/bill-payments/{codigo}`
+  </Card>
+  <Card title="Pagar boleto ou conta" icon="paper-plane" href="/api-reference/pagamento-contas/pagar-conta">
+    `POST /baas/api/v1/bill-payments`
   </Card>
 </CardGroup>
